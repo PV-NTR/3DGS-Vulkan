@@ -6,31 +6,21 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} \
 
 project("vkrenderer")
 
-# add game-activity
-find_package(game-activity REQUIRED CONFIG)
 # add log lib
 find_library(log-lib log)
 
 # main library
-set(RENDERER_DIR ../../../../../../renderer)
+set(RENDERER_DIR ../../renderer)
 file(GLOB_RECURSE RENDERER_SRC ${RENDERER_DIR}/*.cpp)
-add_library(${CMAKE_PROJECT_NAME} SHARED
+add_executable(${CMAKE_PROJECT_NAME}
         ${RENDERER_SRC}
-        GameActivitySources.cpp
-        AndroidMain.cpp)
-
+        WinMain.cpp)
 
 # add vulkan hpp
-add_definitions(-DVULKAN_HPP_TYPESAFE_CONVERSION)
-set(VULKAN_DIR ${ANDROID_NDK}/sources/third_party/vulkan/src)
-set(Vulkan_INCLUDE_DIR ${VULKAN_DIR}/include)
+find_package(Vulkan REQUIRED)
 
 # add asset manager
 set(ASSET_MANAGER ${ANDROID_NDK}/sysroot/usr/include)
-
-# add 3rdparty
-set(3RDPARTY_DIR ../../../../../../3rdparty)
-include_directories(${3RDPARTY_DIR}/glm)
 
 # add shaderc lib
 #find_package(shaderc REQUIRED CONFIG)
@@ -38,12 +28,7 @@ include_directories(${3RDPARTY_DIR}/glm)
 #        ${CMAKE_CURRENT_SOURCE_DIR}/shaderc/libs/${ANDROID_STL}/${ANDROID_ABI}/libshaderc.a)
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
-        ${ANDROID_NDK}/sources/android/native_app_glue
-        ${VULKAN_DIR}/include
-        ASSET_MANAGER
-        ${RENDERER_DIR})
+        ASSET_MANAGER)
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC
-        game-activity::game-activity
-        android
-        log)
+        ${Vulkan_LIBRARY})

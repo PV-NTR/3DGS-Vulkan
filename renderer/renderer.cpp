@@ -22,7 +22,7 @@ void Renderer::Destroy()
 
 bool Renderer::IsReady()
 {
-    return true;
+    return context_.IsReady();
 }
 
 void Renderer::DrawFrame()

@@ -1,0 +1,6 @@
+[submodule "3rdparty/glm"]
+	path = 3rdparty/glm
+	url = https://github.com/icaven/glm.git
+[submodule "3rdparty/plog"]
+	path = 3rdparty/plog
+	url = https://github.com/SergiusTheBest/plog.git
