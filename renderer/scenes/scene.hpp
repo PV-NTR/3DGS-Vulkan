@@ -5,6 +5,8 @@
 
 #include "object.hpp"
 
+namespace X {
+
 class Scene {
 public:
     Scene() = default;
@@ -18,3 +20,5 @@ private:
 private:
     std::vector<std::unique_ptr<Object>> objects_;
 };
+
+} // namespace X

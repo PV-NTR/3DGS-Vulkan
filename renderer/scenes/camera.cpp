@@ -1,5 +1,7 @@
 #include "camera.hpp"
 
+namespace X {
+
 bool Camera::Moving()
 {
     return keys_.left || keys_.right || keys_.up || keys_.down;
@@ -183,3 +185,5 @@ void Camera::UpdateViewMatrix()
         updated_ = true;
     }
 };
+
+} // namespace X

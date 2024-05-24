@@ -1,8 +1,8 @@
-#include <android/log.h>
+#include <plog/Log.h>
 #include <game-activity/native_app_glue/android_native_app_glue.h>
 #include "renderer.hpp"
 
-Renderer g_renderer;
+X::Renderer g_renderer;
 android_app* g_androidAppCtx = nullptr;
 
 bool InitVulkan(android_app* app)
@@ -10,8 +10,7 @@ bool InitVulkan(android_app* app)
     g_androidAppCtx = app;
 
     if (!g_renderer.Init()) {
-        __android_log_print(ANDROID_LOG_WARN, "Gaussian Splatting Renderer",
-            "Vulkan is unavailable, install vulkan and re-start");
+        PLOGW.printf("Gaussian Splatting Renderer: Vulkan is unavailable, install vulkan and re-start");
         return false;
     }
     return false;
@@ -26,7 +25,7 @@ void handle_cmd(android_app* app, int32_t cmd) {
             g_renderer.Destroy();
             break;
         default:
-            __android_log_print(ANDROID_LOG_INFO, "Gaussian Splatting Renderer", "event not handled: %d", cmd);
+            PLOGI.printf("Gaussian Splatting Renderer", "event not handled: %d", cmd);
     }
 }
 

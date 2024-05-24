@@ -2,6 +2,8 @@
 
 #include <memory>
 
+namespace X {
+
 class Data {
 public:
     std::shared_ptr<Data> MakeLength(uint32_t size, bool init = false);
@@ -16,3 +18,5 @@ private:
     uint32_t size_;
     void* data_;
 };
+
+} // namespace X

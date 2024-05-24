@@ -4,3 +4,6 @@
 [submodule "3rdparty/plog"]
 	path = 3rdparty/plog
 	url = https://github.com/SergiusTheBest/plog.git
+[submodule "3rdparty/vma"]
+	path = 3rdparty/vma
+	url = https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git

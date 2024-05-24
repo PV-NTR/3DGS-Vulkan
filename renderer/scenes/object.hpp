@@ -6,7 +6,10 @@
 
 #include "utils/utils.hpp"
 
+namespace X {
+
 class Object {
+public:
 
 private:
     uint32_t objectID_ = NewID();
@@ -15,3 +18,5 @@ private:
     glm::vec3 scale_;
     glm::mat4 transform_;
 };
+
+} // namespace X

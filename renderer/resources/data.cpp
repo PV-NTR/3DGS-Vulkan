@@ -1,5 +1,7 @@
 #include "data.hpp"
 
+namespace X {
+
 std::shared_ptr<Data> Data::MakeLength(uint32_t size, bool init)
 {
     return std::shared_ptr<Data>(new Data(size, init));
@@ -19,3 +21,5 @@ Data::~Data()
         delete reinterpret_cast<uint32_t*>(data_);
     }
 }
+
+} // namespace X

@@ -4,6 +4,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 
+namespace X {
+
 class Camera {
 public:
     Camera() = default;
@@ -71,3 +73,5 @@ private:
         glm::mat4 view = glm::mat4();
     } matrices_;
 };
+
+} // namespace X

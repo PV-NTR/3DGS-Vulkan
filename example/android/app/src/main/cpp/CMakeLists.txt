@@ -6,6 +6,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} \
 
 project("vkrenderer")
 
+add_definitions(-DHOST_ANDROID)
 # add game-activity
 find_package(game-activity REQUIRED CONFIG)
 # add log lib
@@ -29,8 +30,17 @@ set(Vulkan_INCLUDE_DIR ${VULKAN_DIR}/include)
 set(ASSET_MANAGER ${ANDROID_NDK}/sysroot/usr/include)
 
 # add 3rdparty
+## glm
 set(3RDPARTY_DIR ../../../../../../3rdparty)
 include_directories(${3RDPARTY_DIR}/glm)
+## vma
+add_library(vma INTERFACE)
+set(VMA_DIR ${3RDPARTY_DIR}/vma/include)
+target_sources(vma INTERFACE ${VMA_DIR}/vk_mem_alloc.h)
+target_include_directories(vma SYSTEM INTERFACE ${VMA_DIR})
+# target_link_libraries(vma INTERFACE vulkan)
+## plog
+include_directories(${3RDPARTY_DIR}/plog/include)
 
 # add shaderc lib
 #find_package(shaderc REQUIRED CONFIG)
@@ -45,5 +55,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC
         game-activity::game-activity
+        vma
         android
-        log)
+        log
+        vulkan)

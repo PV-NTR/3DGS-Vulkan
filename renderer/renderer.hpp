@@ -3,8 +3,10 @@
 #include <vector>
 #include <thread>
 
-#include "resources/vkcontext.hpp"
+#include "resources/vk/vkcontext.hpp"
 #include "utils/singleton.hpp"
+
+namespace X {
 
 class Renderer : public Singleton<Renderer> {
 public:
@@ -17,7 +19,8 @@ public:
     void DrawFrame();
 
 private:
-    // TODO: multi thread
-    VkContext context_;
+    Backend::VkContext context_;
     /* data */
 };
+
+} // namespace X
