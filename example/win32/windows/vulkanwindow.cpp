@@ -153,3 +153,13 @@ void VulkanWindow::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     OnHandleMessage(uMsg, wParam, lParam);
 }
+
+void VulkanWindow::InitRenderer()
+{
+    renderer_.Init();
+}
+
+void VulkanWindow::LoadScene()
+{
+
+}

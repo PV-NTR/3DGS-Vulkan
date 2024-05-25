@@ -6,6 +6,10 @@
 #include <windows.h>
 #include <libloaderapi.h>
 #endif
+
+#include <algorithm>
+#include "common/log_common.hpp"
+
 namespace X::Backend {
 
 std::vector<const char*> VkContext::requiredInstanceExts = {
@@ -50,11 +54,46 @@ void VkContext::LoadVkLibrary()
      VULKAN_HPP_DEFAULT_DISPATCHER.init(entryFunc_);
 }
 
+void VkContext::GetSupportedInstanceExtensions()
+{
+    // Get extensions supported by the instance and store for later use
+    uint32_t extCount = 0;
+    vk::enumerateInstanceExtensionProperties(nullptr, &extCount, nullptr);
+    if (extCount > 0) {
+        std::vector<vk::ExtensionProperties> extensions(extCount);
+        if (vk::enumerateInstanceExtensionProperties(nullptr, &extCount, &extensions.front()) == vk::Result::eSuccess) {
+            for (vk::ExtensionProperties extension : extensions)
+            {
+                supportedInstanceExts.push_back(extension.extensionName);
+            }
+        }
+    }
+}
+
+void VkContext::CollectEnabledInstanceExtensions()
+{
+    // Enabled requested instance extensions
+    if (requiredInstanceExts.size() > 0)
+    {
+        for (const char* supportedInstanceExt : supportedInstanceExts)
+        {
+            // Output message if requested extension is not available
+            if (std::find(supportedInstanceExts.begin(), supportedInstanceExts.end(), supportedInstanceExt) == supportedInstanceExts.end())
+            {
+                XLOGE("Enabled instance extension %s is not present at instance level", supportedInstanceExt);
+            }
+            enabledInstanceExts.push_back(supportedInstanceExt);
+        }
+    }
+}
+
 void VkContext::CreateInstance()
 {
     if (!entryFunc_) {
         return;
     }
+    GetSupportedInstanceExtensions();
+
 }
 
 void VkContext::SelectPhysicalDevice()

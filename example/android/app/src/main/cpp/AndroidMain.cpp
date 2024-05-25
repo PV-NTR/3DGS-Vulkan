@@ -25,7 +25,7 @@ void handle_cmd(android_app* app, int32_t cmd) {
             g_renderer.Destroy();
             break;
         default:
-            PLOGI.printf("Gaussian Splatting Renderer", "event not handled: %d", cmd);
+            PLOGI.printf("Gaussian Splatting Renderer: event not handled: %d", cmd);
     }
 }
 

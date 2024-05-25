@@ -11,6 +11,8 @@ public:
 	std::string GetWindowTitle() const override { return ClassName(); }
 	void HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) override;
 	void RenderLoop() { };
+	void InitRenderer();
+	void LoadScene();
 
 protected:
 	friend class BaseWindow<VulkanWindow>;

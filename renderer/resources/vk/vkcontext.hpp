@@ -20,6 +20,9 @@ private:
     void CreateDeviceAndQueues();
     void InitAllocator();
 
+    void GetSupportedInstanceExtensions();
+    void CollectEnabledInstanceExtensions();
+
 private:
     vk::PhysicalDevice physicalDevice_;
 
@@ -40,6 +43,9 @@ private:
 
     static std::vector<const char*> requiredInstanceExts, requiredInstanceLayers;
     static std::vector<const char*> requiredDeviceExts;
+
+    std::vector<const char*> supportedInstanceExts, supportedInstanceLayers;
+    std::vector<const char*> supportedDeviceExts;
 
     std::vector<const char*> enabledInstanceExts, enabledInstanceLayers;
     std::vector<const char*> enabledDeviceExts;
