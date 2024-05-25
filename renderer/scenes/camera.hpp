@@ -16,8 +16,10 @@ public:
         LookAt,
         FirstPerson
     };
+    CameraType GetType() const { return type_; }
+    void SwitchType();
 
-    bool Moving();
+    bool Moving() const;
 
     float GetNearClip() { return zNear_; }
     float GetFarClip() { return zFar_; }
@@ -32,11 +34,26 @@ public:
 
     void SetRotationSpeed(float rotationSpeed) { this->rotationSpeed_ = rotationSpeed; }
     void SetMovementSpeed(float movementSpeed) { this->movementSpeed_ = movementSpeed; }
+    float GetRotationSpeed() const { return rotationSpeed_; }
+    float GetMovementSpeed() const { return movementSpeed_; }
 
     void UpdateAspectRatio(float aspect);
 
     void Update(float deltaTime);
     bool UpdatePad(glm::vec2 axisLeft, glm::vec2 axisRight, float deltaTime);
+    bool Updated() const { return updated_; };
+
+public:
+    // for camera moving
+    struct {
+        bool left = false;
+        bool right = false;
+        bool up = false;
+        bool down = false;
+    } keys_;
+    float rotationSpeed_ = 1.0f;
+    float movementSpeed_ = 1.0f;
+    bool updated_ = false;
 
 private:
     void UpdateViewMatrix();
@@ -55,17 +72,6 @@ private:
     float fovY_;
     float aspect_;
     float zNear_, zFar_;
-
-    // for camera moving
-    struct {
-        bool left = false;
-        bool right = false;
-        bool up = false;
-        bool down = false;
-    } keys_;
-    float rotationSpeed_ = 1.0f;
-    float movementSpeed_ = 1.0f;
-    bool updated_ = true;
 
     // cached MVP
     struct {

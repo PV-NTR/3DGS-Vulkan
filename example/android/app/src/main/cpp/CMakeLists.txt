@@ -57,5 +57,4 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC
         game-activity::game-activity
         vma
         android
-        log
-        vulkan)
+        log)

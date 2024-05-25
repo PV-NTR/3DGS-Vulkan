@@ -20,6 +20,7 @@ public:
 
 private:
     Backend::VkContext context_;
+    bool ready_;
     /* data */
 };
 

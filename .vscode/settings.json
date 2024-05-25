@@ -3,6 +3,9 @@
         "cmath": "cpp",
         "memory": "cpp",
         "thread": "cpp",
-        "vector": "cpp"
+        "vector": "cpp",
+        "unordered_map": "cpp",
+        "*.rh": "cpp",
+        "xiosbase": "cpp"
     }
 }

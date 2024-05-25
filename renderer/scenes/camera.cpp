@@ -1,10 +1,18 @@
 #include "camera.hpp"
 
+#include "utils/utils.hpp"
+
 namespace X {
 
-bool Camera::Moving()
+bool Camera::Moving() const
 {
     return keys_.left || keys_.right || keys_.up || keys_.down;
+}
+
+void Camera::SwitchType()
+{
+    type_ = static_cast<CameraType>(1 - ECast(type_));
+    UpdateViewMatrix();
 }
 
 void Camera::SetPerspective(float fovY, float aspect, float zNear, float zFar)
@@ -132,7 +140,7 @@ bool Camera::UpdateCameraFirstPerson(glm::vec2 axisLeft, glm::vec2 axisRight, fl
 
 bool Camera::UpdateCameraLookAt(glm::vec2 axisLeft, glm::vec2 axisRight, float deadZone)
 {
-    bool ret;
+    bool ret = false;
     if (std::abs(axisLeft.x) > deadZone) {
         rotation_ += glm::vec3(0.0f, axisLeft.x * 0.5f, 0.0f);
         ret = true;

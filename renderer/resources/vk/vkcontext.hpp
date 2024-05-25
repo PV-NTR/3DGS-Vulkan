@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <vector>
 
 #include "common/vk_common.hpp"
 
@@ -13,7 +14,7 @@ public:
     bool IsReady();
 
 private:
-    void LoadLibrary();
+    void LoadVkLibrary();
     void CreateInstance();
     void SelectPhysicalDevice();
     void CreateDeviceAndQueues();
@@ -36,6 +37,12 @@ private:
     } queues_;
 
     PFN_vkGetInstanceProcAddr entryFunc_ = nullptr;
+
+    static std::vector<const char*> requiredInstanceExts, requiredInstanceLayers;
+    static std::vector<const char*> requiredDeviceExts;
+
+    std::vector<const char*> enabledInstanceExts, enabledInstanceLayers;
+    std::vector<const char*> enabledDeviceExts;
 };
 
 } // namespace X::Backend
