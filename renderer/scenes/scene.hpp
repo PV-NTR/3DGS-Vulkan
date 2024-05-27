@@ -20,7 +20,9 @@ public:
     Camera::CameraType GetCameraType() const { return camera_.GetType(); };
     void UpdateCameraState();
     bool OverlayVisible();
-    bool SceneChanged();
+    bool SceneChanged() const;
+    bool ObjectChanged() const;
+    bool OverlayChanged() const;
     Camera& GetCamera() { return camera_; }
 
 private:

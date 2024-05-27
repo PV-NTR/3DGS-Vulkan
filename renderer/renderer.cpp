@@ -28,6 +28,13 @@ bool Renderer::IsReady()
     return context_.IsReady();
 }
 
+void Renderer::UpdateScene(const Scene& scene)
+{
+    if (scene.SceneChanged()) {
+        
+    }
+}
+
 void Renderer::DrawFrame()
 {
 

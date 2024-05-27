@@ -163,3 +163,11 @@ void VulkanWindow::LoadScene()
 {
 
 }
+
+void VulkanWindow::RenderLoop()
+{
+    if (scene_.SceneChanged()) {
+        renderer_.UpdateScene(scene_);
+    }
+    renderer_.DrawFrame();
+}

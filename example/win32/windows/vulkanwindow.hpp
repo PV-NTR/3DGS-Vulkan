@@ -10,9 +10,9 @@ public:
     LPCSTR ClassName() const override { return "Vulkan Window Class"; }
 	std::string GetWindowTitle() const override { return ClassName(); }
 	void HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) override;
-	void RenderLoop() { };
 	void InitRenderer();
 	void LoadScene();
+	void RenderLoop();
 
 protected:
 	friend class BaseWindow<VulkanWindow>;

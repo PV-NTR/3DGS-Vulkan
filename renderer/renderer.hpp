@@ -5,6 +5,7 @@
 
 #include "resources/vk/vkcontext.hpp"
 #include "utils/singleton.hpp"
+#include "scenes/scene.hpp"
 
 namespace X {
 
@@ -16,6 +17,7 @@ public:
     bool IsReady();
     bool Init();
     void Destroy();
+    void UpdateScene(const Scene& scene);
     void DrawFrame();
 
 private:
