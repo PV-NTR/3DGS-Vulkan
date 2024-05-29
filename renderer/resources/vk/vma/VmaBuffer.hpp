@@ -1,12 +1,12 @@
 #pragma once
 
-#include "common/VkCommon.hpp"
+#include "VmaObject.hpp"
 
 namespace X::Backend {
 
-class VmaBuffer {
-
-
+class VmaBuffer : public VmaObject {
+public:
+    VmaBuffer();
 };
 
 } // namespace X::Backend
