@@ -1,4 +1,6 @@
-#include "renderer.hpp"
+#include "Renderer.hpp"
+
+#include "resources/vk/VkResourceManager.hpp"
 
 namespace X {
 
@@ -15,6 +17,7 @@ Renderer::~Renderer()
 bool Renderer::Init()
 {
     context_.Init();
+    Backend::VkResourceManager::GetInstance();
     return true;
 }
 

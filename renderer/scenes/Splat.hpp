@@ -2,8 +2,8 @@
 
 #include <memory>
 
-#include "object.hpp"
-#include "resources/data.hpp"
+#include "Object.hpp"
+#include "resources/Data.hpp"
 
 namespace X {
 

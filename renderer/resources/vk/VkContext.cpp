@@ -1,4 +1,4 @@
-#include "vkcontext.hpp"
+#include "VkContext.hpp"
 
 #ifdef HOST_ANDROID
 #include <dlfcn.h>
@@ -8,7 +8,7 @@
 #endif
 
 #include <algorithm>
-#include "common/log_common.hpp"
+#include "common/LogCommon.hpp"
 
 namespace X::Backend {
 
@@ -36,7 +36,7 @@ void VkContext::Init()
 
     CreateInstance();
     SelectPhysicalDevice();
-    QueueQueueFamilies();
+    QueryQueueFamilies();
     CreateDeviceAndQueues();
 
     InitAllocator();
@@ -211,7 +211,7 @@ bool VkContext::SelectPhysicalDevice()
     return true;
 }
 
-bool VkContext::QueueQueueFamilies()
+bool VkContext::QueryQueueFamilies()
 {
     if (!physicalDevice_) {
         XLOGE("physicalDevice not specified!");
@@ -250,7 +250,7 @@ bool VkContext::CreateDeviceAndQueues()
         return false;
     }
     vk::DeviceCreateInfo deviceCI {};
-    if (!QueueQueueFamilies()) {
+    if (!QueryQueueFamilies()) {
         return false;
     }
 

@@ -1,4 +1,4 @@
-#include "vk_common.hpp"
+#include "VkCommon.hpp"
 
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 

@@ -1,5 +1,5 @@
-#include "windows/vulkanwindow.hpp"
-#include "common/log_common.hpp"
+#include "windows/VulkanWindow.hpp"
+#include "common/LogCommon.hpp"
 #include <plog/Formatters/TxtFormatter.h>
 #include <plog/Appenders/ColorConsoleAppender.h>
 

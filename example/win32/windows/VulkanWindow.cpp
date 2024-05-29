@@ -1,6 +1,6 @@
 #include "vulkanwindow.hpp"
 
-#include "common/keycodes_common.hpp"
+#include "common/KeycodesCommon.hpp"
 #include "imgui.h"
 
 void VulkanWindow::HandleMouseMove(int32_t x, int32_t y)

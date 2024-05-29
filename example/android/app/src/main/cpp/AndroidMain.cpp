@@ -1,6 +1,6 @@
 #include <plog/Log.h>
 #include <game-activity/native_app_glue/android_native_app_glue.h>
-#include "renderer.hpp"
+#include "Renderer.hpp"
 
 X::Renderer g_renderer;
 android_app* g_androidAppCtx = nullptr;

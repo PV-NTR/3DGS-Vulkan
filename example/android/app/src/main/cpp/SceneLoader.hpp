@@ -1,6 +1,6 @@
 #pragma once
 
-#include "scenes/scene.hpp"
+#include "scenes/Scene.hpp"
 
 class SceneLoader {
 public:

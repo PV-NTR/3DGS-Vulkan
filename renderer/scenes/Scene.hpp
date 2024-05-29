@@ -3,9 +3,9 @@
 #include <vector>
 #include <memory>
 
-#include "camera.hpp"
-#include "object.hpp"
-#include "uioverlay.hpp"
+#include "Camera.hpp"
+#include "Object.hpp"
+#include "UIOverlay.hpp"
 
 namespace X {
 

@@ -1,9 +1,9 @@
 #pragma once
 
-#include "basewindow.hpp"
+#include "BaseWindow.hpp"
 
-#include "renderer.hpp"
-#include "scenes/scene.hpp"
+#include "Renderer.hpp"
+#include "scenes/Scene.hpp"
 
 class VulkanWindow : public BaseWindow<VulkanWindow> {
 public:

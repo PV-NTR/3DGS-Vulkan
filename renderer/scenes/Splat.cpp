@@ -1,4 +1,4 @@
-#include "splat.hpp"
+#include "Splat.hpp"
 
 namespace X {
 

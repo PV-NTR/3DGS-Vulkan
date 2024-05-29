@@ -1,10 +1,10 @@
 #pragma once
 
-#include "common/glm_common.hpp"
+#include "common/GLMCommon.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-#include "utils/utils.hpp"
+#include "utils/Utils.hpp"
 
 namespace X {
 

@@ -1,6 +1,6 @@
-#include "camera.hpp"
+#include "Camera.hpp"
 
-#include "utils/utils.hpp"
+#include "utils/Utils.hpp"
 
 namespace X {
 

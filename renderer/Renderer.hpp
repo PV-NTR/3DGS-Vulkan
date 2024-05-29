@@ -3,9 +3,9 @@
 #include <vector>
 #include <thread>
 
-#include "resources/vk/vkcontext.hpp"
-#include "utils/singleton.hpp"
-#include "scenes/scene.hpp"
+#include "resources/vk/VkContext.hpp"
+#include "utils/Singleton.hpp"
+#include "scenes/Scene.hpp"
 
 namespace X {
 

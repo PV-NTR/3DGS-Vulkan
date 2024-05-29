@@ -4,7 +4,7 @@
 #include <vector>
 #include <atomic>
 
-#include "common/vk_common.hpp"
+#include "common/VkCommon.hpp"
 
 namespace X::Backend {
 
@@ -20,7 +20,7 @@ private:
     void LoadVkLibrary();
     bool CreateInstance();
     bool SelectPhysicalDevice();
-    bool QueueQueueFamilies();
+    bool QueryQueueFamilies();
     bool CreateDeviceAndQueues();
     bool InitAllocator();
 
