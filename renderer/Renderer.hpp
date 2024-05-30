@@ -3,7 +3,6 @@
 #include <vector>
 #include <thread>
 
-#include "resources/vk/VkContext.hpp"
 #include "utils/Singleton.hpp"
 #include "scenes/Scene.hpp"
 
@@ -21,7 +20,6 @@ public:
     void DrawFrame();
 
 private:
-    Backend::VkContext context_;
     bool ready_;
     /* data */
 };

@@ -11,11 +11,19 @@ namespace X::Backend {
 
 class VkResourceManager : public Singleton<VkResourceManager> {
 public:
+    BufferManager& GetBufferManager()
+    {
+        return bufferMgr_;
+    }
+
+    ImageManager& GetImageManager()
+    {
+        return imageMgr_;
+    }
 
 private:
-    std::shared_ptr<BufferManager> bufferMgr_;
-    std::shared_ptr<ImageManager> imageMgr_;
-
+    BufferManager bufferMgr_ {};
+    ImageManager imageMgr_ {};
 };
 
 } // namespace X::Backend

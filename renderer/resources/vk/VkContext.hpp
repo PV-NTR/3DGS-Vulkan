@@ -5,16 +5,21 @@
 #include <atomic>
 
 #include "common/VkCommon.hpp"
+#include "utils/Singleton.hpp"
 
 namespace X::Backend {
 
-class VkContext {
+class VkContext : public Singleton<VkContext>{
 public:
     VkContext() = default;
     void Init();
     bool IsReady();
     [[nodiscard]] vk::Queue AcquireGraphicsQueue();
     [[nodiscard]] vk::Queue AcquireComputeQueue();
+    VmaAllocator GetAllocator() const
+    {
+        return allocator_;
+    }
 
 private:
     void LoadVkLibrary();

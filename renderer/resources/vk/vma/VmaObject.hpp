@@ -56,8 +56,7 @@ public:
         if (persistent_) {
             std::copy(data, data + size, reinterpret_cast<uint8_t*>(mappedData_) + offset);
             Flush();
-        }
-        else {
+        } else {
             Map();
             std::copy(data, data + size, reinterpret_cast<uint8_t*>(mappedData_) + offset);
             Flush();
@@ -70,10 +69,11 @@ public:
         return Update(reinterpret_cast<const uint8_t*>(data), size, offset);
     }
 
-private:
-    VmaAllocator allocator_;
-    VmaAllocation allocation_;
+protected:
+    VmaAllocator allocator_ = VK_NULL_HANDLE;
+    VmaAllocation allocation_ = VK_NULL_HANDLE;
 
+private:
     void* mappedData_ = nullptr;
     bool coherent_ = false;     // where the buffer is host_coherent
     bool persistent_ = false;   // whether the buffer is persistently mapped or not

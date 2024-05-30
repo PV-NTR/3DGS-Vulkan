@@ -1,0 +1,16 @@
+#include "Image.hpp"
+#include "VkContext.hpp"
+
+namespace X::Backend {
+
+Image::Image(VmaAllocator allocator, const ImageInfo& info) noexcept
+    : image_(allocator, { info.width_, info.height_, vk::Format::eR8G8B8A8Unorm,
+        vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst |
+        vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eColorAttachment |
+        vk::ImageUsageFlagBits::eInputAttachment }), 
+      info_(info)
+{
+
+}
+    
+} // namespace X::Backend

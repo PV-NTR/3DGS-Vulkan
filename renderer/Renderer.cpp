@@ -1,5 +1,6 @@
 #include "Renderer.hpp"
 
+#include "resources/vk/VkContext.hpp"
 #include "resources/vk/VkResourceManager.hpp"
 
 namespace X {
@@ -16,7 +17,7 @@ Renderer::~Renderer()
 
 bool Renderer::Init()
 {
-    context_.Init();
+    Backend::VkContext::GetInstance().Init();
     Backend::VkResourceManager::GetInstance();
     return true;
 }
@@ -28,7 +29,7 @@ void Renderer::Destroy()
 
 bool Renderer::IsReady()
 {
-    return context_.IsReady();
+    return Backend::VkContext::GetInstance().IsReady();
 }
 
 void Renderer::UpdateScene(const Scene& scene)

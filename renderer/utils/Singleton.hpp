@@ -3,12 +3,13 @@
 template<typename T>
 class Singleton {
 public:
-    Singleton() = default;
-    ~Singleton() = default;
     static T& GetInstance() {
-        static T instance_;
+        static T instance_ {};
         return instance_;
     }
+
+protected:
+    Singleton() = default;
 
 private:
     Singleton(const Singleton&) = delete;

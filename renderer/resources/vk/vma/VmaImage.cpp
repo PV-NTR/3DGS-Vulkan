@@ -2,21 +2,33 @@
 
 namespace X::Backend {
 
-VmaImage::VmaImage(VmaAllocator allocator) noexcept
-    : VmaObject(allocator)
+VmaImage::VmaImage(VmaAllocator allocator, const VmaImageInfo& info) noexcept
+    : VmaObject(allocator, static_cast<bool>(info.memProps_ & vk::MemoryPropertyFlagBits::eHostCoherent))
 {
+    assert(allocator_ != VK_NULL_HANDLE);
+    VkImageCreateInfo imageCI {};
+    imageCI.imageType = VkImageType::VK_IMAGE_TYPE_2D;
+    imageCI.format = static_cast<VkFormat>(info.format_);
+    imageCI.extent = VkExtent3D { info.width_, info.height_, 1 };
+    imageCI.usage = static_cast<VkImageUsageFlags>(info.usage_);
 
+    VmaAllocationCreateInfo allocationCI {};
+    allocationCI.memoryTypeBits = static_cast<VkImageUsageFlags>(info.memProps_);
+
+    VkImage handle;
+    auto ret = vmaCreateImage(allocator_, &imageCI, &allocationCI, &handle, &allocation_, nullptr);
+    handle_ = handle;
 }
 
 VmaImage::~VmaImage() noexcept
 {
-
+    Destroy();
 }
 
 VmaImage::VmaImage(VmaImage&& other) noexcept
     : VmaObject(std::move(other)), handle_(std::exchange(other.handle_, VK_NULL_HANDLE))
 {
-    other.handle_ = VK_NULL_HANDLE;
+
 }
 
 VmaImage& VmaImage::operator=(VmaImage&& other) noexcept
@@ -31,7 +43,10 @@ VmaImage& VmaImage::operator=(VmaImage&& other) noexcept
 
 void VmaImage::Destroy() noexcept
 {
-
+    assert(allocator_ != VK_NULL_HANDLE);
+    if (allocation_ != VK_NULL_HANDLE) {
+        vmaDestroyImage(allocator_, handle_, allocation_);
+    }
 }
     
 } // namespace X::Backend

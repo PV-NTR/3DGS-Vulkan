@@ -7,7 +7,7 @@ namespace X {
 class Resource {
 public:
     Resource() = default;
-    ~Resource() = default;
+    virtual ~Resource() = default;
 
 private:
     uint32_t resourceID_ = NewID();
