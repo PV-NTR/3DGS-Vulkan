@@ -55,8 +55,8 @@ private:
     static std::vector<const char*> requiredInstanceExts_, requiredInstanceLayers_;
     static std::vector<const char*> requiredDeviceExts_;
 
-    std::vector<const char*> supportedInstanceExts_, supportedInstanceLayers_;
-    std::vector<const char*> supportedDeviceExts_;
+    std::vector<std::string> supportedInstanceExts_, supportedInstanceLayers_;
+    std::vector<std::string> supportedDeviceExts_;
 
     std::vector<const char*> enabledInstanceExts_, enabledInstanceLayers_;
     std::vector<const char*> enabledDeviceExts_;

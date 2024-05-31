@@ -77,8 +77,8 @@ void VkContext::GetSupportedInstanceExtensions()
     if (extCount > 0) {
         std::vector<vk::ExtensionProperties> extensions(extCount);
         if (vk::enumerateInstanceExtensionProperties(nullptr, &extCount, &extensions.front()) == vk::Result::eSuccess) {
-            for (vk::ExtensionProperties extension : extensions) {
-                supportedInstanceExts_.push_back(extension.extensionName);
+            for (const vk::ExtensionProperties& extension : extensions) {
+                supportedInstanceExts_.emplace_back(extension.extensionName.operator std::string());
             }
         }
     }
@@ -108,8 +108,8 @@ void VkContext::GetSupportedInstanceLayers()
     if (layerCount > 0) {
         std::vector<vk::LayerProperties> layers(layerCount);
         if (vk::enumerateInstanceLayerProperties(&layerCount, &layers.front()) == vk::Result::eSuccess) {
-            for (vk::LayerProperties layer : layers) {
-                supportedInstanceExts_.push_back(layer.layerName);
+            for (const vk::LayerProperties& layer : layers) {
+                supportedInstanceLayers_.push_back(layer.layerName.operator std::string());
             }
         }
     }
@@ -140,7 +140,7 @@ void VkContext::GetSupportedDeviceExtensions()
     if (extCount > 0) {
         std::vector<vk::ExtensionProperties> extensions(extCount);
         if (physicalDevice_.enumerateDeviceExtensionProperties(nullptr, &extCount, &extensions.front()) == vk::Result::eSuccess) {
-            for (vk::ExtensionProperties extension : extensions) {
+            for (const vk::ExtensionProperties& extension : extensions) {
                 supportedDeviceExts_.push_back(extension.extensionName);
             }
         }
