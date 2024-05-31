@@ -4,7 +4,7 @@
 
 namespace X::Backend {
 
-struct BufferInfo {
+struct VmaBufferInfo {
     uint64_t size_;
     vk::BufferUsageFlags usage_;
     vk::MemoryPropertyFlags memProps_;
@@ -12,12 +12,17 @@ struct BufferInfo {
 
 class VmaBuffer : public VmaObject {
 public:
-    VmaBuffer(VmaAllocator allocator, const BufferInfo& info) noexcept;
+    VmaBuffer(VmaAllocator allocator, const VmaBufferInfo& info) noexcept;
     ~VmaBuffer() noexcept;
 
-private:
+    VmaBuffer(VmaBuffer&& other) noexcept;
+    VmaBuffer& operator=(VmaBuffer&& other) noexcept;
+
+protected:
     void Destroy() noexcept;
 
+private:
+    vk::Buffer handle_;
 };
 
 } // namespace X::Backend

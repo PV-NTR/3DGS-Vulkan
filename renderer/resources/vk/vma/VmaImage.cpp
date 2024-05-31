@@ -37,7 +37,7 @@ VmaImage& VmaImage::operator=(VmaImage&& other) noexcept
         return *this;
     }
     Destroy();
-    new (this) VmaImage{ std::move(other) };
+    new (this) VmaImage { std::move(other) };
     return *this;
 }
 

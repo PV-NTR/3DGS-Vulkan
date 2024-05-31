@@ -1,41 +1,45 @@
 #include "BufferManager.hpp"
 
+#include "resources/vk/VkContext.hpp"
+
 namespace X::Backend {
 
-union BufferKey {
-    struct {
-        uint64_t size_ : 32;
-        uint32_t usage_ : 10;
-        uint32_t memProps_ : 9;
-        uint32_t padding_ : 11;
-    };
-    uint64_t packed_;
-};
-
-using BufferProps = std::pair<vk::BufferUsageFlags, vk::MemoryPropertyFlags>;
-
-static std::unordered_map<BufferType, BufferProps> typePropMap = {
-    { BufferType::Vertex, { vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst, vk::MemoryPropertyFlagBits::eDeviceLocal }},
-    { BufferType::Index, { vk::BufferUsageFlagBits::eIndexBuffer| vk::BufferUsageFlagBits::eTransferDst, vk::MemoryPropertyFlagBits::eDeviceLocal }},
-    { BufferType::Uniform, { vk::BufferUsageFlagBits::eUniformBuffer | vk::BufferUsageFlagBits::eTransferDst, vk::MemoryPropertyFlagBits::eDeviceLocal }},
-    { BufferType::Storage, { vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst, vk::MemoryPropertyFlagBits::eDeviceLocal }},
-    { BufferType::Staging, { vk::BufferUsageFlagBits::eTransferSrc | vk::BufferUsageFlagBits::eTransferDst, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent }},
-};
-
-static BufferProps GetBufferPropsFromType(BufferType type)
+BufferManager::BufferKey BufferManager::GetKeyFromBufferInfo(const BufferInfo& info)
 {
-    return typePropMap[type];
-}
-
-static BufferKey GetKeyFromBufferInfo(const BufferInfo& info)
-{
-    auto [usage, prop] = GetBufferPropsFromType(info.type_);
-    BufferKey key{};
+    auto [usage, prop] = Buffer::GetPropsFromType(info.type_);
+    BufferManager::BufferKey key{};
     key.size_ = info.size_;
     key.usage_ = static_cast<uint32_t>(usage);
     key.memProps_ = static_cast<uint32_t>(prop);
     key.padding_ = 0;
     return key;
 }
-    
+
+std::shared_ptr<Buffer> BufferManager::RequireBuffer(const BufferInfo& info)
+{
+    auto key = GetKeyFromBufferInfo(info);
+    if (freeResources_.find(key.packed_) == freeResources_.end()) {
+        freeResources_[key.packed_] = std::unique_ptr<Buffer>(new Buffer(VkContext::GetInstance().GetAllocator(), info));
+    }
+    std::shared_ptr<Buffer> ret(freeResources_[key.packed_].release(), [this](Buffer* bufferPtr) {
+            this->Recycle(bufferPtr);
+        });
+    assert(ret != nullptr);
+    freeResources_.erase(key.packed_);
+    return ret;
+}
+   
+void BufferManager::Recycle(Buffer* bufferPtr)
+{
+    while (freeResources_.size() >= CACHE_SIZE) {
+        auto frontFreeResource = resourceQueue_.front();
+        resourceQueue_.pop();
+        freeResources_.erase(frontFreeResource);
+    }
+    auto key = GetKeyFromBufferInfo(bufferPtr->info_);
+    resourceQueue_.push(key.packed_);
+    freeResources_[key.packed_] = std::unique_ptr<Buffer>(new Buffer(std::move(*bufferPtr)));
+    delete bufferPtr;
+}
+
 } // namespace X::Backend

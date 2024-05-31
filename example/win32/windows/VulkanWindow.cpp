@@ -166,8 +166,20 @@ void VulkanWindow::LoadScene()
 
 void VulkanWindow::RenderLoop()
 {
-    if (scene_.SceneChanged()) {
-        renderer_.UpdateScene(scene_);
+    MSG msg;
+    bool quitMessageReceived = false;
+    while (!quitMessageReceived) {
+        while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+            if (msg.message == WM_QUIT) {
+                quitMessageReceived = true;
+                break;
+            }
+        }
+        if (scene_.SceneChanged()) {
+            renderer_.UpdateScene(scene_);
+        }
+        renderer_.DrawFrame();
     }
-    renderer_.DrawFrame();
 }

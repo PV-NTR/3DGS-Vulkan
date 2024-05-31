@@ -25,11 +25,11 @@ public:
     VmaImage(VmaImage&& other) noexcept;
     VmaImage& operator=(VmaImage&& other) noexcept;
 
+protected:
     void Destroy() noexcept;
 
 private:
     vk::Image handle_;
-    VmaImageInfo info_;
 };
 
 } // namespace X::Backend

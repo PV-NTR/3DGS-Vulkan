@@ -4,21 +4,9 @@
 
 namespace X::Backend {
 
-union ImageKey {
-    struct {
-        uint32_t width_ : 14;
-        uint32_t height_ : 14;
-        uint32_t format_ : 10;
-        uint32_t usage_ : 10;
-        uint32_t memProps_ : 9;
-        uint32_t padding_ : 7;
-    };
-    uint64_t packed_;
-};
-
-static ImageKey GetKeyFromImageInfo(const ImageInfo& info)
+ImageManager::ImageKey ImageManager::GetKeyFromImageInfo(const ImageInfo& info)
 {
-    ImageKey key {};
+    ImageManager::ImageKey key {};
     key.width_ = info.width_;
     key.height_ = info.height_;
     key.format_ = static_cast<uint32_t>(vk::Format::eR8G8B8A8Unorm);

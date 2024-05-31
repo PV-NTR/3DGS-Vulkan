@@ -1,7 +1,9 @@
 #pragma once
 
+#include <unordered_map>
+
 #include "VkResourceBase.hpp"
-#include "vma/VmaImage.hpp"
+#include "vma/VmaBuffer.hpp"
 #include "resources/Enums.hpp"
 
 namespace X::Backend {
@@ -15,10 +17,22 @@ struct BufferInfo {
 
 class Buffer : public VkResourceBase<Buffer>{
 private:
+    friend class BufferManager;
     using Parent = VkResourceBase<Buffer>;
+    using BufferProps = std::pair<vk::BufferUsageFlags, vk::MemoryPropertyFlags>;
 
 public:
     virtual ~Buffer() noexcept = default;
+
+private:
+    Buffer(VmaAllocator allocator, const BufferInfo& info) noexcept;
+    Buffer(Buffer&& other) noexcept : buffer_(std::move(other.buffer_)), info_(other.info_) {}
+    static BufferProps GetPropsFromType(BufferType type);
+
+private:
+    static std::unordered_map<BufferType, BufferProps> propMap_;
+    VmaBuffer buffer_;
+    BufferInfo info_;
 };
 
 } // namespace X::Backend
