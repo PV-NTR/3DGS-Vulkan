@@ -10,7 +10,7 @@ set(RENDERER_DIR ../../renderer)
 file(GLOB_RECURSE RENDERER_SRC ${RENDERER_DIR}/*.cpp)
 file(GLOB_RECURSE WINDOWS_SRC ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
 
-# add vulkan hpp
+# add vulkan lib
 find_package(Vulkan REQUIRED)
 
 # add 3rdparty
@@ -25,6 +25,8 @@ include_directories(${3RDPARTY_DIR}/plog/include)
 ## imgui
 set(IMGUI_DIR ${3RDPARTY_DIR}/imgui/)
 file(GLOB IMGUI_SRC ${IMGUI_DIR}/*.cpp)
+## vulkan headers
+set(VULKAN_HEADER_DIR ${3RDPARTY_DIR}/vulkan-headers/include)
 
 add_executable(${CMAKE_PROJECT_NAME} WIN32
         ${IMGUI_SRC}
@@ -35,8 +37,8 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${IMGUI_DIR}
         ${RENDERER_DIR}
-        ${Vulkan_INCLUDE_DIR}
+        ${VULKAN_HEADER_DIR}
         ${VMA_DIR})
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC
-        Vulkan::Headers)
+        )

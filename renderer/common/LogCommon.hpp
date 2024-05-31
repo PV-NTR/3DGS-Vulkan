@@ -13,9 +13,9 @@ inline std::string FormatWithLogOutput(const char* format)
 }
 
 #define INIT_LOGGER plog::init()
-#define XLOGE(fmt, ...) PLOGE.printf(FormatWithLogOutput(fmt).c_str(), __VA_ARGS__)
-#define XLOGI(fmt, ...) PLOGI.printf(FormatWithLogOutput(fmt).c_str(), __VA_ARGS__)
-#define XLOGW(fmt, ...) PLOGW.printf(FormatWithLogOutput(fmt).c_str(), __VA_ARGS__)
-#define XLOGD(fmt, ...) PLOGD.printf(FormatWithLogOutput(fmt).c_str(), __VA_ARGS__)
+#define XLOGE(fmt, ...) PLOGE.printf(FormatWithLogOutput(fmt).c_str(), ##__VA_ARGS__)
+#define XLOGI(fmt, ...) PLOGI.printf(FormatWithLogOutput(fmt).c_str(), ##__VA_ARGS__)
+#define XLOGW(fmt, ...) PLOGW.printf(FormatWithLogOutput(fmt).c_str(), ##__VA_ARGS__)
+#define XLOGD(fmt, ...) PLOGD.printf(FormatWithLogOutput(fmt).c_str(), ##__VA_ARGS__)
 
 } // namespace X

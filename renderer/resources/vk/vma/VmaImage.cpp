@@ -26,9 +26,9 @@ VmaImage::~VmaImage() noexcept
 }
 
 VmaImage::VmaImage(VmaImage&& other) noexcept
-    : VmaObject(std::move(other)), handle_(std::exchange(other.handle_, VK_NULL_HANDLE))
+    : VmaObject(std::move(other)), handle_(other.handle_)
 {
-
+    other.handle_ = nullptr;
 }
 
 VmaImage& VmaImage::operator=(VmaImage&& other) noexcept

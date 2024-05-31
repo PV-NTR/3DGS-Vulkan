@@ -12,20 +12,6 @@ find_package(game-activity REQUIRED CONFIG)
 # add log lib
 find_library(log-lib log)
 
-# main library
-set(RENDERER_DIR ../../../../../../renderer)
-file(GLOB_RECURSE RENDERER_SRC ${RENDERER_DIR}/*.cpp)
-add_library(${CMAKE_PROJECT_NAME} SHARED
-        ${RENDERER_SRC}
-        GameActivitySources.cpp
-        AndroidMain.cpp)
-
-
-# add vulkan hpp
-add_definitions(-DVULKAN_HPP_TYPESAFE_CONVERSION)
-set(VULKAN_DIR ${ANDROID_NDK}/sources/third_party/vulkan/src)
-set(Vulkan_INCLUDE_DIR ${VULKAN_DIR}/include)
-
 # add asset manager
 set(ASSET_MANAGER ${ANDROID_NDK}/sysroot/usr/include)
 
@@ -34,27 +20,39 @@ set(ASSET_MANAGER ${ANDROID_NDK}/sysroot/usr/include)
 set(3RDPARTY_DIR ../../../../../../3rdparty)
 include_directories(${3RDPARTY_DIR}/glm)
 ## vma
-add_library(vma INTERFACE)
 set(VMA_DIR ${3RDPARTY_DIR}/vma/include)
-target_sources(vma INTERFACE ${VMA_DIR}/vk_mem_alloc.h)
-target_include_directories(vma SYSTEM INTERFACE ${VMA_DIR})
-# target_link_libraries(vma INTERFACE vulkan)
 ## plog
 include_directories(${3RDPARTY_DIR}/plog/include)
+## imgui
+set(IMGUI_DIR ${3RDPARTY_DIR}/imgui/)
+file(GLOB IMGUI_SRC ${IMGUI_DIR}/*.cpp)
+## vulkan headers
+add_definitions(-DVULKAN_HPP_TYPESAFE_CONVERSION)
+set(VULKAN_HEADER_DIR ${3RDPARTY_DIR}/vulkan-headers/include)
 
 # add shaderc lib
 #find_package(shaderc REQUIRED CONFIG)
 #set_target_properties(shaderc PROPERTIES IMPORTED_LOCATION
 #        ${CMAKE_CURRENT_SOURCE_DIR}/shaderc/libs/${ANDROID_STL}/${ANDROID_ABI}/libshaderc.a)
 
+# main library
+set(RENDERER_DIR ../../../../../../renderer)
+file(GLOB_RECURSE RENDERER_SRC ${RENDERER_DIR}/*.cpp)
+add_library(${CMAKE_PROJECT_NAME} SHARED
+        ${RENDERER_SRC}
+        ${IMGUI_SRC}
+        GameActivitySources.cpp
+        AndroidMain.cpp)
+
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
-        ${ANDROID_NDK}/sources/android/native_app_glue
-        ${VULKAN_DIR}/include
         ASSET_MANAGER
-        ${RENDERER_DIR})
+        ${ANDROID_NDK}/sources/android/native_app_glue
+        ${VULKAN_HEADER_DIR}
+        ${RENDERER_DIR}
+        ${IMGUI_DIR}
+        ${VMA_DIR})
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC
         game-activity::game-activity
-        vma
         android
         log)

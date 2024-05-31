@@ -10,3 +10,6 @@
 [submodule "3rdparty/imgui"]
 	path = 3rdparty/imgui
 	url = https://github.com/ocornut/imgui.git
+[submodule "3rdparty/vulkan-headers"]
+	path = 3rdparty/vulkan-headers
+	url = https://github.com/KhronosGroup/Vulkan-Headers.git
