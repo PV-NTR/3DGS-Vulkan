@@ -23,7 +23,7 @@ private:
         };
         uint64_t packed_;
     };
-    static BufferKey BufferManager::GetKeyFromBufferInfo(const BufferInfo& info);
+    static BufferKey GetKeyFromBufferInfo(const BufferInfo& info);
     void Recycle(Buffer* bufferPtr);
 
 private:

@@ -20,6 +20,10 @@ public:
     {
         return allocator_;
     }
+    vk::Device GetDevice()
+    {
+        return device_;
+    }
 
 private:
     void LoadVkLibrary();

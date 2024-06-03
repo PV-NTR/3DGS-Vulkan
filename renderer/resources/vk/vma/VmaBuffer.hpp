@@ -18,6 +18,8 @@ public:
     VmaBuffer(VmaBuffer&& other) noexcept;
     VmaBuffer& operator=(VmaBuffer&& other) noexcept;
 
+    vk::Buffer GetHandle() { return handle_; }
+
 protected:
     void Destroy() noexcept;
 

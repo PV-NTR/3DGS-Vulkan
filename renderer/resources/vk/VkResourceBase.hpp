@@ -6,7 +6,6 @@
 
 namespace X::Backend {
 
-template <typename VkResource>
 class VkResourceBase : public Resource {
 public:
     VkResourceBase() noexcept = default;

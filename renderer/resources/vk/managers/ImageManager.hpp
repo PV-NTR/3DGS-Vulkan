@@ -25,7 +25,7 @@ private:
         };
         uint64_t packed_;
     };
-    static ImageManager::ImageKey ImageManager::GetKeyFromImageInfo(const ImageInfo& info);
+    static ImageKey GetKeyFromImageInfo(const ImageInfo& info);
     void Recycle(Image* imagePtr);
 
 private:

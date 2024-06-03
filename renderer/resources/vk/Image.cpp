@@ -1,5 +1,6 @@
 #include "Image.hpp"
 #include "VkContext.hpp"
+#include "ImageView.hpp"
 
 namespace X::Backend {
 
@@ -8,9 +9,9 @@ Image::Image(VmaAllocator allocator, const ImageInfo& info) noexcept
         vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst |
         vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eColorAttachment |
         vk::ImageUsageFlagBits::eInputAttachment }), 
-      info_(info)
+      info_(info), view_(shared_from_this())
 {
 
 }
-    
+
 } // namespace X::Backend

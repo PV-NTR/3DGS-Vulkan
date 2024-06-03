@@ -4,6 +4,8 @@
 
 namespace X::Backend {
 
+class Image;
+
 struct VmaImageInfo {
     uint32_t width_;
     uint32_t height_;
@@ -24,6 +26,7 @@ public:
 
     VmaImage(VmaImage&& other) noexcept;
     VmaImage& operator=(VmaImage&& other) noexcept;
+    vk::Image GetHandle() { return handle_; };
 
 protected:
     void Destroy() noexcept;

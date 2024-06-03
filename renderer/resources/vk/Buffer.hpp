@@ -15,14 +15,14 @@ struct BufferInfo {
     BufferType type_;
 };
 
-class Buffer : public VkResourceBase<Buffer>{
+class Buffer : public VkResourceBase {
 private:
     friend class BufferManager;
-    using Parent = VkResourceBase<Buffer>;
     using BufferProps = std::pair<vk::BufferUsageFlags, vk::MemoryPropertyFlags>;
 
 public:
     virtual ~Buffer() noexcept = default;
+    vk::Buffer GetHandle() { return buffer_.GetHandle(); }
 
 private:
     Buffer(VmaAllocator allocator, const BufferInfo& info) noexcept;
