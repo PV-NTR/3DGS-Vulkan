@@ -2,7 +2,7 @@
 
 namespace X::Backend {
 
-class PipelineManager {
+class ShaderManager {
 
 };
     

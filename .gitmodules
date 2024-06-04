@@ -13,3 +13,6 @@
 [submodule "3rdparty/vulkan-headers"]
 	path = 3rdparty/vulkan-headers
 	url = https://github.com/KhronosGroup/Vulkan-Headers.git
+[submodule "3rdparty/glslang"]
+	path = 3rdparty/glslang
+	url = https://github.com/KhronosGroup/glslang.git

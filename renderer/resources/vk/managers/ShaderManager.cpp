@@ -1,9 +1,5 @@
-#pragma once
+#include "ShaderManager.hpp"
 
 namespace X::Backend {
-
-class PipelineManager {
-
-};
     
 } // namespace X::Backend
