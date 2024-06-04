@@ -20,11 +20,11 @@ std::vector<const char*> VkContext::requiredInstanceExts_ = {
     "VK_KHR_win32_surface"
 #endif
 };
-std::vector<const char*> VkContext::requiredInstanceLayers_ {
+std::vector<const char*> VkContext::requiredInstanceLayers_ = {
     "VK_LAYER_KHRONOS_validation"
 };
 
-std::vector<const char*> VkContext::requiredDeviceExts_ {
+std::vector<const char*> VkContext::requiredDeviceExts_ = {
 #ifdef HOST_WIN32
     "VK_KHR_swapchain"
 #endif

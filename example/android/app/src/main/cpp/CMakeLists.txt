@@ -29,6 +29,8 @@ file(GLOB IMGUI_SRC ${IMGUI_DIR}/*.cpp)
 ## vulkan headers
 add_definitions(-DVULKAN_HPP_TYPESAFE_CONVERSION)
 set(VULKAN_HEADER_DIR ${3RDPARTY_DIR}/vulkan-headers/include)
+## glslang
+set(GLSLANG_DIR ${3RDPARTY_DIR}/glslang)
 
 # add shaderc lib
 #find_package(shaderc REQUIRED CONFIG)
@@ -36,7 +38,7 @@ set(VULKAN_HEADER_DIR ${3RDPARTY_DIR}/vulkan-headers/include)
 #        ${CMAKE_CURRENT_SOURCE_DIR}/shaderc/libs/${ANDROID_STL}/${ANDROID_ABI}/libshaderc.a)
 
 # main library
-set(RENDERER_DIR ../../../../../../renderer)
+set(RENDERER_DIR ${CMAKE_SOURCE_DIR}/../../../../../../renderer)
 file(GLOB_RECURSE RENDERER_SRC ${RENDERER_DIR}/*.cpp)
 add_library(${CMAKE_PROJECT_NAME} SHARED
         ${RENDERER_SRC}
@@ -50,9 +52,13 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${VULKAN_HEADER_DIR}
         ${RENDERER_DIR}
         ${IMGUI_DIR}
-        ${VMA_DIR})
+        ${VMA_DIR}
+        ${GLSLANG_DIR})
+
+file(GLOB GLSLANG_LIBS ${CMAKE_SOURCE_DIR}/../../../../../../libs/glslang/android/*.a)
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC
         game-activity::game-activity
         android
-        log)
+        log
+        ${GLSLANG_LIBS})

@@ -1,9 +1,5 @@
-#pragma once
+#include "PipelineManager.hpp"
 
 namespace X::Backend {
-
-class PipelineManager {
-
-};
     
 } // namespace X::Backend

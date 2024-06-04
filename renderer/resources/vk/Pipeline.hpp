@@ -21,7 +21,7 @@ protected:
     vk::UniquePipeline pipelineUnique_;
     vk::Pipeline pipeline_;
     vk::PipelineCache cache_;
-    vk::PipelineLayout layout_;
+    vk::UniquePipelineLayout layoutUnique_;
 };
 
 } // namespace X::Backend

@@ -1,9 +1,6 @@
-#pragma once
+#include "DescriptorSet.hpp"
 
 namespace X::Backend {
 
-class PipelineManager {
-
-};
     
 } // namespace X::Backend
