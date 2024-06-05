@@ -29,9 +29,10 @@ private:
     void Recycle(Image* imagePtr);
 
 private:
+    static inline constexpr uint32_t CACHE_SIZE = 256;
+
     std::unordered_map<uint64_t, std::unique_ptr<Image>> freeResources_;
     std::queue<uint64_t> resourceQueue_;
-    static inline constexpr uint32_t CACHE_SIZE = 256;
 };
 
 } // namespace X::Backend

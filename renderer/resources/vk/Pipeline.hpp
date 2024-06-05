@@ -2,7 +2,7 @@
 
 #include "common/VkCommon.hpp"
 #include "RenderPass.hpp"
-#include "VkResourceBase.hpp"
+#include "VkResource.hpp"
 
 namespace X::Backend {
 
@@ -15,12 +15,13 @@ public:
     virtual ~Pipeline();
 
 protected:
-    explicit Pipeline(Type type = Type::Graphics) noexcept : type_(type) {}
+    Pipeline(std::string name, Type type = Type::Graphics) noexcept : name_(name), type_(type) {}
+    bool CreatePipelineLayout(const std::vector<std::shared_ptr<DescriptorSetLayout>>& setLayouts);
 
+    std::string name_;
     Type type_;
     vk::UniquePipeline pipelineUnique_;
     vk::Pipeline pipeline_;
-    vk::PipelineCache cache_;
     vk::UniquePipelineLayout layoutUnique_;
 };
 

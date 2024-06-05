@@ -13,8 +13,7 @@ std::string ShaderModule::ReadShader(std::string fileName)
     std::ifstream is(fileName, std::ios::binary | std::ios::in | std::ios::ate);
     std::stringstream ss;
 
-    if (is.is_open())
-    {
+    if (is.is_open()) {
         size_t size = is.tellg();
         is.seekg(0, std::ios::beg);
         ss << is.rdbuf();

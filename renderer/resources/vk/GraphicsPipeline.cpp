@@ -5,10 +5,11 @@
 
 namespace X::Backend {
 
-GraphicsPipeline::GraphicsPipeline(std::shared_ptr<RenderPass> renderPass, const GraphicsPipelineInfo& info) noexcept
-    : Pipeline(Type::Graphics)
+GraphicsPipeline::GraphicsPipeline(const GraphicsPipelineInfo& info, vk::PipelineCache cache) noexcept
+    : Pipeline(info.name + "-graphics", Type::Graphics)
 {
-    if (!CreatePipelineLayout(info)) {
+    assert(!info.setLayouts.empty());
+    if (!CreatePipelineLayout(info.setLayouts)) {
         return;
     }
 
@@ -32,8 +33,10 @@ GraphicsPipeline::GraphicsPipeline(std::shared_ptr<RenderPass> renderPass, const
     defaultState_.shaderStages[0].setStage(vk::ShaderStageFlagBits::eVertex).setModule(info.vs->GetHandle());
     defaultState_.shaderStages[1].setStage(vk::ShaderStageFlagBits::eFragment).setModule(info.fs->GetHandle());
 
+    assert(info.renderPass != nullptr);
     vk::GraphicsPipelineCreateInfo pipelineCI {};
-    pipelineCI.setRenderPass(renderPass->GetHandle())
+    pipelineCI.setRenderPass(info.renderPass->GetHandle())
+        .setLayout(*layoutUnique_)
         .setPInputAssemblyState(&defaultState_.inputAssemblyState)
         .setPRasterizationState(&defaultState_.rasterizationState)
         .setPColorBlendState(&defaultState_.colorBlendState)
@@ -43,30 +46,18 @@ GraphicsPipeline::GraphicsPipeline(std::shared_ptr<RenderPass> renderPass, const
         .setPDynamicState(&defaultState_.dynamicState)
         .setStages(defaultState_.shaderStages);
 
-    auto [ret, pipelineUnique] = VkContext::GetInstance().GetDevice().createGraphicsPipelineUnique(cache_, pipelineCI);
+    auto [ret, pipelineUnique] = VkContext::GetInstance().GetDevice().createGraphicsPipelineUnique(cache, pipelineCI);
     if (ret != vk::Result::eSuccess) {
         XLOGE("CreateGraphicsPipeline failed, errCode: %d", ret);
         return;
     }
     pipelineUnique_.swap(pipelineUnique);
     pipeline_ = *pipelineUnique_;
-}
-
-bool GraphicsPipeline::CreatePipelineLayout(const GraphicsPipelineInfo& info)
-{
-    vk::PipelineLayoutCreateInfo pipelayoutCI {};
-    std::vector<vk::DescriptorSetLayout> setLayouts;
-    for (const auto& layout : info.setLayouts) {
-        setLayouts.emplace_back(*layout);
+    this->DependOn(info.vs);
+    this->DependOn(info.fs);
+    for (const auto& setLayout : info.setLayouts) {
+        this->DependOn(setLayout);
     }
-    pipelayoutCI.setSetLayouts(setLayouts);
-    auto [ret, layoutUnique] = VkContext::GetInstance().GetDevice().createPipelineLayoutUnique(pipelayoutCI);
-    if (ret != vk::Result::eSuccess) {
-        XLOGE("CreatePipelineLayout failed, errCode: %d", ret);
-        return false;
-    }
-    layoutUnique_.swap(layoutUnique);
-    return true;
 }
 
 void GraphicsPipeline::InitDefaultSettings()

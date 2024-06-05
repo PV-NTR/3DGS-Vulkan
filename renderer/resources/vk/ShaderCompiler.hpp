@@ -29,10 +29,10 @@ enum class ShaderType {
 
 class ShaderCompiler : public Singleton<ShaderCompiler> {
 public:
-	bool CompileShader(const std::string& code, ShaderType type, std::vector<uint32_t>& spirv);
+    bool CompileShader(const std::string& code, ShaderType type, std::vector<uint32_t>& spirv);
 
 private:
-	std::unordered_map<ShaderType, std::unique_ptr<glslang::TShader>> shaders_;
+    std::unordered_map<ShaderType, std::unique_ptr<glslang::TShader>> shaders_;
 };
 
 } // namespace X::Backend

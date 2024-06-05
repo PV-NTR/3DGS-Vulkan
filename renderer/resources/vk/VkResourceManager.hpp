@@ -4,7 +4,7 @@
 #include "managers/BufferManager.hpp"
 #include "managers/ImageManager.hpp"
 #include "managers/ShaderManager.hpp"
-#include "managers/PipelineManager.hpp"
+#include "PipelineTable.hpp"
 // #include "managers/renderpassmanager.hpp"
 
 namespace X::Backend {
@@ -26,16 +26,16 @@ public:
         return shaderMgr_;
     }
 
-    PipelineManager& GetPipelineManager()
+    PipelineTable& GetPipelineTable()
     {
-        return pipelineMgr_;
+        return pipelineTable_;
     }
 
 private:
     BufferManager bufferMgr_ {};
     ImageManager imageMgr_ {};
     ShaderManager shaderMgr_ {};
-    PipelineManager pipelineMgr_ {};
+    PipelineTable pipelineTable_ {};
 };
 
 } // namespace X::Backend
