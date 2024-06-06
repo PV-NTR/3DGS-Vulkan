@@ -3,29 +3,11 @@
 #include <unordered_map>
 #include <memory>
 
+#include "resources/Enums.hpp"
 #include "utils/Singleton.hpp"
 #include <glslang/Public/ShaderLang.h>
 
 namespace X::Backend {
-
-enum class ShaderType {
-    Vertex = 0,
-    TesseControl,
-    TesseEval,
-    Geometry,
-    Fragment,
-    Compute,
-    // ray tracing
-    RayGen,
-    AnyHit,
-    ClosestHit,
-    Miss,
-    Intersection,
-    Callable,
-    // mesh shader
-    Task,
-    Mesh,
-};
 
 class ShaderCompiler : public Singleton<ShaderCompiler> {
 public:

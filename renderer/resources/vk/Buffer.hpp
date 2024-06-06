@@ -23,6 +23,8 @@ private:
 public:
     virtual ~Buffer() noexcept = default;
     vk::Buffer GetHandle() { return buffer_.GetHandle(); }
+    uint64_t GetSize() { return info_.size_; }
+    BufferType GetType() { return info_.type_; }
 
 private:
     Buffer(VmaAllocator allocator, const BufferInfo& info) noexcept;

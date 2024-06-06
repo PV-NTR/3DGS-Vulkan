@@ -6,13 +6,8 @@
 namespace X::Backend {
 
 GraphicsPipeline::GraphicsPipeline(const GraphicsPipelineInfo& info, vk::PipelineCache cache) noexcept
-    : Pipeline(info.name + "-graphics", Type::Graphics)
+    : Pipeline(info.name + "-graphics", info.setLayouts, Type::Graphics)
 {
-    assert(!info.setLayouts.empty());
-    if (!CreatePipelineLayout(info.setLayouts)) {
-        return;
-    }
-
     InitDefaultSettings();
 
     vk::PipelineColorBlendAttachmentState blendAttachmentState {};
@@ -36,7 +31,7 @@ GraphicsPipeline::GraphicsPipeline(const GraphicsPipelineInfo& info, vk::Pipelin
     assert(info.renderPass != nullptr);
     vk::GraphicsPipelineCreateInfo pipelineCI {};
     pipelineCI.setRenderPass(info.renderPass->GetHandle())
-        .setLayout(*layoutUnique_)
+        .setLayout(layout_)
         .setPInputAssemblyState(&defaultState_.inputAssemblyState)
         .setPRasterizationState(&defaultState_.rasterizationState)
         .setPColorBlendState(&defaultState_.colorBlendState)

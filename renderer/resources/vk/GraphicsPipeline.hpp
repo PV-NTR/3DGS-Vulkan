@@ -2,7 +2,6 @@
 
 #include <optional>
 #include "Pipeline.hpp"
-#include "VkResource.hpp"
 #include "BlendState.hpp"
 #include "ShaderModule.hpp"
 

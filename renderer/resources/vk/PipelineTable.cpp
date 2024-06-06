@@ -22,7 +22,7 @@ PipelineTable::PipelineTable()
     char buf[MAX_PATH] = { '\0' };
     auto ret = GetEnvironmentVariable("HOME", buf, MAX_PATH);
     if (!ret) {
-        CACHE_FILE = buf;
+        CACHE_FILE = std::string(buf) + "/.3dgs/pipeline.cache";
     }
 #endif
     CreatePipelineCache();

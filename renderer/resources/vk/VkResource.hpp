@@ -11,6 +11,6 @@ public:
     virtual ~VkResource() { VkUniqueHandle::reset(); }
 };
 
-using DescriptorSetLayout = VkResource<vk::UniqueDescriptorSetLayout>;
+using DescriptorSet = VkResource<vk::UniqueDescriptorSet>;
 
 } // namespace X::Backend
