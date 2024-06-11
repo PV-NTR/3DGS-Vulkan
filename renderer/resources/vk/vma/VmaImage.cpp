@@ -20,6 +20,12 @@ VmaImage::VmaImage(VmaAllocator allocator, const VmaImageInfo& info) noexcept
     handle_ = handle;
 }
 
+VmaImage::VmaImage(vk::Image image) noexcept
+    : VmaObject(nullptr), handle_(image), external_(true)
+{
+
+}
+
 VmaImage::~VmaImage() noexcept
 {
     Destroy();
@@ -43,7 +49,7 @@ VmaImage& VmaImage::operator=(VmaImage&& other) noexcept
 
 void VmaImage::Destroy() noexcept
 {
-    assert(allocator_ != VK_NULL_HANDLE);
+    assert(external_ || allocator_ != VK_NULL_HANDLE);
     if (allocation_ != VK_NULL_HANDLE) {
         vmaDestroyImage(allocator_, handle_, allocation_);
     }

@@ -14,4 +14,10 @@ Image::Image(VmaAllocator allocator, const ImageInfo& info) noexcept
 
 }
 
+Image::Image(vk::Image image, const ImageInfo& info) noexcept
+    : image_(image), info_(info), view_(shared_from_this())
+{
+
+}
+
 } // namespace X::Backend

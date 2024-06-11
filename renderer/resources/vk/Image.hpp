@@ -19,6 +19,7 @@ struct ImageInfo {
 class Image : public VkResourceBase, public std::enable_shared_from_this<Image> {
 private:
     friend class ImageManager;
+    friend class Surface;
 
 public:
     virtual ~Image() noexcept = default;
@@ -27,6 +28,8 @@ public:
 
 private:
     Image(VmaAllocator allocator, const ImageInfo& info) noexcept;
+    // external image, only for swapchain
+    Image(vk::Image image, const ImageInfo& info) noexcept;
     Image(Image&& other) noexcept : image_(std::move(other.image_)), info_(other.info_), view_(std::move(other.view_)) {}
 
 private:

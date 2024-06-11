@@ -14,18 +14,25 @@ public:
     VkContext() = default;
     void Init();
     bool IsReady();
-    [[nodiscard]] vk::Queue AcquireGraphicsQueue();
-    [[nodiscard]] vk::Queue AcquireComputeQueue();
-    VmaAllocator GetAllocator() const
+    [[nodiscard]] vk::Queue AcquireGraphicsQueue(uint32_t idx);
+    [[nodiscard]] vk::Queue AcquireComputeQueue(uint32_t idx);
+    [[nodiscard]] std::pair<uint32_t, vk::Queue> AcquireCurrentGraphicsQueue();
+    [[nodiscard]] std::pair<uint32_t, vk::Queue> AcquireCurrentComputeQueue();
+    [[nodiscard]] std::pair<uint32_t, vk::Queue> AcquireNextGraphicsQueue();
+    [[nodiscard]] std::pair<uint32_t, vk::Queue> AcquireNextComputeQueue();
+
+    VmaAllocator GetAllocator()
     {
         return allocator_;
     }
+
     vk::Device GetDevice()
     {
         return device_;
     }
 
 private:
+    friend class Surface;
     void LoadVkLibrary();
     bool CreateInstance();
     bool SelectPhysicalDevice();
@@ -39,6 +46,19 @@ private:
     void CollectEnabledInstanceLayers();
     void GetSupportedDeviceExtensions();
     void CollectEnabledDeviceExtensions();
+
+    uint32_t QueryPresentQueueFamilies(vk::SurfaceKHR surface);
+
+    vk::PhysicalDevice GetPhysicalDevice()
+    {
+        return physicalDevice_;
+    }
+
+    vk::Instance GetVkInstance()
+    {
+        return instance_;
+    }
+
 
 private:
     vk::PhysicalDevice physicalDevice_;

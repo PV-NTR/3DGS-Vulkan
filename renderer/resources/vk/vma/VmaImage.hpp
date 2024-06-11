@@ -22,6 +22,8 @@ struct VmaImageState {
 class VmaImage : public VmaObject {
 public:
     VmaImage(VmaAllocator allocator, const VmaImageInfo& info) noexcept;
+    // from external
+    explicit VmaImage(vk::Image image) noexcept;
     ~VmaImage() noexcept;
 
     VmaImage(VmaImage&& other) noexcept;
@@ -33,6 +35,7 @@ protected:
 
 private:
     vk::Image handle_;
+    bool external_ = false;
 };
 
 } // namespace X::Backend

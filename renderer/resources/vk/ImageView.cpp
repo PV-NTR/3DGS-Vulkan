@@ -6,7 +6,7 @@ namespace X::Backend {
 
 ImageView::ImageView(std::shared_ptr<Image> image) noexcept
 {
-    auto& info = image->GetInfo();
+    // auto& info = image->GetInfo();
     vk::ImageViewCreateInfo viewCI;
     vk::ImageSubresourceRange subreourceRange;
     subreourceRange.setAspectMask(vk::ImageAspectFlagBits::eColor)

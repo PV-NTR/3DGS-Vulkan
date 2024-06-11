@@ -1,7 +1,10 @@
-#include "vulkanwindow.hpp"
+#include "VulkanWindow.hpp"
 
 #include "common/KeycodesCommon.hpp"
 #include "imgui.h"
+
+#include "resources/vk/VkContext.hpp"
+#include "resources/vk/VkResourceManager.hpp"
 
 void VulkanWindow::HandleMouseMove(int32_t x, int32_t y)
 {
@@ -10,7 +13,7 @@ void VulkanWindow::HandleMouseMove(int32_t x, int32_t y)
 
     bool handled = false;
 
-    if (scene_.OverlayVisible()) {
+    if (scene_->OverlayVisible()) {
         ImGuiIO& io = ImGui::GetIO();
         handled = io.WantCaptureMouse;
     }
@@ -21,13 +24,13 @@ void VulkanWindow::HandleMouseMove(int32_t x, int32_t y)
     }
 
     if (mouseState_.buttons_.left) {
-        scene_.GetCamera().Rotate(glm::vec3(dy * scene_.GetCamera().GetRotationSpeed(), -dx * scene_.GetCamera().GetRotationSpeed(), 0.0f));
+        scene_->GetCamera().Rotate(glm::vec3(dy * scene_->GetCamera().GetRotationSpeed(), -dx * scene_->GetCamera().GetRotationSpeed(), 0.0f));
     }
     if (mouseState_.buttons_.right) {
-        scene_.GetCamera().Translate(glm::vec3(-0.0f, 0.0f, dy * .005f));
+        scene_->GetCamera().Translate(glm::vec3(-0.0f, 0.0f, dy * .005f));
     }
     if (mouseState_.buttons_.middle) {
-        scene_.GetCamera().Translate(glm::vec3(-dx * 0.005f, -dy * 0.005f, 0.0f));
+        scene_->GetCamera().Translate(glm::vec3(-dx * 0.005f, -dy * 0.005f, 0.0f));
     }
     mouseState_.position_ = glm::vec2((float)x, (float)y);
 }
@@ -36,7 +39,7 @@ void VulkanWindow::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg) {
         case WM_CLOSE:
-            renderer_.Destroy();
+            renderer_->Destroy();
             DestroyWindow(hWnd_);
             PostQuitMessage(0);
             break;
@@ -46,49 +49,49 @@ void VulkanWindow::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
         case WM_KEYDOWN:
             switch (wParam) {
                 case KEY_F1:
-                    scene_.ChangeOverlayState();
+                    scene_->ChangeOverlayState();
                     break;
                 case KEY_F2:
-                    scene_.ChangeCameraType();
+                    scene_->ChangeCameraType();
                     break;
                 case KEY_ESCAPE:
                     PostQuitMessage(0);
                     break;
             }
 
-            if (scene_.GetCameraType() == X::Camera::CameraType::FirstPerson) {
-                scene_.UpdateCameraState();
+            if (scene_->GetCameraType() == X::Camera::CameraType::FirstPerson) {
+                scene_->UpdateCameraState();
                 switch (wParam) {
                     case KEY_W:
-                        scene_.GetCamera().keys_.up = true;
+                        scene_->GetCamera().keys_.up = true;
                         break;
                     case KEY_S:
-                        scene_.GetCamera().keys_.down = true;
+                        scene_->GetCamera().keys_.down = true;
                         break;
                     case KEY_A:
-                        scene_.GetCamera().keys_.left = true;
+                        scene_->GetCamera().keys_.left = true;
                         break;
                     case KEY_D:
-                        scene_.GetCamera().keys_.right = true;
+                        scene_->GetCamera().keys_.right = true;
                         break;
                 }
             }
 
             break;
         case WM_KEYUP:
-            if (scene_.GetCameraType() == X::Camera::CameraType::FirstPerson) {
+            if (scene_->GetCameraType() == X::Camera::CameraType::FirstPerson) {
                 switch (wParam) {
                     case KEY_W:
-                        scene_.GetCamera().keys_.up = false;
+                        scene_->GetCamera().keys_.up = false;
                         break;
                     case KEY_S:
-                        scene_.GetCamera().keys_.down = false;
+                        scene_->GetCamera().keys_.down = false;
                         break;
                     case KEY_A:
-                        scene_.GetCamera().keys_.left = false;
+                        scene_->GetCamera().keys_.left = false;
                         break;
                     case KEY_D:
-                        scene_.GetCamera().keys_.right = false;
+                        scene_->GetCamera().keys_.right = false;
                         break;
                 }
             }
@@ -117,7 +120,7 @@ void VulkanWindow::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
         case WM_MOUSEWHEEL:
         {
             short wheelDelta = GET_WHEEL_DELTA_WPARAM(wParam);
-            scene_.GetCamera().Translate(glm::vec3(0.0f, 0.0f, (float)wheelDelta * 0.005f));
+            scene_->GetCamera().Translate(glm::vec3(0.0f, 0.0f, (float)wheelDelta * 0.005f));
             break;
         }
         case WM_MOUSEMOVE:
@@ -126,7 +129,7 @@ void VulkanWindow::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
             break;
         }
         case WM_SIZE:
-            if ((renderer_.IsReady()) && (wParam != SIZE_MINIMIZED))
+            if ((renderer_->IsReady()) && (wParam != SIZE_MINIMIZED))
             {
                 if ((resizing_) || ((wParam == SIZE_MAXIMIZED) || (wParam == SIZE_RESTORED)))
                 {
@@ -154,9 +157,21 @@ void VulkanWindow::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
     OnHandleMessage(uMsg, wParam, lParam);
 }
 
+void VulkanWindow::InitBackend()
+{
+    X::Backend::VkContext::GetInstance().Init();
+    X::Backend::VkResourceManager::GetInstance();
+}
+
 void VulkanWindow::InitRenderer()
 {
-    renderer_.Init();
+    renderer_ = std::make_unique<X::Renderer>();
+    renderer_->Init(surface_.get());
+}
+
+void VulkanWindow::InitSurface()
+{
+    surface_ = X::Backend::Surface::Make(hInstance_, hWnd_);
 }
 
 void VulkanWindow::LoadScene()
@@ -177,9 +192,9 @@ void VulkanWindow::RenderLoop()
                 break;
             }
         }
-        if (scene_.SceneChanged()) {
-            renderer_.UpdateScene(scene_);
+        if (scene_->SceneChanged()) {
+            renderer_->UpdateScene(scene_.get());
         }
-        renderer_.DrawFrame();
+        renderer_->DrawFrame();
     }
 }

@@ -47,14 +47,36 @@ bool VkContext::IsReady()
     return entryFunc_ && instance_ && physicalDevice_ && device_;
 }
 
-vk::Queue VkContext::AcquireGraphicsQueue()
+vk::Queue VkContext::AcquireGraphicsQueue(uint32_t idx)
 {
-    return device_.getQueue(graphicsQueueFamilyIdx_, graphicsQueueIdx_.fetch_add(1, std::memory_order_relaxed));
+    return device_.getQueue(graphicsQueueFamilyIdx_, idx);
 }
 
-vk::Queue VkContext::AcquireComputeQueue()
+vk::Queue VkContext::AcquireComputeQueue(uint32_t idx)
 {
-    return device_.getQueue(computeQueueFamilyIdx_, computeQueueIdx_.fetch_add(1, std::memory_order_relaxed));
+    return device_.getQueue(computeQueueFamilyIdx_, idx);
+}
+
+std::pair<uint32_t, vk::Queue> VkContext::AcquireCurrentGraphicsQueue()
+{
+    return { graphicsQueueIdx_, device_.getQueue(graphicsQueueFamilyIdx_, graphicsQueueIdx_) };
+}
+
+std::pair<uint32_t, vk::Queue> VkContext::AcquireCurrentComputeQueue()
+{
+    return { computeQueueIdx_, device_.getQueue(computeQueueFamilyIdx_, computeQueueIdx_) };
+}
+
+std::pair<uint32_t, vk::Queue> VkContext::AcquireNextGraphicsQueue()
+{
+    graphicsQueueIdx_.fetch_add(1);
+    return { graphicsQueueIdx_, device_.getQueue(graphicsQueueFamilyIdx_, graphicsQueueIdx_) };
+}
+
+std::pair<uint32_t, vk::Queue> VkContext::AcquireNextComputeQueue()
+{
+    computeQueueIdx_.fetch_add(1);
+    return { computeQueueIdx_, device_.getQueue(computeQueueFamilyIdx_, computeQueueIdx_) };
 }
 
 void VkContext::LoadVkLibrary()
@@ -241,6 +263,28 @@ bool VkContext::QueryQueueFamilies()
         return false;
     }
     return true;
+}
+
+uint32_t VkContext::QueryPresentQueueFamilies(vk::SurfaceKHR surface)
+{
+    if (!physicalDevice_) {
+        XLOGE("physicalDevice not specified!");
+        return false;
+    }
+    uint32_t queueCnt;
+    physicalDevice_.getQueueFamilyProperties(&queueCnt, nullptr);
+    std::vector<vk::QueueFamilyProperties> queueProps(queueCnt);
+    physicalDevice_.getQueueFamilyProperties(&queueCnt, queueProps.data());
+    for (uint32_t i = 0; i < queueCnt; i++) {
+        if ((queueProps[i].queueFlags & vk::QueueFlagBits::eGraphics)) {
+            auto ret = physicalDevice_.getSurfaceSupportKHR(i, surface);
+            if (ret.result == vk::Result::eSuccess && ret.value == vk::True) {
+                return i;
+            }
+        }
+    }
+    return UINT32_MAX;
+
 }
 
 bool VkContext::CreateDeviceAndQueues()
