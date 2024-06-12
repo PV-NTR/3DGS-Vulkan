@@ -3,6 +3,7 @@
 #include "common/KeycodesCommon.hpp"
 #include "imgui.h"
 
+#include "GaussianRenderer.hpp"
 #include "resources/vk/VkContext.hpp"
 #include "resources/vk/VkResourceManager.hpp"
 
@@ -165,13 +166,13 @@ void VulkanWindow::InitBackend()
 
 void VulkanWindow::InitRenderer()
 {
-    renderer_ = std::make_unique<X::Renderer>();
+    renderer_ = std::make_unique<X::GaussianRenderer>();
     renderer_->Init(surface_.get());
 }
 
 void VulkanWindow::InitSurface()
 {
-    surface_ = X::Backend::Surface::Make(hInstance_, hWnd_);
+    surface_ = X::Backend::DisplaySurface::Make(hInstance_, hWnd_);
 }
 
 void VulkanWindow::LoadScene()

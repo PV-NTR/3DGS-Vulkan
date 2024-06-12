@@ -9,8 +9,8 @@ public:
     Resource() = default;
     virtual ~Resource() = default;
 
-private:
-    uint32_t resourceID_ = NewID();
+protected:
+    const uint32_t resourceID_ = NewID();
 };
 
 } // namespace X

@@ -40,8 +40,7 @@ bool Pipeline::CreateDescriptorPool(const std::vector<std::shared_ptr<Descriptor
         XLOGE("CreateDescriptorPool failed, errCode: %d", ret);
         return false;
     }
-    poolUnique_.swap(poolUnique);
-    pool_ = *poolUnique_;
+    pool_.swap(poolUnique);
     return true;
 }
 
@@ -58,9 +57,7 @@ bool Pipeline::CreatePipelineLayout(const std::vector<std::shared_ptr<Descriptor
         XLOGE("CreatePipelineLayout failed, errCode: %d", ret);
         return false;
     }
-    layoutUnique_.swap(layoutUnique);
-    layout_ = *layoutUnique;
-
+    layout_ .swap(layoutUnique);
     return true;
 }
 
@@ -71,16 +68,15 @@ bool Pipeline::AllocDescriptorSets(const std::vector<std::shared_ptr<DescriptorS
     for (const auto& layout : setLayouts) {
         setLayoutsData.emplace_back(layout->GetHandle());
     }
-    allocInfo.setDescriptorPool(pool_).setSetLayouts(setLayoutsData);
+    allocInfo.setDescriptorPool(*pool_).setSetLayouts(setLayoutsData);
     auto [ret, descriptorSetsUnique] = VkContext::GetInstance().GetDevice().allocateDescriptorSetsUnique(allocInfo);
     if (ret != vk::Result::eSuccess) {
         XLOGE("allocateDescriptorSets failed, errCode: %d", ret);
         return false;
     }
 
-    descriptorSetsUnique_.swap(descriptorSetsUnique);
-    for (const auto& descriptorSetUnique_ : descriptorSetsUnique_) {
-        descriptorSets_.emplace_back(*descriptorSetUnique_);
+    for (auto&& descriptorSetUnique : descriptorSetsUnique) {
+        descriptorSets_.emplace_back(std::move(descriptorSetUnique));
     }
     return true;
 }
@@ -101,7 +97,7 @@ bool Pipeline::BindUniformBuffers(const std::vector<std::shared_ptr<Buffer>>& bu
         infos.emplace_back(buffer->GetHandle(), 0, buffer->GetSize());
     }
     vk::WriteDescriptorSet dWrite{};
-    dWrite.setDstSet(descriptorSets_[bindSet])
+    dWrite.setDstSet(*descriptorSets_[bindSet])
         .setDescriptorType(vk::DescriptorType::eUniformBuffer)
         .setDstBinding(binding)
         .setBufferInfo(infos);
@@ -124,7 +120,7 @@ bool Pipeline::BindStorageBuffers(const std::vector<std::shared_ptr<Buffer>>& bu
         infos.emplace_back(buffer->GetHandle(), 0, buffer->GetSize());
     }
     vk::WriteDescriptorSet dWrite{};
-    dWrite.setDstSet(descriptorSets_[bindSet])
+    dWrite.setDstSet(*descriptorSets_[bindSet])
         .setDescriptorType(vk::DescriptorType::eStorageBuffer)
         .setDstBinding(binding)
         .setBufferInfo(infos);

@@ -31,7 +31,7 @@ GraphicsPipeline::GraphicsPipeline(const GraphicsPipelineInfo& info, vk::Pipelin
     assert(info.renderPass != nullptr);
     vk::GraphicsPipelineCreateInfo pipelineCI {};
     pipelineCI.setRenderPass(info.renderPass->GetHandle())
-        .setLayout(layout_)
+        .setLayout(*layout_)
         .setPInputAssemblyState(&defaultState_.inputAssemblyState)
         .setPRasterizationState(&defaultState_.rasterizationState)
         .setPColorBlendState(&defaultState_.colorBlendState)

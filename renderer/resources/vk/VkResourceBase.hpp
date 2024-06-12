@@ -18,7 +18,7 @@ public:
         dependencies_.emplace_back(dep);
     }
 
-private:
+protected:
     std::vector<std::shared_ptr<VkResourceBase>> dependencies_;
 };
     

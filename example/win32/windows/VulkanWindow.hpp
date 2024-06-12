@@ -4,7 +4,7 @@
 
 #include "Renderer.hpp"
 #include "scenes/Scene.hpp"
-#include "resources/vk/Surface.hpp"
+#include "resources/vk/DisplaySurface.hpp"
 
 class VulkanWindow : public BaseWindow<VulkanWindow> {
 public:
@@ -26,7 +26,7 @@ protected:
 private:
     std::unique_ptr<X::Renderer> renderer_;
     std::unique_ptr<X::Scene> scene_;
-    std::unique_ptr<X::Backend::Surface> surface_;
+    std::unique_ptr<X::Backend::DisplaySurface> surface_;
 
     // State of mouse/touch input
     struct {

@@ -12,6 +12,8 @@ class ImageManager;
 struct ImageInfo {
     uint32_t width_;
     uint32_t height_;
+    vk::Format format_;
+    bool depthStencil_ = false;
     // TODO: support other colortype
     // ColorType colorType_;
 };
@@ -19,7 +21,7 @@ struct ImageInfo {
 class Image : public VkResourceBase, public std::enable_shared_from_this<Image> {
 private:
     friend class ImageManager;
-    friend class Surface;
+    friend class DisplaySurface;
 
 public:
     virtual ~Image() noexcept = default;

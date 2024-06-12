@@ -9,7 +9,7 @@ ImageManager::ImageKey ImageManager::GetKeyFromImageInfo(const ImageInfo& info)
     ImageManager::ImageKey key {};
     key.width_ = info.width_;
     key.height_ = info.height_;
-    key.format_ = static_cast<uint32_t>(vk::Format::eR8G8B8A8Unorm);
+    key.format_ = static_cast<uint32_t>(info.format_);
     key.usage_ = static_cast<uint32_t>(vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst |
         vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eColorAttachment |
         vk::ImageUsageFlagBits::eInputAttachment);

@@ -70,6 +70,7 @@ public:
     }
 
 protected:
+    VmaObject() noexcept = default;
     VmaAllocator allocator_ = VK_NULL_HANDLE;
     VmaAllocation allocation_ = VK_NULL_HANDLE;
 

@@ -32,12 +32,9 @@ protected:
     Type type_;
     vk::UniquePipeline pipelineUnique_;
     vk::Pipeline pipeline_;
-    vk::UniquePipelineLayout layoutUnique_;
-    vk::PipelineLayout layout_;
-    vk::UniqueDescriptorPool poolUnique_;
-    vk::DescriptorPool pool_;
-    std::vector<vk::UniqueDescriptorSet> descriptorSetsUnique_;
-    std::vector<vk::DescriptorSet> descriptorSets_;
+    PipelineLayout layout_;
+    DescriptorPool pool_;
+    std::vector<DescriptorSet> descriptorSets_;
 };
 
 } // namespace X::Backend

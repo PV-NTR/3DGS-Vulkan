@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Renderer.hpp"
+#include "resources/vk/RenderPass.hpp"
 
 namespace X {
 
@@ -8,9 +9,12 @@ class GaussianRenderer : public Renderer {
 public:
     GaussianRenderer();
 
+protected:
+    void RecordGraphicsCommands() override;
+    void RecordComputeCommands() override {};
+
 private:
-    vk::UniqueRenderPass mainRenderPassUnique_;
-    vk::RenderPass mainRenderPass_;
+    std::shared_ptr<Backend::RenderPass> renderPass_;
 };
     
 } // namespace X

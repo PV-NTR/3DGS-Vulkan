@@ -13,7 +13,7 @@ ComputePipeline::ComputePipeline(const ComputePipelineInfo& info, vk::PipelineCa
     shaderStage.setStage(vk::ShaderStageFlagBits::eCompute).setModule(info.cs->GetHandle());
 
     vk::ComputePipelineCreateInfo pipelineCI {};
-    pipelineCI.setLayout(layout_).setStage(shaderStage);
+    pipelineCI.setLayout(*layout_).setStage(shaderStage);
 
     auto [ret, pipelineUnique] = VkContext::GetInstance().GetDevice().createComputePipelineUnique(cache, pipelineCI);
     if (ret != vk::Result::eSuccess) {

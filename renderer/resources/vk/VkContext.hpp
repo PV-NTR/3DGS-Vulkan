@@ -32,7 +32,7 @@ public:
     }
 
 private:
-    friend class Surface;
+    friend class DisplaySurface;
     void LoadVkLibrary();
     bool CreateInstance();
     bool SelectPhysicalDevice();

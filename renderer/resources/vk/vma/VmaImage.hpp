@@ -21,6 +21,7 @@ struct VmaImageState {
 
 class VmaImage : public VmaObject {
 public:
+    VmaImage() noexcept = default;
     VmaImage(VmaAllocator allocator, const VmaImageInfo& info) noexcept;
     // from external
     explicit VmaImage(vk::Image image) noexcept;
