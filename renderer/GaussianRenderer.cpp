@@ -1,19 +1,26 @@
 #include "GaussianRenderer.hpp"
 
+#include "resources/vk/VkContext.hpp"
+
 namespace X {
 
 GaussianRenderer::GaussianRenderer()
 {
-	renderPass_ = Backend::RenderPass::Make();
 }
 
-void GaussianRenderer::RecordGraphicsCommands()
+void GaussianRenderer::RecordComputeCommands(Scene* scene)
 {
-	auto cmdBuffer_ = GetCurrentPresentCmdBuffer();
-	//vk::RenderPassBeginInfo beginInfo{};
-	//beginInfo.setRenderPass(renderPass_->GetHandle())
-	//	.setFramebuffer(surface_->GetFramebuffer());
-	//cmdBuffer_.beginRenderPass(beginInfo);
+
+}
+
+void GaussianRenderer::OnRecordGraphicsCommands(Scene* scene)
+{
+	auto cmdBuffer = GetCurrentPresentCmdBuffer();
+}
+
+void GaussianRenderer::OnDrawFrame()
+{
+
 }
 
 } // namespace X

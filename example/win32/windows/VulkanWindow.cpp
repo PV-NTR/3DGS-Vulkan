@@ -3,7 +3,7 @@
 #include "common/KeycodesCommon.hpp"
 #include "imgui.h"
 
-#include "GaussianRenderer.hpp"
+#include "Renderer.hpp"
 #include "resources/vk/VkContext.hpp"
 #include "resources/vk/VkResourceManager.hpp"
 
@@ -173,6 +173,8 @@ void VulkanWindow::InitRenderer()
 void VulkanWindow::InitSurface()
 {
     surface_ = X::Backend::DisplaySurface::Make(hInstance_, hWnd_);
+    surface_->SetupSwapchain();
+    surface_->SetupSwapSurfaces();
 }
 
 void VulkanWindow::LoadScene()

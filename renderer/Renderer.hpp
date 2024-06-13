@@ -22,12 +22,14 @@ public:
     void DrawFrame();
 
 protected:
-    virtual void RecordGraphicsCommands() = 0;
-    virtual void RecordComputeCommands() = 0;
+    virtual void RecordGraphicsCommands(Scene* scene);
+    virtual void RecordComputeCommands(Scene* scene) = 0;
     void SubmitGraphicsCommands();
+
     virtual bool OnInit(Backend::DisplaySurface* surface);
     virtual void OnUpdateScene(Scene* scene);
-    virtual void OnDrawFrame();
+    virtual void OnDrawFrame() = 0;
+    virtual void OnRecordGraphicsCommands(Scene* scene) = 0;
     vk::CommandBuffer GetCurrentPresentCmdBuffer() { return presentCmdBuffers_[currentFrameIdx_]; }
 
 protected:
@@ -36,11 +38,12 @@ protected:
 private:
     bool ready_ = false;
     bool needCompute_ = false;
+    bool commandChanged_ = false;
+    bool dataChanged_ = false;
 
     Backend::CommandPool presentPool_, computePool_;
     std::vector<vk::CommandBuffer> presentCmdBuffers_, computeCmdBuffers_;
     uint32_t currentFrameIdx_ = 0;
-    std::shared_ptr<Backend::Image> depthStencil_;
     // data
 };
 

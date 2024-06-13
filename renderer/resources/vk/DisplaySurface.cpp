@@ -1,6 +1,7 @@
 #include "DisplaySurface.hpp"
 
 #include "VkContext.hpp"
+#include "VkResourceManager.hpp"
 #include "common/LogCommon.hpp"
 
 namespace X::Backend {
@@ -80,18 +81,20 @@ void DisplaySurface::SetupSwapchain()
         return;
     }
     swapchain_.swap(swapchainUnique);
-    GetImagesFromSwapchain();
 }
 
-void DisplaySurface::GetImagesFromSwapchain()
+std::vector<std::shared_ptr<Image>> DisplaySurface::GetImagesFromSwapchain()
 {
     // WARNING: check return
     auto vkImages = VkContext::GetInstance().GetDevice().getSwapchainImagesKHR(*swapchain_).value;
-    assert(vkImages.size() == imageCount);
+    assert(vkImages.size() == imageCount_);
 
+    std::vector<std::shared_ptr<Image>> images;
+    images.reserve(imageCount_);
     for (auto&& vkImage : vkImages) {
-        images_.emplace_back(std::shared_ptr<Image>(new Image(vkImage, ImageInfo{ width_, height_ })));		
+        images.emplace_back(new Image(vkImage, ImageInfo{ width_, height_ }));
     }
+    return images;
 }
 
 uint32_t DisplaySurface::NextFrame()
@@ -111,15 +114,23 @@ void DisplaySurface::Present()
     queue.presentKHR(presentInfo);
 }
 
-void DisplaySurface::SetupFramebuffer(std::shared_ptr<RenderPass> renderPass, std::shared_ptr<Image> depthImage)
+void DisplaySurface::SetupSwapSurfaces(bool enableDepthStencil)
 {
-    // TODO: depth/stencil attachment
-    vk::FramebufferCreateInfo fbCI{};
-    fbCI.setRenderPass(renderPass->GetHandle())
-        .setWidth(width_)
-        .setHeight(height_)
-        .setAttachmentCount(1)
-        .setPAttachments(&images_[currentFrame_]->view_.GetHandle());
+    enableDepthStencil_ = enableDepthStencil;
+    auto images = GetImagesFromSwapchain();
+    if (enableDepthStencil) {
+        depthStencil_ = VkResourceManager::GetInstance().GetImageManager().RequireImage({ width_, height_, vk::Format::eD32SfloatS8Uint });
+    } else {
+        depthStencil_ = nullptr;
+    }
+    std::vector<std::shared_ptr<Image>> attachmentResources(2);
+    attachmentResources[1] = depthStencil_;
+    for (const auto& image : images) {
+        attachmentResources[0] = image;
+        auto swapSurface = Surface::Make(attachmentResources);
+        swapSurface->Init();
+        swapSurfaces_.emplace_back(std::move(swapSurface));
+    }
 }
 
 } // namespace X::Backend

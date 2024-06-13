@@ -37,9 +37,9 @@ bool Renderer::OnInit(Backend::DisplaySurface* surface)
     }
     presentPool_.swap(presentPoolUnique);
 
-    presentCmdBuffers_.resize(surface->GetSwapbufferCount());
+    presentCmdBuffers_.resize(surface->GetSwapSurfaceCount());
     vk::CommandBufferAllocateInfo allocInfo{};
-    allocInfo.setCommandPool(*presentPool_).setCommandBufferCount(surface->GetSwapbufferCount());
+    allocInfo.setCommandPool(*presentPool_).setCommandBufferCount(surface->GetSwapSurfaceCount());
     auto allocRet = device.allocateCommandBuffers(&allocInfo, presentCmdBuffers_.data());
     if (allocRet != vk::Result::eSuccess) {
         XLOGE("allocate present commandbuffer failed, errCode: %d", allocRet);
@@ -55,8 +55,8 @@ bool Renderer::OnInit(Backend::DisplaySurface* surface)
         }
         computePool_.swap(computePoolUnique);
 
-        computeCmdBuffers_.resize(surface->GetSwapbufferCount());
-        allocInfo.setCommandPool(*computePool_).setCommandBufferCount(surface->GetSwapbufferCount());
+        computeCmdBuffers_.resize(surface->GetSwapSurfaceCount());
+        allocInfo.setCommandPool(*computePool_).setCommandBufferCount(surface->GetSwapSurfaceCount());
         allocRet = device.allocateCommandBuffers(&allocInfo, computeCmdBuffers_.data());
         if (allocRet != vk::Result::eSuccess) {
             XLOGE("allocate compute commandbuffer failed, errCode: %d", allocRet);
@@ -86,16 +86,42 @@ void Renderer::UpdateScene(Scene* scene)
 
 void Renderer::OnUpdateScene(Scene* scene)
 {
-
+    if (scene->SceneChanged() && !scene->GetCamera().Updated()) {
+        this->RecordGraphicsCommands(scene);
+        this->RecordComputeCommands(scene);
+    }
 }
 
 void Renderer::DrawFrame()
 {
     this->OnDrawFrame();
+    surface_->Present();
+    currentFrameIdx_ = surface_->NextFrame();
+}
+
+void Renderer::RecordGraphicsCommands(Scene* scene)
+{
+    auto cmdBuffer = GetCurrentPresentCmdBuffer();
+    vk::CommandBufferBeginInfo cmdBufferBeginInfo{};
+    cmdBuffer.begin(cmdBufferBeginInfo);
+
+    auto swapSurface = surface_->GetCurrentSwapSurface();
+    vk::RenderPassBeginInfo beginInfo{};
+    beginInfo.setRenderPass(swapSurface->GetRenderPass()->GetHandle())
+        .setFramebuffer(swapSurface->GetFramebuffer()->get());
+    cmdBuffer.beginRenderPass(beginInfo, { vk::SubpassContents::eInline });
+
+    this->OnRecordGraphicsCommands(scene);
+
+    cmdBuffer.endRenderPass();
+    cmdBuffer.end();
 }
 
 void Renderer::SubmitGraphicsCommands()
 {
+    // end comandbuffer
+    auto cmdBuffer = GetCurrentPresentCmdBuffer();
+
     auto queue = Backend::VkContext::GetInstance().AcquireGraphicsQueue(surface_->GetPresentQueueIdx());
     vk::SubmitInfo submitInfo{};
     std::vector<vk::PipelineStageFlags> waitStageMask{ vk::PipelineStageFlagBits::eColorAttachmentOutput };
@@ -110,8 +136,6 @@ void Renderer::SubmitGraphicsCommands()
 
 void Renderer::OnDrawFrame()
 {
-    currentFrameIdx_ = surface_->NextFrame();
-    this->RecordGraphicsCommands();
     this->SubmitGraphicsCommands();
 }
 

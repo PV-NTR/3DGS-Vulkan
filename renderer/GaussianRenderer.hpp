@@ -10,11 +10,12 @@ public:
     GaussianRenderer();
 
 protected:
-    void RecordGraphicsCommands() override;
-    void RecordComputeCommands() override {};
+    void RecordComputeCommands(Scene* scene) override;
+
+    void OnRecordGraphicsCommands(Scene* scene) override;
+    void OnDrawFrame() override;
 
 private:
-    std::shared_ptr<Backend::RenderPass> renderPass_;
 };
     
 } // namespace X

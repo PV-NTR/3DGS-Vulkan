@@ -2,7 +2,7 @@
 
 #include "BaseWindow.hpp"
 
-#include "Renderer.hpp"
+#include "GaussianRenderer.hpp"
 #include "scenes/Scene.hpp"
 #include "resources/vk/DisplaySurface.hpp"
 

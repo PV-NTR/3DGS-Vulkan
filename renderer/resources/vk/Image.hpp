@@ -27,6 +27,7 @@ public:
     virtual ~Image() noexcept = default;
     vk::Image GetHandle() { return image_.GetHandle(); };
     const ImageInfo& GetInfo() { return info_; }
+    std::shared_ptr<ImageView> GetView() { return view_; }
 
 private:
     Image(VmaAllocator allocator, const ImageInfo& info) noexcept;
@@ -37,7 +38,7 @@ private:
 private:
     VmaImage image_;
     ImageInfo info_;
-    ImageView view_;
+    std::shared_ptr<ImageView> view_;
 };
 
 } // namespace X::Backend

@@ -24,5 +24,6 @@ using DescriptorPool = VkResource<vk::UniqueDescriptorPool>;
 using DescriptorSet = VkResource<vk::UniqueDescriptorSet>;
 using CommandPool = VkResource<vk::UniqueCommandPool>;
 using Swapchain = VkResource<vk::UniqueSwapchainKHR>;
+using Framebuffer = VkResource<vk::UniqueFramebuffer>;
 
 } // namespace X::Backend

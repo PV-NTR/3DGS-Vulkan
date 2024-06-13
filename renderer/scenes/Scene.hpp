@@ -13,7 +13,7 @@ class Scene {
 public:
     Scene() = default;
     Scene(Scene&& other) = default;
-    ~Scene() = default;
+    virtual ~Scene() = default;
     void AddObject(Object&& object);
     void ChangeOverlayState();
     void ChangeCameraType();
