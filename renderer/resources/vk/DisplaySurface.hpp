@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Surface.hpp"
+#include "Buffer.hpp"
 
 namespace X::Backend {
 
@@ -15,6 +16,7 @@ public:
     vk::SurfaceKHR GetHandle() const { return surface_; }
     void SetupSwapchain();
     void SetupSwapSurfaces(bool enableDepthStencil = false);
+    void UpdateScreenSizeBuffer();
     void Present();
     uint32_t GetPresentQueueIdx() const { return presentQueueIdx_; }
     uint32_t GetCurrentFrameIdx() const { return currentFrame_; }
@@ -24,6 +26,8 @@ public:
 
     uint32_t NextFrame();
     std::shared_ptr<Surface> GetCurrentSwapSurface() const { return swapSurfaces_[currentFrame_]; }
+    std::shared_ptr<Buffer> GetScreenSizeBuffer() const { return screenSize_; }
+    bool Resized() const { return resized_; }
 
 protected:
 #ifdef HOST_ANDROID
@@ -40,6 +44,7 @@ private:
     vk::SurfaceKHR surface_;
     uint32_t width_ = UINT32_MAX;
     uint32_t height_ = UINT32_MAX;
+    bool resized_ = false;
 
     // TODO: Disable swapchain when use Android, use SurfaceView instead
     Swapchain swapchain_;
@@ -47,6 +52,7 @@ private:
     std::shared_ptr<Image> depthStencil_;
     vk::Semaphore acquireFrameSignalSemaphore_;
     vk::Semaphore presentWaitSemaphore_;
+    std::shared_ptr<Buffer> screenSize_;
 
     uint32_t presentQueueIdx_ = UINT32_MAX;
     uint32_t currentFrame_ = 0;

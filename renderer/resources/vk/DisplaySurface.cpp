@@ -44,10 +44,12 @@ DisplaySurface::DisplaySurface(void* instance, void* window)
     if (presentQueueIdx_ == UINT32_MAX) {
         XLOGE("No valid present queue!");
     }
+    screenSize_ = Backend::VkResourceManager::GetInstance().GetBufferManager().RequireBuffer({ 2, BufferType::Uniform });
 }
 
 void DisplaySurface::SetupSwapchain()
 {
+    resized_ = true;
     // WARNING: check result
     vk::SurfaceCapabilitiesKHR surfCaps = VkContext::GetInstance().GetPhysicalDevice().getSurfaceCapabilitiesKHR(surface_).value;
 
@@ -130,6 +132,15 @@ void DisplaySurface::SetupSwapSurfaces(bool enableDepthStencil)
         auto swapSurface = Surface::Make(attachmentResources);
         swapSurface->Init();
         swapSurfaces_.emplace_back(std::move(swapSurface));
+    }
+}
+
+void DisplaySurface::UpdateScreenSizeBuffer()
+{
+    if (resized_) {
+        uint32_t data[2] = { width_, height_ };
+        screenSize_->Update(data, 2, 0);
+        resized_ = false;
     }
 }
 

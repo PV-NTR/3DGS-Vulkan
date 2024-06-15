@@ -6,28 +6,28 @@
 
 namespace X::Backend {
 
-union BindingTypes {
-    struct {
-        uint32_t type : 4;
-        uint32_t stage : 14;
-        uint32_t padding : 14;
-    };
-    uint32_t packed;
+struct BindingTypes {
+    vk::DescriptorType type_;
+    vk::ShaderStageFlags stage_;
 };
 
-using LayoutBindingInfo = std::array<std::pair<BindingTypes, uint32_t>, 4>;
+using LayoutBindingInfo = std::pair<BindingTypes, uint32_t>;
 
 class DescriptorSetLayout : public VkResourceBase {
 public:
-    explicit DescriptorSetLayout(const LayoutBindingInfo& bindingInfo);
-    virtual ~DescriptorSetLayout();
+    [[nodiscard]] static std::shared_ptr<DescriptorSetLayout> Make();
+    virtual ~DescriptorSetLayout() noexcept;
     vk::DescriptorSetLayout GetHandle() { return descLayout_; }
+
+    void Update();
+    void AddDescriptorBinding(vk::DescriptorType type_, vk::ShaderStageFlags stage_, uint32_t num);
+
+protected:
+    DescriptorSetLayout() noexcept = default;
 
 private:
     friend class Pipeline;
-    static const std::array<vk::DescriptorType, 4> descTypeMap_;
-    static const std::array<vk::ShaderStageFlagBits, 14> shaderStageMap_;
-    LayoutBindingInfo bindingInfo_;
+    std::vector<LayoutBindingInfo> bindingInfos_;
     vk::UniqueDescriptorSetLayout uniqueDescLayout_;
     vk::DescriptorSetLayout descLayout_;
 };

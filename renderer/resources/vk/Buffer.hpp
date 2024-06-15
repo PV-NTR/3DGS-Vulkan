@@ -25,6 +25,7 @@ public:
     vk::Buffer GetHandle() { return buffer_.GetHandle(); }
     uint64_t GetSize() { return info_.size_; }
     BufferType GetType() { return info_.type_; }
+    void Update(const void* data, size_t size, size_t offset);
 
 private:
     Buffer(VmaAllocator allocator, const BufferInfo& info) noexcept;

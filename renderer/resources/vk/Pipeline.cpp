@@ -25,12 +25,12 @@ bool Pipeline::CreateDescriptorPool(const std::vector<std::shared_ptr<Descriptor
     std::vector<vk::DescriptorPoolSize> poolSizes;
     for (const auto& layout : setLayouts) {
         poolSizes.emplace_back();
-        auto& bindingInfo = layout->bindingInfo_;
-        for (const auto& binding : bindingInfo) {
-            if (binding.second == 0) {
+        auto& bindingInfos = layout->bindingInfos_;
+        for (const auto& bindingInfo : bindingInfos) {
+            if (bindingInfo.second == 0) {
                 continue;
             }
-            poolSizes.back().setType(DescriptorSetLayout::descTypeMap_[binding.first.type]);
+            poolSizes.back().setType(bindingInfo.first.type_);
         }
     }
     poolCI.setPoolSizes(poolSizes);
@@ -136,6 +136,16 @@ bool Pipeline::BindTextures(const std::vector<std::shared_ptr<Image>>& images, u
     }
     XLOGE("NOT IMPLEMENT YET!");
     return false;
+}
+
+bool Pipeline::BindDescriptorSets(vk::CommandBuffer cmdBuffer)
+{
+    std::vector<vk::DescriptorSet> descSetHandles;
+    for (const auto& descriptorSet : descriptorSets_) {
+        descSetHandles.emplace_back(descriptorSet.get());
+    }
+    vk::PipelineBindPoint bindPoint = type_ == Type::Graphics ? vk::PipelineBindPoint::eGraphics : vk::PipelineBindPoint::eCompute;
+    cmdBuffer.bindDescriptorSets(bindPoint, *layout_, 0, descSetHandles, {});
 }
 
 } // namespace X::Backend

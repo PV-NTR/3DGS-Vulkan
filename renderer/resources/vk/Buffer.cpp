@@ -21,4 +21,9 @@ Buffer::Buffer(VmaAllocator allocator, const BufferInfo& info) noexcept
 
 }
 
+void Buffer::Update(const void* data, size_t size, size_t offset)
+{
+    buffer_.Update(data, size, offset);
+}
+
 } // namespacae X::Backend

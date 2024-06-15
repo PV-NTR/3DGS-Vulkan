@@ -10,6 +10,10 @@ set(RENDERER_DIR ../../renderer)
 file(GLOB_RECURSE RENDERER_SRC ${RENDERER_DIR}/*.cpp)
 file(GLOB_RECURSE WINDOWS_SRC ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
 
+set(SHADER_DIR "${RENDERER_DIR}/resources/shaders/")
+file(GLOB SHADERS "${SHADER_DIR}/*.vert" "${SHADER_DIR}/*.frag" "${SHADER_DIR}/*.comp" "${SHADER_DIR}/*.geom" "${SHADER_DIR}/*.tesc" "${SHADER_DIR}/*.tese" "${SHADER_DIR}/*.mesh" "${SHADER_DIR}/*.task" "${SHADER_DIR}/*.rgen" "${SHADER_DIR}/*.rchit" "${SHADER_DIR}/*.rmiss" "${SHADER_DIR}/*.rcall" "${SHADER_DIR}/*.rahit" "${SHADER_DIR}/*.rint")
+source_group("Shaders" FILES ${SHADERS})
+
 # add vulkan lib
 find_package(Vulkan REQUIRED)
 
@@ -33,7 +37,8 @@ set(GLSLANG_DIR ${3RDPARTY_DIR}/glslang)
 add_executable(${CMAKE_PROJECT_NAME} WIN32
         ${IMGUI_SRC}
         ${RENDERER_SRC}
-        ${WINDOWS_SRC})
+        ${WINDOWS_SRC}
+        ${SHADERS})
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}

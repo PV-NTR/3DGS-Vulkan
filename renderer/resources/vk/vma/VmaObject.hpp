@@ -66,7 +66,7 @@ public:
 
     void Update(const void* data, size_t size, size_t offset = 0)
     {
-        return Update(reinterpret_cast<const uint8_t*>(data), size, offset);
+        Update(reinterpret_cast<const uint8_t*>(data), size, offset);
     }
 
 protected:

@@ -5,47 +5,22 @@
 
 namespace X::Backend {
 
-const std::array<vk::DescriptorType, 4> DescriptorSetLayout::descTypeMap_ = {
-	vk::DescriptorType::eCombinedImageSampler,
-	vk::DescriptorType::eUniformBuffer,
-	vk::DescriptorType::eStorageBuffer,
-	vk::DescriptorType::eInputAttachment
-};
+std::shared_ptr<DescriptorSetLayout> DescriptorSetLayout::Make()
+{
+	return std::shared_ptr<DescriptorSetLayout>(new DescriptorSetLayout());
+}
 
-const std::array<vk::ShaderStageFlagBits, 14> DescriptorSetLayout::shaderStageMap_ = {
-    vk::ShaderStageFlagBits::eVertex,
-    vk::ShaderStageFlagBits::eTessellationControl,
-    vk::ShaderStageFlagBits::eTessellationEvaluation,
-    vk::ShaderStageFlagBits::eGeometry,
-    vk::ShaderStageFlagBits::eFragment,
-    vk::ShaderStageFlagBits::eCompute,
-    vk::ShaderStageFlagBits::eRaygenKHR,
-    vk::ShaderStageFlagBits::eAnyHitKHR,
-    vk::ShaderStageFlagBits::eClosestHitKHR,
-    vk::ShaderStageFlagBits::eMissKHR,
-    vk::ShaderStageFlagBits::eIntersectionKHR,
-    vk::ShaderStageFlagBits::eCallableKHR,
-    vk::ShaderStageFlagBits::eTaskEXT,
-    vk::ShaderStageFlagBits::eMeshEXT,
-};
-
-DescriptorSetLayout::DescriptorSetLayout(const LayoutBindingInfo& bindingInfo) : bindingInfo_(bindingInfo)
+void DescriptorSetLayout::Update()
 {
 	std::vector<vk::DescriptorSetLayoutBinding> bindings;
-	for (const auto& binding : bindingInfo) {
-		if (binding.second != 0) {
+	for (const auto& bindingInfo : bindingInfos_) {
+		if (bindingInfo.second != 0) {
 			bindings.emplace_back();
-			vk::ShaderStageFlags flags {};
-			for (uint32_t i = 0; i < shaderStageMap_.size(); i++) {
-				if (i & binding.first.stage) {
-					flags |= shaderStageMap_[i];
-				}
-			}
-			bindings.back().setDescriptorType(descTypeMap_[binding.first.stage])
-				.setDescriptorCount(binding.second).setStageFlags(flags);
+			bindings.back().setDescriptorType(bindingInfo.first.type_)
+				.setDescriptorCount(bindingInfo.second).setStageFlags(bindingInfo.first.stage_);
 		}
 	}
-	vk::DescriptorSetLayoutCreateInfo layoutCI {};
+	vk::DescriptorSetLayoutCreateInfo layoutCI{};
 	layoutCI.setFlags(vk::DescriptorSetLayoutCreateFlagBits::eUpdateAfterBindPool).setBindings(bindings);
 	auto [ret, uniqueDescLayout] = VkContext::GetInstance().GetDevice().createDescriptorSetLayoutUnique(layoutCI);
 	if (ret != vk::Result::eSuccess) {
@@ -56,7 +31,12 @@ DescriptorSetLayout::DescriptorSetLayout(const LayoutBindingInfo& bindingInfo) :
 	descLayout_ = *uniqueDescLayout_;
 }
 
-DescriptorSetLayout::~DescriptorSetLayout()
+void DescriptorSetLayout::AddDescriptorBinding(vk::DescriptorType type, vk::ShaderStageFlags stage, uint32_t num)
+{
+	bindingInfos_.emplace_back(BindingTypes{ type, stage }, num);
+}
+
+DescriptorSetLayout::~DescriptorSetLayout() noexcept
 {
 
 }

@@ -21,7 +21,7 @@ protected:
     friend class BaseWindow<VulkanWindow>;
     void HandleMouseMove(int32_t x, int32_t y);
     void OnHandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) {};
-    void WindowResize() override {};
+    void WindowResize() override;
 
 private:
     std::unique_ptr<X::Renderer> renderer_;

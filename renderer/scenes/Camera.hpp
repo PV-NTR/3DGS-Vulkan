@@ -62,6 +62,7 @@ private:
     bool UpdateCameraLookAt(glm::vec2 axisLeft, glm::vec2 axisRight, float deadZone);
 
 private:
+    friend class Scene;
     CameraType type_ = CameraType::LookAt;
 
     // extrinsic param

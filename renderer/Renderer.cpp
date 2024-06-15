@@ -63,7 +63,6 @@ bool Renderer::OnInit(Backend::DisplaySurface* surface)
             return false;
         }
     }
-
     return true;
 }
 
@@ -86,9 +85,14 @@ void Renderer::UpdateScene(Scene* scene)
 
 void Renderer::OnUpdateScene(Scene* scene)
 {
-    if (scene->SceneChanged() && !scene->GetCamera().Updated()) {
+    if (surface_->Resized()) {
         this->RecordGraphicsCommands(scene);
         this->RecordComputeCommands(scene);
+    }
+
+    surface_->UpdateScreenSizeBuffer();
+    if (scene->SceneChanged() && !scene->GetCamera().Updated()) {
+        scene->UpdateData();
     }
 }
 
@@ -119,7 +123,6 @@ void Renderer::RecordGraphicsCommands(Scene* scene)
 
 void Renderer::SubmitGraphicsCommands()
 {
-    // end comandbuffer
     auto cmdBuffer = GetCurrentPresentCmdBuffer();
 
     auto queue = Backend::VkContext::GetInstance().AcquireGraphicsQueue(surface_->GetPresentQueueIdx());

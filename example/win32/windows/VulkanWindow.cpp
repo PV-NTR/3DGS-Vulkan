@@ -179,7 +179,7 @@ void VulkanWindow::InitSurface()
 
 void VulkanWindow::LoadScene()
 {
-
+    scene_ = std::make_unique<X::Scene>();
 }
 
 void VulkanWindow::RenderLoop()
@@ -200,4 +200,11 @@ void VulkanWindow::RenderLoop()
         }
         renderer_->DrawFrame();
     }
+}
+
+void VulkanWindow::WindowResize()
+{
+    X::Backend::VkContext::GetInstance().GetDevice().waitIdle();
+    surface_->SetupSwapchain();
+    surface_->SetupSwapSurfaces();
 }
