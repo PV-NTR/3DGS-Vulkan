@@ -6,6 +6,7 @@
 
 #include "common/VkCommon.hpp"
 #include "utils/Singleton.hpp"
+#include "resources/vk/VkResource.hpp"
 
 namespace X::Backend {
 
@@ -14,24 +15,35 @@ public:
     VkContext() = default;
     void Init();
     bool IsReady();
-    [[nodiscard]] vk::Queue AcquireGraphicsQueue();
-    [[nodiscard]] vk::Queue AcquireComputeQueue();
-    VmaAllocator GetAllocator() const
+    [[nodiscard]] vk::Queue AcquireGraphicsQueue(uint32_t idx);
+    [[nodiscard]] vk::Queue AcquireComputeQueue(uint32_t idx);
+    [[nodiscard]] std::pair<uint32_t, vk::Queue> AcquireCurrentGraphicsQueue();
+    [[nodiscard]] std::pair<uint32_t, vk::Queue> AcquireCurrentComputeQueue();
+    [[nodiscard]] std::pair<uint32_t, vk::Queue> AcquireNextGraphicsQueue();
+    [[nodiscard]] std::pair<uint32_t, vk::Queue> AcquireNextComputeQueue();
+
+    VmaAllocator GetAllocator()
     {
         return allocator_;
     }
+
     vk::Device GetDevice()
     {
         return device_;
     }
 
+    vk::CommandPool GetPresentCmdPool() { return presentPool_.get(); }
+    vk::CommandPool GetComputeCmdPool() { return computePool_.get(); }
+
 private:
+    friend class DisplaySurface;
     void LoadVkLibrary();
     bool CreateInstance();
     bool SelectPhysicalDevice();
     bool QueryQueueFamilies();
     bool CreateDeviceAndQueues();
     bool InitAllocator();
+    bool CreateCmdPools();
 
     void GetSupportedInstanceExtensions();
     void CollectEnabledInstanceExtensions();
@@ -39,6 +51,18 @@ private:
     void CollectEnabledInstanceLayers();
     void GetSupportedDeviceExtensions();
     void CollectEnabledDeviceExtensions();
+
+    uint32_t QueryPresentQueueFamilies(vk::SurfaceKHR surface);
+
+    vk::PhysicalDevice GetPhysicalDevice()
+    {
+        return physicalDevice_;
+    }
+
+    vk::Instance GetVkInstance()
+    {
+        return instance_;
+    }
 
 private:
     vk::PhysicalDevice physicalDevice_;
@@ -53,6 +77,7 @@ private:
     uint32_t graphicsQueueFamilyIdx_ = UINT32_MAX, computeQueueFamilyIdx_ = UINT32_MAX;
     std::atomic<uint32_t> graphicsQueueIdx_ = { 0 };
     std::atomic<uint32_t> computeQueueIdx_ = { 0 };
+    CommandPool presentPool_, computePool_;
 
     PFN_vkGetInstanceProcAddr entryFunc_ = nullptr;
 

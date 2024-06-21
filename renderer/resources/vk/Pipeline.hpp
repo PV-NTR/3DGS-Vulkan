@@ -2,7 +2,10 @@
 
 #include "common/VkCommon.hpp"
 #include "RenderPass.hpp"
-#include "VkResourceBase.hpp"
+#include "VkResource.hpp"
+#include "DescriptorSetLayout.hpp"
+#include "Buffer.hpp"
+#include "Image.hpp"
 
 namespace X::Backend {
 
@@ -14,14 +17,27 @@ public:
     };
     virtual ~Pipeline();
 
-protected:
-    explicit Pipeline(Type type = Type::Graphics) noexcept : type_(type) {}
 
+    bool BindBuffer(std::shared_ptr<Buffer> buffer, uint32_t bindSet, uint32_t binding);
+    bool BindUniformBuffers(const std::vector<std::shared_ptr<Buffer>>& buffers, uint32_t bindSet, uint32_t startBinding);
+    bool BindStorageBuffers(const std::vector<std::shared_ptr<Buffer>>& buffers, uint32_t bindSet, uint32_t startBinding);
+    bool BindTextures(const std::vector<std::shared_ptr<Image>>& images, uint32_t bindSet, uint32_t startBinding);
+    bool BindDescriptorSets(vk::CommandBuffer cmdBuffer);
+
+protected:
+    Pipeline(std::string name, const std::vector<std::shared_ptr<DescriptorSetLayout>>& setLayouts,
+        Type type = Type::Graphics) noexcept;
+    bool CreateDescriptorPool(const std::vector<std::shared_ptr<DescriptorSetLayout>>& setLayouts);
+    bool CreatePipelineLayout(const std::vector<std::shared_ptr<DescriptorSetLayout>>& setLayouts);
+    bool AllocDescriptorSets(const std::vector<std::shared_ptr<DescriptorSetLayout>>& setLayouts);
+
+    std::string name_;
     Type type_;
     vk::UniquePipeline pipelineUnique_;
     vk::Pipeline pipeline_;
-    vk::PipelineCache cache_;
-    vk::UniquePipelineLayout layoutUnique_;
+    PipelineLayout layout_;
+    DescriptorPool pool_;
+    std::vector<DescriptorSet> descriptorSets_;
 };
 
 } // namespace X::Backend

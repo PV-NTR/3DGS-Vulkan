@@ -7,14 +7,16 @@ VmaBuffer::VmaBuffer(VmaAllocator allocator, const VmaBufferInfo& info) noexcept
 {
     assert(allocator_ != VK_NULL_HANDLE);
     VkBufferCreateInfo bufferCI {};
+    bufferCI.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     bufferCI.size = info.size_;
     bufferCI.usage = static_cast<VkBufferUsageFlags>(info.usage_);
 
     VmaAllocationCreateInfo allocationCI {};
-    allocationCI.memoryTypeBits = static_cast<VkImageUsageFlags>(info.memProps_);
+    allocationCI.requiredFlags = static_cast<VkMemoryPropertyFlags>(info.memProps_);
 
     VkBuffer handle;
-    auto ret = vmaCreateBuffer(allocator_, &bufferCI, &allocationCI, &handle, &allocation_, nullptr);
+    auto ret = vmaCreateBuffer(allocator_, &bufferCI, &allocationCI, &handle, &allocation_, &allocationInfo_);
+    SetMappedData();
     handle_ = handle;
 }
 

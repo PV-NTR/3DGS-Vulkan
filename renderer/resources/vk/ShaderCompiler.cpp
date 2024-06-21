@@ -7,6 +7,16 @@
 
 namespace X::Backend {
 
+ShaderCompiler::ShaderCompiler()
+{
+    glslang::InitializeProcess();
+}
+
+ShaderCompiler::~ShaderCompiler()
+{
+    glslang::FinalizeProcess();
+}
+
 bool ShaderCompiler::CompileShader(const std::string& code, ShaderType type, std::vector<uint32_t>& spirv)
 {
     if (shaders_.find(type) == shaders_.end()) {
@@ -15,8 +25,8 @@ bool ShaderCompiler::CompileShader(const std::string& code, ShaderType type, std
     auto& shader = shaders_[type];
     const char* shaderStrings[1] = { code.c_str() };
     shader->setStrings(shaderStrings, 1);
-    EShMessages messages = EShMsgDefault;
-    if (!shader->parse(GetResources(), 100, false, messages)) {
+    EShMessages messages = static_cast<EShMessages>(EShMsgVulkanRules | EShMsgSpvRules);
+    if (!shader->parse(GetDefaultResources(), 100, false, messages)) {
         XLOGE("CompileShader parse failed, glslang info: %s\n, debug info: %s\n", shader->getInfoLog(), shader->getInfoDebugLog());
         return false;
     }

@@ -13,11 +13,18 @@ VmaImage::VmaImage(VmaAllocator allocator, const VmaImageInfo& info) noexcept
     imageCI.usage = static_cast<VkImageUsageFlags>(info.usage_);
 
     VmaAllocationCreateInfo allocationCI {};
-    allocationCI.memoryTypeBits = static_cast<VkImageUsageFlags>(info.memProps_);
+    allocationCI.requiredFlags = static_cast<VkMemoryPropertyFlags>(info.memProps_);
 
     VkImage handle;
-    auto ret = vmaCreateImage(allocator_, &imageCI, &allocationCI, &handle, &allocation_, nullptr);
+    auto ret = vmaCreateImage(allocator_, &imageCI, &allocationCI, &handle, &allocation_, &allocationInfo_);
+    SetMappedData();
     handle_ = handle;
+}
+
+VmaImage::VmaImage(vk::Image image, VmaImageState&& state) noexcept
+    : VmaObject(nullptr), handle_(image), state_(std::move(state)), external_(true)
+{
+
 }
 
 VmaImage::~VmaImage() noexcept
@@ -43,7 +50,7 @@ VmaImage& VmaImage::operator=(VmaImage&& other) noexcept
 
 void VmaImage::Destroy() noexcept
 {
-    assert(allocator_ != VK_NULL_HANDLE);
+    assert(external_ || allocator_ != VK_NULL_HANDLE);
     if (allocation_ != VK_NULL_HANDLE) {
         vmaDestroyImage(allocator_, handle_, allocation_);
     }

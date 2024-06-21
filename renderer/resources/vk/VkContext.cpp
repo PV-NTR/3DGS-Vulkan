@@ -26,8 +26,11 @@ std::vector<const char*> VkContext::requiredInstanceLayers_ = {
 
 std::vector<const char*> VkContext::requiredDeviceExts_ = {
 #ifdef HOST_WIN32
-    "VK_KHR_swapchain"
+    "VK_KHR_swapchain",
 #endif
+    "VK_KHR_buffer_device_address",
+    "VK_KHR_synchronization2",
+    "VK_KHR_timeline_semaphore"
 };
 
 void VkContext::Init()
@@ -40,6 +43,7 @@ void VkContext::Init()
     CreateDeviceAndQueues();
 
     InitAllocator();
+    CreateCmdPools();
 }
 
 bool VkContext::IsReady()
@@ -47,14 +51,36 @@ bool VkContext::IsReady()
     return entryFunc_ && instance_ && physicalDevice_ && device_;
 }
 
-vk::Queue VkContext::AcquireGraphicsQueue()
+vk::Queue VkContext::AcquireGraphicsQueue(uint32_t idx)
 {
-    return device_.getQueue(graphicsQueueFamilyIdx_, graphicsQueueIdx_.fetch_add(1, std::memory_order_relaxed));
+    return device_.getQueue(graphicsQueueFamilyIdx_, idx);
 }
 
-vk::Queue VkContext::AcquireComputeQueue()
+vk::Queue VkContext::AcquireComputeQueue(uint32_t idx)
 {
-    return device_.getQueue(computeQueueFamilyIdx_, computeQueueIdx_.fetch_add(1, std::memory_order_relaxed));
+    return device_.getQueue(computeQueueFamilyIdx_, idx);
+}
+
+std::pair<uint32_t, vk::Queue> VkContext::AcquireCurrentGraphicsQueue()
+{
+    return { graphicsQueueIdx_, device_.getQueue(graphicsQueueFamilyIdx_, graphicsQueueIdx_) };
+}
+
+std::pair<uint32_t, vk::Queue> VkContext::AcquireCurrentComputeQueue()
+{
+    return { computeQueueIdx_, device_.getQueue(computeQueueFamilyIdx_, computeQueueIdx_) };
+}
+
+std::pair<uint32_t, vk::Queue> VkContext::AcquireNextGraphicsQueue()
+{
+    graphicsQueueIdx_.fetch_add(1);
+    return { graphicsQueueIdx_, device_.getQueue(graphicsQueueFamilyIdx_, graphicsQueueIdx_) };
+}
+
+std::pair<uint32_t, vk::Queue> VkContext::AcquireNextComputeQueue()
+{
+    computeQueueIdx_.fetch_add(1);
+    return { computeQueueIdx_, device_.getQueue(computeQueueFamilyIdx_, computeQueueIdx_) };
 }
 
 void VkContext::LoadVkLibrary()
@@ -243,6 +269,28 @@ bool VkContext::QueryQueueFamilies()
     return true;
 }
 
+uint32_t VkContext::QueryPresentQueueFamilies(vk::SurfaceKHR surface)
+{
+    if (!physicalDevice_) {
+        XLOGE("physicalDevice not specified!");
+        return false;
+    }
+    uint32_t queueCnt;
+    physicalDevice_.getQueueFamilyProperties(&queueCnt, nullptr);
+    std::vector<vk::QueueFamilyProperties> queueProps(queueCnt);
+    physicalDevice_.getQueueFamilyProperties(&queueCnt, queueProps.data());
+    for (uint32_t i = 0; i < queueCnt; i++) {
+        if ((queueProps[i].queueFlags & vk::QueueFlagBits::eGraphics)) {
+            auto ret = physicalDevice_.getSurfaceSupportKHR(i, surface);
+            if (ret.result == vk::Result::eSuccess && ret.value == vk::True) {
+                return i;
+            }
+        }
+    }
+    return UINT32_MAX;
+
+}
+
 bool VkContext::CreateDeviceAndQueues()
 {
     if (!physicalDevice_) {
@@ -322,7 +370,7 @@ bool VkContext::InitAllocator()
     allocatorCI.flags = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
     allocatorCI.physicalDevice = physicalDevice_;
     allocatorCI.device = device_;
-    allocatorCI.preferredLargeHeapBlockSize = 4096;     // TODO: Find a property value
+    allocatorCI.preferredLargeHeapBlockSize = 1024;     // TODO: Find a property value
     allocatorCI.pVulkanFunctions = &vmaFuncs;
     allocatorCI.instance = instance_;
     allocatorCI.vulkanApiVersion = VK_API_VERSION_1_3;
@@ -332,6 +380,28 @@ bool VkContext::InitAllocator()
         XLOGE("Create VmaAllocator failed, errCode: %d", ret);
         return false;
     }
+    return true;
+}
+
+bool VkContext::CreateCmdPools()
+{
+    vk::CommandPoolCreateInfo poolCI{};
+    poolCI.setFlags(vk::CommandPoolCreateFlagBits::eResetCommandBuffer);
+    poolCI.setQueueFamilyIndex(graphicsQueueFamilyIdx_);
+    auto [presentRet, presentPoolUnique] = device_.createCommandPoolUnique(poolCI);
+    if (presentRet != vk::Result::eSuccess) {
+        XLOGE("Create Present Pool failed, errCode: %d", presentRet);
+        return false;
+    }
+    presentPool_.swap(presentPoolUnique);
+
+    poolCI.setQueueFamilyIndex(computeQueueFamilyIdx_);
+    auto [computeRet, computePoolUnique] = device_.createCommandPoolUnique(poolCI);
+    if (computeRet != vk::Result::eSuccess) {
+        XLOGE("Create Compute Pool failed, errCode: %d", computeRet);
+        return false;
+    }
+    computePool_.swap(computePoolUnique);
     return true;
 }
 

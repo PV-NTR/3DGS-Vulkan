@@ -5,13 +5,26 @@
 namespace X::Backend {
 
 Image::Image(VmaAllocator allocator, const ImageInfo& info) noexcept
-    : image_(allocator, { info.width_, info.height_, vk::Format::eR8G8B8A8Unorm,
-        vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst |
-        vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eColorAttachment |
-        vk::ImageUsageFlagBits::eInputAttachment }), 
-      info_(info), view_(shared_from_this())
+    : info_(info)
 {
+    vk::ImageUsageFlags flag = vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst |
+        vk::ImageUsageFlagBits::eInputAttachment;
+    if (info.depthStencil_) {
+        flag |= vk::ImageUsageFlagBits::eDepthStencilAttachment;
+    } else {
+        flag |= vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eColorAttachment;
+    }
+    image_ = VmaImage(allocator, { info.width_, info.height_, info.format_, flag, vk::MemoryPropertyFlagBits::eDeviceLocal });
+}
 
+Image::Image(vk::Image image, const ImageInfo& info, VmaImageState&& state) noexcept
+    : image_(image, std::move(state)), info_(info)
+{
+}
+
+void Image::CreateView()
+{
+    view_ = std::make_shared<ImageView>(shared_from_this());
 }
 
 } // namespace X::Backend

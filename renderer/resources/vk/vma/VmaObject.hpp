@@ -66,12 +66,20 @@ public:
 
     void Update(const void* data, size_t size, size_t offset = 0)
     {
-        return Update(reinterpret_cast<const uint8_t*>(data), size, offset);
+        Update(reinterpret_cast<const uint8_t*>(data), size, offset);
     }
 
 protected:
+    VmaObject() noexcept = default;
     VmaAllocator allocator_ = VK_NULL_HANDLE;
     VmaAllocation allocation_ = VK_NULL_HANDLE;
+    VmaAllocationInfo allocationInfo_ {};
+
+    void SetMappedData()
+    {
+        mappedData_ = allocationInfo_.pMappedData;
+        persistent_ = Mapped();
+    }
 
 private:
     void* mappedData_ = nullptr;

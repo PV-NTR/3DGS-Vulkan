@@ -13,8 +13,7 @@ std::string ShaderModule::ReadShader(std::string fileName)
     std::ifstream is(fileName, std::ios::binary | std::ios::in | std::ios::ate);
     std::stringstream ss;
 
-    if (is.is_open())
-    {
+    if (is.is_open()) {
         size_t size = is.tellg();
         is.seekg(0, std::ios::beg);
         ss << is.rdbuf();
@@ -30,13 +29,23 @@ std::string ShaderModule::ReadShader(std::string fileName)
     }
 }
 
+std::string ShaderModule::GenerateShaderName(std::string fileName)
+{
+    size_t split = fileName.find_last_of("/\\");
+    std::string shaderName = fileName.substr(split + 1);
+    split = shaderName.find_first_of(".");
+    shaderName = shaderName.substr(0, split) + "_" + shaderName.substr(split + 1);
+    return shaderName;
+}
+
 ShaderModule::ShaderModule(std::string fileName, ShaderType type)
-    : type_(type)
+    : shaderName_(GenerateShaderName(fileName)), type_(type)
 {
     std::string shaderCode = ReadShader(fileName);
     if (shaderCode.empty()) {
         return;
     }
+
     std::vector<uint32_t> dst;
     if (!ShaderCompiler::GetInstance().CompileShader(shaderCode, type, dst)) {
         XLOGE("CompileShader failed!");

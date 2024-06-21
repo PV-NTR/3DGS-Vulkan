@@ -6,7 +6,7 @@ namespace X {
 
 class Data {
 public:
-    std::shared_ptr<Data> MakeLength(uint32_t size, bool init = false);
+    [[nodiscard]] static std::shared_ptr<Data> MakeLength(uint32_t size, bool init = false);
     ~Data();
 
     void* Addr() { return data_; }

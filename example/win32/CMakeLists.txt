@@ -1,14 +1,21 @@
 cmake_minimum_required(VERSION 3.22.1)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17 -DVK_USE_PLATFORM_WIN32_KHR")
 
 project("vkrenderer")
 
 add_definitions(-DHOST_WIN32 -DNOMINMAX)
 
-set(RENDERER_DIR ../../renderer)
+set(RENDERER_DIR ${CMAKE_SOURCE_DIR}/../../renderer)
 file(GLOB_RECURSE RENDERER_SRC ${RENDERER_DIR}/*.cpp)
 file(GLOB_RECURSE WINDOWS_SRC ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
+
+set(SHADER_DIR "${RENDERER_DIR}/resources/shaders/")
+file(GLOB SHADERS "${SHADER_DIR}/*.vert" "${SHADER_DIR}/*.frag" "${SHADER_DIR}/*.comp" "${SHADER_DIR}/*.geom" "${SHADER_DIR}/*.tesc" "${SHADER_DIR}/*.tese" "${SHADER_DIR}/*.mesh" "${SHADER_DIR}/*.task" "${SHADER_DIR}/*.rgen" "${SHADER_DIR}/*.rchit" "${SHADER_DIR}/*.rmiss" "${SHADER_DIR}/*.rcall" "${SHADER_DIR}/*.rahit" "${SHADER_DIR}/*.rint")
+source_group("Shaders" FILES ${SHADERS})
+
+# Asset and shader path selection
+add_definitions(-DSHADER_DIR=\"${SHADER_DIR}\")
 
 # add vulkan lib
 find_package(Vulkan REQUIRED)
@@ -31,20 +38,30 @@ set(VULKAN_HEADER_DIR ${3RDPARTY_DIR}/vulkan-headers/include)
 set(GLSLANG_DIR ${3RDPARTY_DIR}/glslang)
 
 add_executable(${CMAKE_PROJECT_NAME} WIN32
-        ${IMGUI_SRC}
-        ${RENDERER_SRC}
-        ${WINDOWS_SRC})
+    ${IMGUI_SRC}
+    ${RENDERER_SRC}
+    ${WINDOWS_SRC}
+    ${SHADERS})
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}
-        ${IMGUI_DIR}
-        ${RENDERER_DIR}
-        ${GLSLANG_DIR}
-        ${VULKAN_HEADER_DIR}
-        ${VMA_DIR})
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${IMGUI_DIR}
+    ${RENDERER_DIR}
+    ${GLSLANG_DIR}
+    ${VULKAN_HEADER_DIR}
+    ${VMA_DIR})
 
-link_directories(${CMAKE_SOURCE_DIR}/../../libs/glslang/win32/)
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    message(STATUS "debug============================")
+    link_directories(${CMAKE_SOURCE_DIR}/../../libs/glslang/win32/debug)
+    file(GLOB GLSLANG_LIBS ${CMAKE_SOURCE_DIR}/../../libs/glslang/win32/debug/*.lib)
+elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
+    message(STATUS "release============================")
+    link_directories(${CMAKE_SOURCE_DIR}/../../libs/glslang/win32/release)
+    file(GLOB GLSLANG_LIBS ${CMAKE_SOURCE_DIR}/../../libs/glslang/win32/release/*.lib)
+endif()
 
-file(GLOB GLSLANG_LIBS ${CMAKE_SOURCE_DIR}/../../libs/glslang/win32/*.lib)
+target_link_libraries(${CMAKE_PROJECT_NAME} ${Vulkan_LIBRARY} ${GLSLANG_LIBS})
 
-target_link_libraries(${CMAKE_PROJECT_NAME} ${GLSLANG_LIBS})
+# debug mode use release libs
+# set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES COMPILE_OPTIONS "$<$<CONFIG:Debug>:/MD>")
