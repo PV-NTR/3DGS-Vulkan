@@ -22,17 +22,26 @@ public:
     void DrawFrame();
 
 protected:
+    bool AllocateCommandBuffers();
     virtual void RecordGraphicsCommands(Scene* scene);
     virtual void RecordComputeCommands(Scene* scene) = 0;
 
     virtual void SubmitGraphicsCommands();
 
-    virtual bool OnInit(Backend::DisplaySurface* surface);
+    virtual bool OnInit(Backend::DisplaySurface* surface) = 0;
     virtual void OnUpdateScene(Scene* scene);
     virtual void OnDrawFrame() = 0;
     virtual void OnRecordGraphicsCommands(Scene* scene) = 0;
-    vk::CommandBuffer GetCurrentPresentCmdBuffer() { return presentCmdBuffers_[currentFrameIdx_]; }
-    vk::CommandBuffer GetCurrentComputeCmdBuffer() { return computeCmdBuffers_[currentFrameIdx_]; }
+    vk::CommandBuffer GetPresentCmdBuffer() { return presentCmdBuffer_; }
+    vk::CommandBuffer GetComputeCmdBuffer() { return computeCmdBuffer_; }
+    const std::string GetShaderPath()
+    {
+#ifdef SHADER_DIR
+        return SHADER_DIR;
+#else
+        return "";
+#endif
+    }
 
 protected:
     Backend::DisplaySurface* surface_ = nullptr;
@@ -43,9 +52,7 @@ private:
     bool commandChanged_ = false;
     bool dataChanged_ = false;
 
-    Backend::CommandPool presentPool_, computePool_;
-    std::vector<vk::CommandBuffer> presentCmdBuffers_, computeCmdBuffers_;
-    uint32_t currentFrameIdx_ = 0;
+    vk::CommandBuffer presentCmdBuffer_, computeCmdBuffer_;
     // data
     std::shared_ptr<Backend::Buffer> screenSize_;
 };

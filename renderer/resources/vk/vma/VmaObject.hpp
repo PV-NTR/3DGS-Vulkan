@@ -73,6 +73,13 @@ protected:
     VmaObject() noexcept = default;
     VmaAllocator allocator_ = VK_NULL_HANDLE;
     VmaAllocation allocation_ = VK_NULL_HANDLE;
+    VmaAllocationInfo allocationInfo_ {};
+
+    void SetMappedData()
+    {
+        mappedData_ = allocationInfo_.pMappedData;
+        persistent_ = Mapped();
+    }
 
 private:
     void* mappedData_ = nullptr;

@@ -22,18 +22,24 @@ Pipeline::Pipeline(std::string name, const std::vector<std::shared_ptr<Descripto
 bool Pipeline::CreateDescriptorPool(const std::vector<std::shared_ptr<DescriptorSetLayout>>& setLayouts)
 {
     vk::DescriptorPoolCreateInfo poolCI {};
-    std::vector<vk::DescriptorPoolSize> poolSizes;
+    std::unordered_map<vk::DescriptorType, uint32_t> descriptorCnts;
+    uint32_t setCnt = 0;
     for (const auto& layout : setLayouts) {
-        poolSizes.emplace_back();
         auto& bindingInfos = layout->bindingInfos_;
         for (const auto& bindingInfo : bindingInfos) {
             if (bindingInfo.second == 0) {
                 continue;
             }
-            poolSizes.back().setType(bindingInfo.first.type_);
+            setCnt += bindingInfo.second;
+            descriptorCnts[bindingInfo.first.type_]++;
         }
     }
-    poolCI.setPoolSizes(poolSizes);
+    std::vector<vk::DescriptorPoolSize> poolSizes;
+    for (auto&& [key, value] : descriptorCnts) {
+        poolSizes.emplace_back();
+        poolSizes.back().setType(key).setDescriptorCount(value);
+    }
+    poolCI.setFlags(vk::DescriptorPoolCreateFlagBits::eUpdateAfterBind).setPoolSizes(poolSizes).setMaxSets(setCnt);
 
     auto [ret, poolUnique] = VkContext::GetInstance().GetDevice().createDescriptorPoolUnique(poolCI);
     if (ret != vk::Result::eSuccess) {
@@ -81,10 +87,33 @@ bool Pipeline::AllocDescriptorSets(const std::vector<std::shared_ptr<DescriptorS
     return true;
 }
 
-bool Pipeline::BindUniformBuffers(const std::vector<std::shared_ptr<Buffer>>& buffers, uint32_t bindSet, uint32_t binding)
+bool Pipeline::BindBuffer(std::shared_ptr<Buffer> buffer, uint32_t bindSet, uint32_t binding)
 {
     if (bindSet >= descriptorSets_.size()) {
         XLOGE("Bind set index not valid!");
+        return false;
+    }
+    vk::DescriptorBufferInfo info {};
+    info.setBuffer(buffer->GetHandle()).setOffset(0).setRange(buffer->GetSize());
+
+    vk::WriteDescriptorSet dWrite {};
+    dWrite.setDstSet(*descriptorSets_[bindSet])
+        .setDescriptorCount(1)
+        .setDescriptorType(buffer->GetType() == BufferType::Uniform ? vk::DescriptorType::eUniformBuffer : vk::DescriptorType::eStorageBuffer)
+        .setDstBinding(binding)
+        .setBufferInfo(info);
+    VkContext::GetInstance().GetDevice().updateDescriptorSets(dWrite, nullptr);
+    return true;
+}
+
+bool Pipeline::BindUniformBuffers(const std::vector<std::shared_ptr<Buffer>>& buffers, uint32_t bindSet, uint32_t startBinding)
+{
+    if (bindSet >= descriptorSets_.size()) {
+        XLOGE("Bind set index not valid!");
+        return false;
+    }
+    if (buffers.empty()) {
+        XLOGE("No buffer to bind!");
         return false;
     }
     
@@ -96,21 +125,29 @@ bool Pipeline::BindUniformBuffers(const std::vector<std::shared_ptr<Buffer>>& bu
         }
         infos.emplace_back(buffer->GetHandle(), 0, buffer->GetSize());
     }
-    vk::WriteDescriptorSet dWrite{};
-    dWrite.setDstSet(*descriptorSets_[bindSet])
-        .setDescriptorType(vk::DescriptorType::eUniformBuffer)
-        .setDstBinding(binding)
-        .setBufferInfo(infos);
-    VkContext::GetInstance().GetDevice().updateDescriptorSets(dWrite, nullptr);
+    std::vector<vk::WriteDescriptorSet> dWrites(buffers.size());
+    for (uint32_t i = 0; i < buffers.size(); i++) {
+        dWrites[i].setDstSet(*descriptorSets_[bindSet])
+            .setDescriptorCount(1)
+            .setDescriptorType(vk::DescriptorType::eUniformBuffer)
+            .setDstBinding(startBinding + i)
+            .setBufferInfo(infos[i]);
+    }
+    VkContext::GetInstance().GetDevice().updateDescriptorSets(dWrites, nullptr);
     return true;
 }
 
-bool Pipeline::BindStorageBuffers(const std::vector<std::shared_ptr<Buffer>>& buffers, uint32_t bindSet, uint32_t binding)
+bool Pipeline::BindStorageBuffers(const std::vector<std::shared_ptr<Buffer>>& buffers, uint32_t bindSet, uint32_t startBinding)
 {
     if (bindSet >= descriptorSets_.size()) {
         XLOGE("Bind set index not valid!");
         return false;
     }
+    if (buffers.empty()) {
+        XLOGE("No buffer to bind!");
+        return false;
+    }
+
     std::vector<vk::DescriptorBufferInfo> infos;
     for (const auto& buffer : buffers) {
         if (buffer->GetType() != BufferType::Storage) {
@@ -119,16 +156,19 @@ bool Pipeline::BindStorageBuffers(const std::vector<std::shared_ptr<Buffer>>& bu
         }
         infos.emplace_back(buffer->GetHandle(), 0, buffer->GetSize());
     }
-    vk::WriteDescriptorSet dWrite{};
-    dWrite.setDstSet(*descriptorSets_[bindSet])
-        .setDescriptorType(vk::DescriptorType::eStorageBuffer)
-        .setDstBinding(binding)
-        .setBufferInfo(infos);
-    VkContext::GetInstance().GetDevice().updateDescriptorSets(dWrite, nullptr);
+    std::vector<vk::WriteDescriptorSet> dWrites(buffers.size());
+    for (uint32_t i = 0; i < buffers.size(); i++) {
+        dWrites[i].setDstSet(*descriptorSets_[bindSet])
+            .setDescriptorCount(1)
+            .setDescriptorType(vk::DescriptorType::eStorageBuffer)
+            .setDstBinding(startBinding + i)
+            .setBufferInfo(infos[i]);
+    }
+    VkContext::GetInstance().GetDevice().updateDescriptorSets(dWrites, nullptr);
     return true;
 }
 
-bool Pipeline::BindTextures(const std::vector<std::shared_ptr<Image>>& images, uint32_t bindSet, uint32_t binding)
+bool Pipeline::BindTextures(const std::vector<std::shared_ptr<Image>>& images, uint32_t bindSet, uint32_t startBinding)
 {
     if (bindSet >= descriptorSets_.size()) {
         XLOGE("Bind set index not valid!");
@@ -140,12 +180,14 @@ bool Pipeline::BindTextures(const std::vector<std::shared_ptr<Image>>& images, u
 
 bool Pipeline::BindDescriptorSets(vk::CommandBuffer cmdBuffer)
 {
+    vk::PipelineBindPoint bindPoint = type_ == Type::Graphics ? vk::PipelineBindPoint::eGraphics : vk::PipelineBindPoint::eCompute;
+    cmdBuffer.bindPipeline(bindPoint, pipeline_);
     std::vector<vk::DescriptorSet> descSetHandles;
     for (const auto& descriptorSet : descriptorSets_) {
         descSetHandles.emplace_back(descriptorSet.get());
     }
-    vk::PipelineBindPoint bindPoint = type_ == Type::Graphics ? vk::PipelineBindPoint::eGraphics : vk::PipelineBindPoint::eCompute;
     cmdBuffer.bindDescriptorSets(bindPoint, *layout_, 0, descSetHandles, {});
+    return true;
 }
 
 } // namespace X::Backend

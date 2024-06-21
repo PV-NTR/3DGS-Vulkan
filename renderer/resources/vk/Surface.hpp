@@ -27,6 +27,7 @@ protected:
     void CreateFramebuffer();
 
 protected:
+    friend class DisplaySurface;
     std::shared_ptr<RenderPass> renderPass_;
     std::vector<std::shared_ptr<Image>> attachmentResources_;
     std::shared_ptr<Framebuffer> framebuffer_;

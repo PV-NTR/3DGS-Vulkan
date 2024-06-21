@@ -19,51 +19,9 @@ Renderer::~Renderer()
 bool Renderer::Init(Backend::DisplaySurface* surface)
 {
     assert(surface != nullptr);
-    return this->OnInit(surface);
-}
-
-bool Renderer::OnInit(Backend::DisplaySurface* surface)
-{
     surface_ = surface;
-    auto device = Backend::VkContext::GetInstance().GetDevice();
-    vk::CommandPoolCreateInfo poolCI {};
-    poolCI.setFlags(vk::CommandPoolCreateFlagBits::eResetCommandBuffer);
 
-    poolCI.setQueueFamilyIndex(surface->GetPresentQueueIdx());
-    auto [presentRet, presentPoolUnique] = device.createCommandPoolUnique(poolCI);
-    if (presentRet != vk::Result::eSuccess) {
-        XLOGE("Create Present Pool failed, errCode: %d", presentRet);
-        return false;
-    }
-    presentPool_.swap(presentPoolUnique);
-
-    presentCmdBuffers_.resize(surface->GetSwapSurfaceCount());
-    vk::CommandBufferAllocateInfo allocInfo{};
-    allocInfo.setCommandPool(*presentPool_).setCommandBufferCount(surface->GetSwapSurfaceCount());
-    auto allocRet = device.allocateCommandBuffers(&allocInfo, presentCmdBuffers_.data());
-    if (allocRet != vk::Result::eSuccess) {
-        XLOGE("allocate present commandbuffer failed, errCode: %d", allocRet);
-        return false;
-    }
-
-    if (needCompute_) {
-        poolCI.setQueueFamilyIndex(Backend::VkContext::GetInstance().AcquireCurrentComputeQueue().first);
-        auto [computeRet, computePoolUnique] = device.createCommandPoolUnique(poolCI);
-        if (computeRet != vk::Result::eSuccess) {
-            XLOGE("Create Compute Pool failed, errCode: %d", computeRet);
-            return false;
-        }
-        computePool_.swap(computePoolUnique);
-
-        computeCmdBuffers_.resize(surface->GetSwapSurfaceCount());
-        allocInfo.setCommandPool(*computePool_).setCommandBufferCount(surface->GetSwapSurfaceCount());
-        allocRet = device.allocateCommandBuffers(&allocInfo, computeCmdBuffers_.data());
-        if (allocRet != vk::Result::eSuccess) {
-            XLOGE("allocate compute commandbuffer failed, errCode: %d", allocRet);
-            return false;
-        }
-    }
-    return true;
+    return this->AllocateCommandBuffers() && this->OnInit(surface);
 }
 
 void Renderer::Destroy()
@@ -78,9 +36,9 @@ bool Renderer::IsReady()
 
 void Renderer::UpdateScene(Scene* scene)
 {
-    if (scene->SceneChanged()) {
+    // if (scene->SceneChanged()) {
         this->OnUpdateScene(scene);
-    }
+    // }
 }
 
 void Renderer::OnUpdateScene(Scene* scene)
@@ -100,21 +58,55 @@ void Renderer::DrawFrame()
 {
     this->OnDrawFrame();
     surface_->Present();
-    currentFrameIdx_ = surface_->NextFrame();
+    surface_->NextFrame();
+}
+
+
+bool Renderer::AllocateCommandBuffers()
+{
+    auto device = Backend::VkContext::GetInstance().GetDevice();
+
+    vk::CommandBufferAllocateInfo allocInfo{};
+    allocInfo.setCommandPool(Backend::VkContext::GetInstance().GetPresentCmdPool()).setCommandBufferCount(1);
+    auto allocRet = device.allocateCommandBuffers(&allocInfo, &presentCmdBuffer_);
+    if (allocRet != vk::Result::eSuccess) {
+        XLOGE("allocate present commandbuffer failed, errCode: %d", allocRet);
+        return false;
+    }
+
+    if (needCompute_) {
+        allocInfo.setCommandPool(Backend::VkContext::GetInstance().GetComputeCmdPool()).setCommandBufferCount(1);
+        allocRet = device.allocateCommandBuffers(&allocInfo, &computeCmdBuffer_);
+        if (allocRet != vk::Result::eSuccess) {
+            XLOGE("allocate compute commandbuffer failed, errCode: %d", allocRet);
+            return false;
+        }
+    }
+    return true;
 }
 
 void Renderer::RecordGraphicsCommands(Scene* scene)
 {
-    auto cmdBuffer = GetCurrentPresentCmdBuffer();
+    // TODO: restore to commandbuffers, record all
+    auto cmdBuffer = GetPresentCmdBuffer();
     vk::CommandBufferBeginInfo cmdBufferBeginInfo{};
+    cmdBufferBeginInfo.setFlags(vk::CommandBufferUsageFlagBits::eSimultaneousUse);
     cmdBuffer.begin(cmdBufferBeginInfo);
+
+    surface_->GetCurrentDisplayImage()->Barrier(cmdBuffer,
+        { vk::ImageLayout::eColorAttachmentOptimal, vk::AccessFlagBits::eColorAttachmentWrite, vk::PipelineStageFlagBits::eColorAttachmentOutput },
+        vk::ImageAspectFlagBits::eColor);
 
     auto swapSurface = surface_->GetCurrentSwapSurface();
     vk::RenderPassBeginInfo beginInfo{};
+    std::array<vk::ClearValue, 2> clearValues;
+    clearValues[0].setColor({ 1.0f, 1.0f, 1.0f, 1.0f });
+    clearValues[1].setDepthStencil({1.0f, 0});
     beginInfo.setRenderPass(swapSurface->GetRenderPass()->GetHandle())
-        .setFramebuffer(swapSurface->GetFramebuffer()->get());
+        .setFramebuffer(swapSurface->GetFramebuffer()->get())
+        .setClearValues(clearValues)
+        .setRenderArea({ {0, 0}, {surface_->GetWidth(), surface_->GetHeight()} });
     cmdBuffer.beginRenderPass(beginInfo, { vk::SubpassContents::eInline });
-
     this->OnRecordGraphicsCommands(scene);
 
     cmdBuffer.endRenderPass();
@@ -123,12 +115,12 @@ void Renderer::RecordGraphicsCommands(Scene* scene)
 
 void Renderer::SubmitGraphicsCommands()
 {
-    auto cmdBuffer = GetCurrentPresentCmdBuffer();
+    auto cmdBuffer = GetPresentCmdBuffer();
 
     auto queue = Backend::VkContext::GetInstance().AcquireGraphicsQueue(surface_->GetPresentQueueIdx());
     vk::SubmitInfo submitInfo{};
     std::vector<vk::PipelineStageFlags> waitStageMask{ vk::PipelineStageFlagBits::eColorAttachmentOutput };
-    submitInfo.setCommandBuffers(presentCmdBuffers_[currentFrameIdx_])
+    submitInfo.setCommandBuffers(presentCmdBuffer_)
         .setWaitSemaphoreCount(1)
         .setPWaitSemaphores(&surface_->GetAcquireFrameSignalSemaphore())
         .setWaitDstStageMask(waitStageMask)

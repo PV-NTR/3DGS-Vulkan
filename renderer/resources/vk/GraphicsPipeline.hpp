@@ -29,6 +29,9 @@ protected:
 protected:
     void InitDefaultSettings();
     struct {
+        vk::VertexInputBindingDescription vertexInputBinding;
+        vk::VertexInputAttributeDescription vertexInputAttribute;
+        vk::PipelineVertexInputStateCreateInfo vertexInputState;
         vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState;
         vk::PipelineRasterizationStateCreateInfo rasterizationState;
         vk::PipelineColorBlendStateCreateInfo colorBlendState;
@@ -37,6 +40,7 @@ protected:
         vk::PipelineViewportStateCreateInfo viewportState;
         vk::PipelineDynamicStateCreateInfo dynamicState;
         std::array<vk::PipelineShaderStageCreateInfo, 2> shaderStages;
+        std::array<vk::DynamicState, 2> dynamicStateEnables = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
     } defaultState_;
 
 private:

@@ -25,20 +25,21 @@ GraphicsPipeline::GraphicsPipeline(const GraphicsPipelineInfo& info, vk::Pipelin
 
     assert(info.vs->GetType() == ShaderType::Vertex);
     assert(info.fs->GetType() == ShaderType::Fragment);
-    defaultState_.shaderStages[0].setStage(vk::ShaderStageFlagBits::eVertex).setModule(info.vs->GetHandle());
-    defaultState_.shaderStages[1].setStage(vk::ShaderStageFlagBits::eFragment).setModule(info.fs->GetHandle());
+    defaultState_.shaderStages[0].setStage(vk::ShaderStageFlagBits::eVertex).setModule(info.vs->GetHandle()).setPName("main");
+    defaultState_.shaderStages[1].setStage(vk::ShaderStageFlagBits::eFragment).setModule(info.fs->GetHandle()).setPName("main");
 
     assert(info.renderPass != nullptr);
     vk::GraphicsPipelineCreateInfo pipelineCI {};
     pipelineCI.setRenderPass(info.renderPass->GetHandle())
         .setLayout(*layout_)
+        .setPVertexInputState(&defaultState_.vertexInputState)
         .setPInputAssemblyState(&defaultState_.inputAssemblyState)
         .setPRasterizationState(&defaultState_.rasterizationState)
         .setPColorBlendState(&defaultState_.colorBlendState)
         .setPDepthStencilState(&defaultState_.depthStencilState)
         .setPMultisampleState(&defaultState_.multisampleState)
-        .setPViewportState(&defaultState_.viewportState)
         .setPDynamicState(&defaultState_.dynamicState)
+        .setPViewportState(&defaultState_.viewportState)
         .setStages(defaultState_.shaderStages);
 
     auto [ret, pipelineUnique] = VkContext::GetInstance().GetDevice().createGraphicsPipelineUnique(cache, pipelineCI);
@@ -57,6 +58,11 @@ GraphicsPipeline::GraphicsPipeline(const GraphicsPipelineInfo& info, vk::Pipelin
 
 void GraphicsPipeline::InitDefaultSettings()
 {
+    // Specify vertex input state
+    defaultState_.vertexInputBinding.setBinding(0).setStride(2).setInputRate(vk::VertexInputRate::eVertex);
+    defaultState_.vertexInputAttribute.setLocation(0).setBinding(0).setFormat(vk::Format::eR32G32Sfloat);
+    defaultState_.vertexInputState.setVertexBindingDescriptions(defaultState_.vertexInputBinding)
+        .setVertexAttributeDescriptions(defaultState_.vertexInputAttribute);
     defaultState_.inputAssemblyState.setTopology(vk::PrimitiveTopology::eTriangleList).setPrimitiveRestartEnable(vk::False);
     defaultState_.rasterizationState.setPolygonMode(vk::PolygonMode::eFill).setCullMode(vk::CullModeFlagBits::eNone)
         .setFrontFace(vk::FrontFace::eClockwise);
@@ -64,8 +70,7 @@ void GraphicsPipeline::InitDefaultSettings()
     defaultState_.depthStencilState.setDepthTestEnable(vk::True).setStencilTestEnable(vk::True)
         .setDepthCompareOp(vk::CompareOp::eLessOrEqual);
     defaultState_.viewportState.setViewportCount(1).setScissorCount(1);
-    std::array<vk::DynamicState, 2> dynamicStateEnables = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
-    defaultState_.dynamicState.setDynamicStates(dynamicStateEnables);
+    defaultState_.dynamicState.setDynamicStates(defaultState_.dynamicStateEnables);
 }
 
 } // namespace X::Backend

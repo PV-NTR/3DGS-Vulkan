@@ -13,7 +13,7 @@ class RenderPass : public VkResourceBase {
 public:
     [[nodiscard]] static std::shared_ptr<RenderPass> Make();
     [[nodiscard]] static std::shared_ptr<RenderPass> MakeDisplay(vk::Format targetFormat = vk::Format::eR8G8B8A8Unorm,
-        bool load = false);
+        bool depthStencil = false, bool load = false);
     virtual ~RenderPass() = default;
     vk::RenderPass GetHandle() { return renderPass_; }
     void AddAttachment(vk::Format format, bool depthStencil = false, bool present = false, bool load = false);
@@ -24,7 +24,7 @@ public:
 
 protected:
     RenderPass() noexcept = default;
-    RenderPass(vk::Format targetFormat, bool load) noexcept;
+    RenderPass(vk::Format targetFormat, bool depthStencil, bool load) noexcept;
 
 private:
     vk::UniqueRenderPass renderPassUnique_;

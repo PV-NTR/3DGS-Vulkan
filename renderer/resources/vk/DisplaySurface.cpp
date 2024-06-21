@@ -39,12 +39,20 @@ DisplaySurface::DisplaySurface(void* instance, void* window)
         return;
     }
     surfaceUnique_.swap(surfaceUnique);
-    surface_ = *surfaceUnique;
+    surface_ = *surfaceUnique_;
     presentQueueIdx_ = VkContext::GetInstance().QueryPresentQueueFamilies(surface_);
     if (presentQueueIdx_ == UINT32_MAX) {
         XLOGE("No valid present queue!");
     }
     screenSize_ = Backend::VkResourceManager::GetInstance().GetBufferManager().RequireBuffer({ 2, BufferType::Uniform });
+    InitDisplaySemaphores();
+}
+
+void DisplaySurface::InitDisplaySemaphores()
+{
+    acquireFrameSignalSemaphore_ = VkContext::GetInstance().GetDevice().createSemaphore({}).value;
+    presentWaitSemaphore_ = VkContext::GetInstance().GetDevice().createSemaphore({}).value;
+    assert(acquireFrameSignalSemaphore_ && presentWaitSemaphore_);
 }
 
 void DisplaySurface::SetupSwapchain()
@@ -60,6 +68,22 @@ void DisplaySurface::SetupSwapchain()
 
     imageCount_ = std::max(std::min(imageCount_, surfCaps.maxImageCount), surfCaps.minImageCount);
 
+    // Find a supported composite alpha format (not all devices support alpha opaque)
+    vk::CompositeAlphaFlagBitsKHR compositeAlpha = vk::CompositeAlphaFlagBitsKHR::eOpaque;
+    // Simply select the first composite alpha format available
+    std::vector<vk::CompositeAlphaFlagBitsKHR> compositeAlphaFlags = {
+        vk::CompositeAlphaFlagBitsKHR::eOpaque,
+        vk::CompositeAlphaFlagBitsKHR::ePreMultiplied,
+        vk::CompositeAlphaFlagBitsKHR::ePostMultiplied,
+        vk::CompositeAlphaFlagBitsKHR::eInherit,
+    };
+    for (auto& compositeAlphaFlag : compositeAlphaFlags) {
+        if (surfCaps.supportedCompositeAlpha & compositeAlphaFlag) {
+            compositeAlpha = compositeAlphaFlag;
+            break;
+        };
+    }
+
     vk::SwapchainCreateInfoKHR swapchainCI {};
     // TODO: can unique handle set old swapchain?
     swapchainCI.setSurface(surface_)
@@ -72,7 +96,7 @@ void DisplaySurface::SetupSwapchain()
         .setImageSharingMode(vk::SharingMode::eExclusive)
         .setQueueFamilyIndices(presentQueueIdx_)
         .setPreTransform(vk::SurfaceTransformFlagBitsKHR::eIdentity)
-        .setCompositeAlpha(vk::CompositeAlphaFlagBitsKHR::eInherit)
+        .setCompositeAlpha(compositeAlpha)
         .setPresentMode(vk::PresentModeKHR::eFifo)
         .setClipped(vk::True)
         .setOldSwapchain(*swapchain_);
@@ -94,13 +118,15 @@ std::vector<std::shared_ptr<Image>> DisplaySurface::GetImagesFromSwapchain()
     std::vector<std::shared_ptr<Image>> images;
     images.reserve(imageCount_);
     for (auto&& vkImage : vkImages) {
-        images.emplace_back(new Image(vkImage, ImageInfo{ width_, height_ }));
+        images.emplace_back(new Image(vkImage, ImageInfo{ width_, height_ }, { vk::ImageLayout::eUndefined, vk::AccessFlagBits::eNone, vk::PipelineStageFlagBits::eBottomOfPipe }));
+        images.back()->CreateView();
     }
     return images;
 }
 
 uint32_t DisplaySurface::NextFrame()
 {
+    VkContext::GetInstance().GetDevice().waitIdle();
     auto nextIndex = VkContext::GetInstance().GetDevice().acquireNextImageKHR(*swapchain_, UINT64_MAX, acquireFrameSignalSemaphore_, {});
     currentFrame_ = nextIndex.value;
     return currentFrame_;
@@ -109,11 +135,15 @@ uint32_t DisplaySurface::NextFrame()
 void DisplaySurface::Present()
 {
     auto queue = VkContext::GetInstance().AcquireGraphicsQueue(presentQueueIdx_);
+    std::array<vk::Semaphore, 2> waitSemaphores { presentWaitSemaphore_, acquireFrameSignalSemaphore_ };
     vk::PresentInfoKHR presentInfo{};
     presentInfo.setImageIndices(currentFrame_)
         .setSwapchains(*swapchain_)
-        .setWaitSemaphores(presentWaitSemaphore_);
-    queue.presentKHR(presentInfo);
+        .setWaitSemaphores(waitSemaphores);
+    auto ret = queue.presentKHR(presentInfo);
+    if (ret != vk::Result::eSuccess) {
+        XLOGE("Present failed, errCode: %d", ret);
+    }
 }
 
 void DisplaySurface::SetupSwapSurfaces(bool enableDepthStencil)
@@ -133,6 +163,7 @@ void DisplaySurface::SetupSwapSurfaces(bool enableDepthStencil)
         swapSurface->Init();
         swapSurfaces_.emplace_back(std::move(swapSurface));
     }
+    NextFrame();
 }
 
 void DisplaySurface::UpdateScreenSizeBuffer()

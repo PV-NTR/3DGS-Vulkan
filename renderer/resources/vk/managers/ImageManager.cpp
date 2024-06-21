@@ -28,6 +28,7 @@ std::shared_ptr<Image> ImageManager::RequireImage(const ImageInfo& info)
             this->Recycle(imagePtr);
         });
     assert(ret != nullptr);
+    ret->CreateView();
     freeResources_.erase(key.packed_);
     return ret;
 }

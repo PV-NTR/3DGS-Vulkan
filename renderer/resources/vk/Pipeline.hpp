@@ -17,9 +17,11 @@ public:
     };
     virtual ~Pipeline();
 
-    bool BindUniformBuffers(const std::vector<std::shared_ptr<Buffer>>& buffers, uint32_t bindSet, uint32_t binding);
-    bool BindStorageBuffers(const std::vector<std::shared_ptr<Buffer>>& buffers, uint32_t bindSet, uint32_t binding);
-    bool BindTextures(const std::vector<std::shared_ptr<Image>>& images, uint32_t bindSet, uint32_t binding);
+
+    bool BindBuffer(std::shared_ptr<Buffer> buffer, uint32_t bindSet, uint32_t binding);
+    bool BindUniformBuffers(const std::vector<std::shared_ptr<Buffer>>& buffers, uint32_t bindSet, uint32_t startBinding);
+    bool BindStorageBuffers(const std::vector<std::shared_ptr<Buffer>>& buffers, uint32_t bindSet, uint32_t startBinding);
+    bool BindTextures(const std::vector<std::shared_ptr<Image>>& images, uint32_t bindSet, uint32_t startBinding);
     bool BindDescriptorSets(vk::CommandBuffer cmdBuffer);
 
 protected:

@@ -6,6 +6,7 @@
 
 #include "common/VkCommon.hpp"
 #include "utils/Singleton.hpp"
+#include "resources/vk/VkResource.hpp"
 
 namespace X::Backend {
 
@@ -31,6 +32,9 @@ public:
         return device_;
     }
 
+    vk::CommandPool GetPresentCmdPool() { return presentPool_.get(); }
+    vk::CommandPool GetComputeCmdPool() { return computePool_.get(); }
+
 private:
     friend class DisplaySurface;
     void LoadVkLibrary();
@@ -39,6 +43,7 @@ private:
     bool QueryQueueFamilies();
     bool CreateDeviceAndQueues();
     bool InitAllocator();
+    bool CreateCmdPools();
 
     void GetSupportedInstanceExtensions();
     void CollectEnabledInstanceExtensions();
@@ -59,7 +64,6 @@ private:
         return instance_;
     }
 
-
 private:
     vk::PhysicalDevice physicalDevice_;
 
@@ -73,6 +77,7 @@ private:
     uint32_t graphicsQueueFamilyIdx_ = UINT32_MAX, computeQueueFamilyIdx_ = UINT32_MAX;
     std::atomic<uint32_t> graphicsQueueIdx_ = { 0 };
     std::atomic<uint32_t> computeQueueIdx_ = { 0 };
+    CommandPool presentPool_, computePool_;
 
     PFN_vkGetInstanceProcAddr entryFunc_ = nullptr;
 

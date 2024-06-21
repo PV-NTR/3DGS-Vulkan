@@ -14,7 +14,7 @@ namespace X {
 
 class Scene {
 public:
-    Scene() = default;
+    Scene();
     Scene(Scene&& other) = default;
     virtual ~Scene() = default;
     void AddObject(Object&& object);
@@ -30,6 +30,7 @@ public:
 
 private:
     Scene(const Scene& other) = delete;
+    void UpdateCameraData();
 
 private:
     friend class Renderer;
@@ -38,9 +39,8 @@ private:
     UIOverlay overlay_;
     Camera camera_;
 
-    std::bitset<32> objectStatus_;
-    std::vector<std::shared_ptr<Backend::Buffer>> ssboIntrinsic_;
-    std::vector<std::shared_ptr<Backend::Buffer>> ssboExtrinsic_;
+    std::bitset<32> objectStatus_ = 0;
+    std::vector<std::shared_ptr<Backend::Buffer>> ssboSplatData_;
     std::shared_ptr<Backend::Buffer> uboPrefixSums_;
     std::vector<std::shared_ptr<Backend::Buffer>> uboModels_;
     std::shared_ptr<Backend::Buffer> uboCamera_;

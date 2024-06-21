@@ -26,8 +26,11 @@ public:
 
     uint32_t NextFrame();
     std::shared_ptr<Surface> GetCurrentSwapSurface() const { return swapSurfaces_[currentFrame_]; }
+    std::shared_ptr<Image> GetCurrentDisplayImage() const { return swapSurfaces_[currentFrame_]->attachmentResources_[0]; }
     std::shared_ptr<Buffer> GetScreenSizeBuffer() const { return screenSize_; }
     bool Resized() const { return resized_; }
+    uint32_t GetWidth() const { return width_; }
+    uint32_t GetHeight() const { return height_; }
 
 protected:
 #ifdef HOST_ANDROID
@@ -38,6 +41,7 @@ protected:
 
 private:
     std::vector<std::shared_ptr<Image>> GetImagesFromSwapchain();
+    void InitDisplaySemaphores();
 
 private:
     vk::UniqueSurfaceKHR surfaceUnique_;

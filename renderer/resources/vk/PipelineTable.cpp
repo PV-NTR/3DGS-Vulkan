@@ -35,7 +35,7 @@ PipelineTable::~PipelineTable()
 
 std::shared_ptr<GraphicsPipeline> PipelineTable::RequireGraphicsPipeline(const GraphicsPipelineInfo& info)
 {
-    if (pipelines_.find(info.name) == pipelines_.end()) {
+    if (pipelines_.find(info.name + "-graphics") == pipelines_.end()) {
         if (pipelines_.size() >= TABLE_SIZE) {
             std::string name = pipelineQueue_.front();
             pipelineQueue_.pop();
@@ -49,7 +49,7 @@ std::shared_ptr<GraphicsPipeline> PipelineTable::RequireGraphicsPipeline(const G
 
 std::shared_ptr<ComputePipeline> PipelineTable::RequireComputePipeline(const ComputePipelineInfo& info)
 {
-    if (pipelines_.find(info.name) == pipelines_.end()) {
+    if (pipelines_.find(info.name + "-compute") == pipelines_.end()) {
         if (pipelines_.size() >= TABLE_SIZE) {
             std::string name = pipelineQueue_.front();
             pipelineQueue_.pop();

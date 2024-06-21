@@ -26,8 +26,11 @@ std::vector<const char*> VkContext::requiredInstanceLayers_ = {
 
 std::vector<const char*> VkContext::requiredDeviceExts_ = {
 #ifdef HOST_WIN32
-    "VK_KHR_swapchain"
+    "VK_KHR_swapchain",
 #endif
+    "VK_KHR_buffer_device_address",
+    "VK_KHR_synchronization2",
+    "VK_KHR_timeline_semaphore"
 };
 
 void VkContext::Init()
@@ -40,6 +43,7 @@ void VkContext::Init()
     CreateDeviceAndQueues();
 
     InitAllocator();
+    CreateCmdPools();
 }
 
 bool VkContext::IsReady()
@@ -366,7 +370,7 @@ bool VkContext::InitAllocator()
     allocatorCI.flags = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
     allocatorCI.physicalDevice = physicalDevice_;
     allocatorCI.device = device_;
-    allocatorCI.preferredLargeHeapBlockSize = 4096;     // TODO: Find a property value
+    allocatorCI.preferredLargeHeapBlockSize = 1024;     // TODO: Find a property value
     allocatorCI.pVulkanFunctions = &vmaFuncs;
     allocatorCI.instance = instance_;
     allocatorCI.vulkanApiVersion = VK_API_VERSION_1_3;
@@ -376,6 +380,28 @@ bool VkContext::InitAllocator()
         XLOGE("Create VmaAllocator failed, errCode: %d", ret);
         return false;
     }
+    return true;
+}
+
+bool VkContext::CreateCmdPools()
+{
+    vk::CommandPoolCreateInfo poolCI{};
+    poolCI.setFlags(vk::CommandPoolCreateFlagBits::eResetCommandBuffer);
+    poolCI.setQueueFamilyIndex(graphicsQueueFamilyIdx_);
+    auto [presentRet, presentPoolUnique] = device_.createCommandPoolUnique(poolCI);
+    if (presentRet != vk::Result::eSuccess) {
+        XLOGE("Create Present Pool failed, errCode: %d", presentRet);
+        return false;
+    }
+    presentPool_.swap(presentPoolUnique);
+
+    poolCI.setQueueFamilyIndex(computeQueueFamilyIdx_);
+    auto [computeRet, computePoolUnique] = device_.createCommandPoolUnique(poolCI);
+    if (computeRet != vk::Result::eSuccess) {
+        XLOGE("Create Compute Pool failed, errCode: %d", computeRet);
+        return false;
+    }
+    computePool_.swap(computePoolUnique);
     return true;
 }
 

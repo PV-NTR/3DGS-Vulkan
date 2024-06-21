@@ -15,21 +15,21 @@ layout (set = 1, binding = 0, std430) restrict readonly buffer SSBO_PREPROCESSED
     Preprocessed preprocessed[];
 };
 
-layout (binding = 2) uniform UBO_OBJECT_INDEX_PREFIXSUM {
+layout (binding = 1) uniform UBO_OBJECT_INDEX_PREFIXSUM {
     uint prefixSums[];
 };
 
-layout (binding = 3) uniform UBO_MODEL {
+layout (binding = 2) uniform UBO_MODEL {
     mat4 models[];
 };
 
-layout (binding = 4) uniform UBO_CAMERA {
+layout (binding = 3) uniform UBO_CAMERA {
     mat4 view;
     mat4 proj;
     vec2 focal;
 };
 
-layout (binding = 5) uniform UBO_SCREEN {
+layout (binding = 4) uniform UBO_SCREEN {
     vec2 viewport;
 };
 

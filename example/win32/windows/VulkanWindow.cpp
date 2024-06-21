@@ -195,9 +195,7 @@ void VulkanWindow::RenderLoop()
                 break;
             }
         }
-        if (scene_->SceneChanged()) {
-            renderer_->UpdateScene(scene_.get());
-        }
+        renderer_->UpdateScene(scene_.get());
         renderer_->DrawFrame();
     }
 }

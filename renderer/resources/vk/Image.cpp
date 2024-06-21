@@ -15,13 +15,16 @@ Image::Image(VmaAllocator allocator, const ImageInfo& info) noexcept
         flag |= vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eColorAttachment;
     }
     image_ = VmaImage(allocator, { info.width_, info.height_, info.format_, flag, vk::MemoryPropertyFlagBits::eDeviceLocal });
-    view_ = std::make_shared<ImageView>(shared_from_this());
 }
 
-Image::Image(vk::Image image, const ImageInfo& info) noexcept
-    : image_(image), info_(info), view_(std::make_shared<ImageView>(shared_from_this()))
+Image::Image(vk::Image image, const ImageInfo& info, VmaImageState&& state) noexcept
+    : image_(image, std::move(state)), info_(info)
 {
+}
 
+void Image::CreateView()
+{
+    view_ = std::make_shared<ImageView>(shared_from_this());
 }
 
 } // namespace X::Backend

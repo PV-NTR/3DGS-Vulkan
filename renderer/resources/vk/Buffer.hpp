@@ -26,6 +26,7 @@ public:
     uint64_t GetSize() { return info_.size_; }
     BufferType GetType() { return info_.type_; }
     void Update(const void* data, size_t size, size_t offset);
+    void Init(uint8_t value);
 
 private:
     Buffer(VmaAllocator allocator, const BufferInfo& info) noexcept;

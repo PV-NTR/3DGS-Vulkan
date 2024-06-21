@@ -1,7 +1,7 @@
 #version 450
 
 layout (location = 0) in mediump vec4 inColor;
-layout (location = 1) in mediump vec4 inPos;
+layout (location = 1) in mediump vec2 inPos;
 
 layout (location = 0) out mediump vec4 outColor;
 

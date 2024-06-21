@@ -85,6 +85,7 @@ void Surface::CreateFramebuffer()
 	}
 	fbCI.setRenderPass(renderPass_->GetHandle())
 		.setAttachments(attachments)
+		.setLayers(1)
 		.setWidth(width_)
 		.setHeight(height_);
 	auto [ret, fbUnique] = VkContext::GetInstance().GetDevice().createFramebufferUnique(fbCI);

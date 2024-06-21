@@ -11,6 +11,8 @@ namespace X::Backend {
 
 class ShaderCompiler : public Singleton<ShaderCompiler> {
 public:
+    ShaderCompiler();
+    virtual ~ShaderCompiler();
     bool CompileShader(const std::string& code, ShaderType type, std::vector<uint32_t>& spirv);
 
 private:

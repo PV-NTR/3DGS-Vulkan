@@ -2,40 +2,35 @@
 #extension GL_KHR_vulkan_glsl : enable
 
 // TODO: compress data
-struct Intrinsic {
-    vec3 center;
-    mat3 cov;
+struct SplatData {
+    float pos[3];
+    float n[3];
+    float color[3];
+    float shs[45];
     float opacity;
-    vec3 color;
+    float scale[3];
+    float rot[4];
 };
 
-struct Extrinsic {
-    vec3 shs[15];
+layout (binding = 0, std430) restrict readonly buffer SSBO_SPLATDATA {
+    SplatData splatData[];
 };
 
-layout (binding = 0, std430) restrict readonly buffer SSBO_VIEW_INDEPENDENT {
-    Intrinsic intrinsic[];
+layout (binding = 1) uniform UBO_OBJECT_INDEX_PREFIXSUM {
+    uint prefixSums[32];
 };
 
-layout (binding = 1, std430) restrict readonly buffer SSBO_VIEW_DEPENDENT {
-    Extrinsic extrinsic[];
+layout (binding = 2) uniform UBO_MODEL {
+    mat4 models[32];
 };
 
-layout (binding = 2) uniform UBO_OBJECT_INDEX_PREFIXSUM {
-    uint prefixSums[];
-};
-
-layout (binding = 3) uniform UBO_MODEL {
-    mat4 models[];
-};
-
-layout (binding = 4) uniform UBO_CAMERA {
+layout (binding = 3) uniform UBO_CAMERA {
     mat4 view;
     mat4 proj;
     vec2 focal;
 };
 
-layout (binding = 5) uniform UBO_SCREEN {
+layout (binding = 4) uniform UBO_SCREEN {
     vec2 viewport;
 };
 
@@ -58,8 +53,27 @@ const float SH_C3[7] = float[](
     -0.45704579946446573, 1.445305721320277027, -0.59004358992664351
 );
 
-vec3 CalcColor(vec3 color, vec3[15] shs, float x, float y, float z)
+mat3 QuatToMat3(vec4 q)
 {
+    mat3 result;
+    result[0][0] = 1 - 2 * q[1] * q[1] - 2 * q[2] * q[2];
+    result[0][1] = 2 * q[0] * q[1] - 2 * q[2] * q[3];
+    result[0][2] = 2 * q[0] * q[2] + 2 * q[1] * q[3];
+    result[1][0] = 2 * q[0] * q[1] + 2 * q[2] * q[3];
+    result[1][1] = 1 - 2 * q[0] * q[0] - 2 * q[2] * q[2];
+    result[1][2] = 2 * q[1] * q[2] - 2 * q[0] * q[3];
+    result[2][0] = 2 * q[0] * q[2] - 2 * q[1] * q[3];
+    result[2][1] = 2 * q[1] * q[2] + 2 * q[0] * q[3];
+    result[2][2] = 1 - 2 * q[0] * q[0] - 2 * q[1] * q[1];
+    return result;
+}
+
+vec3 CalcColor(vec3 color, float[45] shsFloats, float x, float y, float z)
+{
+    vec3 shs[15];
+    for (int i = 0; i < 15; i++) {
+        shs[i] = vec3(shsFloats[3 * i], shsFloats[3 * i + 1], shsFloats[3 * i + 2]);
+    }
     vec3 color0 = color * SH_C0;
     vec3 color1 = SH_C1 * (-shs[0] * y + shs[1] * z + shs[2] * x);
 
@@ -81,15 +95,17 @@ vec3 CalcColor(vec3 color, vec3[15] shs, float x, float y, float z)
 void main()
 {
     // TODO: move common instance computing into compute shader to reduce computation
-    Intrinsic splat = intrinsic[gl_InstanceIndex];
-    Extrinsic shs = extrinsic[gl_InstanceIndex];
+    SplatData splat = splatData[gl_InstanceIndex];
 
     uint objectID = 0;
-    while (prefixSums[objectID] < gl_InstanceIndex) {
-        objectID++;
+    for (int i = 0; i < 32; i++) {
+        if (prefixSums[objectID] >= gl_InstanceIndex) {
+            objectID = i;
+            break;
+        }
     }
 
-    vec3 center = splat.center;
+    vec3 center = vec3(splat.pos[0], splat.pos[1], splat.pos[2]);
     mat4 mv = view * models[objectID];
     vec4 cam = mv * vec4(center, 1.0f);
     vec4 pos2d = proj * cam;
@@ -105,7 +121,13 @@ void main()
         0.f, 0.f, 0.f
     );
     mat3 T = transpose(mat3(mv)) * J;
-    mat3 cov2d = transpose(T) * splat.cov * T;
+    mat3 rot = QuatToMat3(vec4(splat.rot[0], splat.rot[1], splat.rot[2], splat.rot[3]));
+    mat3 scale = mat3(1.0f);
+    scale[0][0] = splat.scale[0];
+    scale[1][1] = splat.scale[1];
+    scale[2][2] = splat.scale[2];
+    mat3 cov = scale * rot;
+    mat3 cov2d = transpose(T) * transpose(cov) * cov * T;
 
     cov2d[0][0] += 0.3f;
     cov2d[1][1] += 0.3f;
@@ -120,7 +142,7 @@ void main()
     vec2 minorAxis = min(sqrt(2.0 * lambda2), 1024.0) * vec2(diagonalVector.y, -diagonalVector.x);
 
     vec3 dir = normalize(center - inverse(view)[3].xyz);
-    vec3 color = CalcColor(splat.color, shs.shs, dir.x, dir.y, dir.z);
+    vec3 color = CalcColor(vec3(splat.color[0], splat.color[1], splat.color[2]), splat.shs, dir.x, dir.y, dir.z);
     outColor = vec4(color, splat.opacity);
     outPos = inPos;
 

@@ -11,15 +11,17 @@ std::shared_ptr<RenderPass> RenderPass::Make()
     return std::shared_ptr<RenderPass>(new RenderPass());
 }
 
-std::shared_ptr<RenderPass> RenderPass::MakeDisplay(vk::Format targetFormat, bool load)
+std::shared_ptr<RenderPass> RenderPass::MakeDisplay(vk::Format targetFormat, bool depthStencil, bool load)
 {
-    return std::shared_ptr<RenderPass>(new RenderPass(targetFormat, load));
+    return std::shared_ptr<RenderPass>(new RenderPass(targetFormat, depthStencil, load));
 }
 
-RenderPass::RenderPass(vk::Format targetFormat, bool load) noexcept
+RenderPass::RenderPass(vk::Format targetFormat, bool depthStencil, bool load) noexcept
 {
     this->AddAttachment(targetFormat, false, true);
-    this->AddAttachment(vk::Format::eD32SfloatS8Uint, true, false);
+    if (depthStencil) {
+        this->AddAttachment(vk::Format::eD32SfloatS8Uint, true, false);
+    }
     this->Init();
 }
 
@@ -66,7 +68,7 @@ void RenderPass::Init()
         if (i == depthStencil_) {
             i++;
         }
-        colorRef.setAttachment(i++).setLayout(vk::ImageLayout::eAttachmentOptimal);
+        colorRef.setAttachment(i++).setLayout(vk::ImageLayout::eColorAttachmentOptimal);
     }
 
     vk::AttachmentReference depthRef {};
