@@ -44,7 +44,7 @@ DisplaySurface::DisplaySurface(void* instance, void* window)
     if (presentQueueIdx_ == UINT32_MAX) {
         XLOGE("No valid present queue!");
     }
-    screenSize_ = Backend::VkResourceManager::GetInstance().GetBufferManager().RequireBuffer({ 2, BufferType::Uniform });
+    screenSize_ = Backend::VkResourceManager::GetInstance().GetBufferManager().RequireBuffer({ 8, BufferType::Uniform });
     InitDisplaySemaphores();
 }
 
@@ -169,8 +169,8 @@ void DisplaySurface::SetupSwapSurfaces(bool enableDepthStencil)
 void DisplaySurface::UpdateScreenSizeBuffer()
 {
     if (resized_) {
-        uint32_t data[2] = { width_, height_ };
-        screenSize_->Update(data, 2, 0);
+        float data[2] = { width_, height_ };
+        screenSize_->Update(data, 8, 0);
         resized_ = false;
     }
 }

@@ -6,6 +6,7 @@
 #include "Renderer.hpp"
 #include "resources/vk/VkContext.hpp"
 #include "resources/vk/VkResourceManager.hpp"
+#include "scenes/Splat.hpp"
 
 void VulkanWindow::HandleMouseMove(int32_t x, int32_t y)
 {
@@ -180,6 +181,10 @@ void VulkanWindow::InitSurface()
 void VulkanWindow::LoadScene()
 {
     scene_ = std::make_unique<X::Scene>();
+    // TODO: use gui callback to load splat file
+    auto splat = X::Splat::MakeUnique(GetAssetPath() + "/demo_fox_gs.ply");
+    scene_->AddObject(std::move(splat));
+    scene_->GetCamera().SetPerspective(1.0f, 1.0f, 0.001f, 100.f);
 }
 
 void VulkanWindow::RenderLoop()
@@ -195,6 +200,10 @@ void VulkanWindow::RenderLoop()
                 break;
             }
         }
+        auto current = std::chrono::high_resolution_clock::now();
+        auto frameTime = std::chrono::duration<double, std::milli>(current - frameStart_).count() / 1000.0f;
+        frameStart_ = current;
+        scene_->GetCamera().Update(frameTime);
         renderer_->UpdateScene(scene_.get());
         renderer_->DrawFrame();
     }

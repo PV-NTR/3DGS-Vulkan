@@ -15,10 +15,6 @@ layout (set = 1, binding = 0, std430) restrict readonly buffer SSBO_PREPROCESSED
     Preprocessed preprocessed[];
 };
 
-layout (binding = 1) uniform UBO_OBJECT_INDEX_PREFIXSUM {
-    uint prefixSums[];
-};
-
 layout (binding = 2) uniform UBO_MODEL {
     mat4 models[];
 };

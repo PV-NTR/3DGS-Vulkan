@@ -17,12 +17,13 @@ public:
     Scene();
     Scene(Scene&& other) = default;
     virtual ~Scene() = default;
-    void AddObject(Object&& object);
+    void AddObject(std::unique_ptr<Object>&& object);
     void ChangeOverlayState();
     void ChangeCameraType();
     Camera::CameraType GetCameraType() const { return camera_.GetType(); };
     void UpdateCameraState();
     bool OverlayVisible();
+    bool ObjectChanged() const;
     bool SceneChanged() const;
     bool OverlayChanged() const;
     Camera& GetCamera() { return camera_; }
@@ -35,14 +36,14 @@ private:
 private:
     friend class Renderer;
     friend class GaussianRenderer;
-    std::vector<std::shared_ptr<Object>> objects_;
+    std::vector<std::unique_ptr<Object>> objects_;
     UIOverlay overlay_;
     Camera camera_;
 
     std::bitset<32> objectStatus_ = 0;
     std::vector<std::shared_ptr<Backend::Buffer>> ssboSplatData_;
     std::shared_ptr<Backend::Buffer> uboPrefixSums_;
-    std::vector<std::shared_ptr<Backend::Buffer>> uboModels_;
+    std::shared_ptr<Backend::Buffer> uboModels_;
     std::shared_ptr<Backend::Buffer> uboCamera_;
     uint32_t totalPointCount_ = 0;
 };

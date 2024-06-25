@@ -17,17 +17,19 @@ Scene::Scene()
     UpdateCameraData();
     uboPrefixSums_ = Backend::VkResourceManager::GetInstance().GetBufferManager().RequireBuffer({ 32 * 4, BufferType::Uniform });
     uboPrefixSums_->Init(0);
+    uboModels_ = Backend::VkResourceManager::GetInstance().GetBufferManager().RequireBuffer({ 32 * sizeof(glm::mat4), BufferType::Uniform });
+    uboModels_->Init(0);
 }
 
-void Scene::AddObject(Object&& object)
+void Scene::AddObject(std::unique_ptr<Object>&& object)
 {
-    objects_.emplace_back(std::make_unique<Object>(object));
+    objects_.emplace_back(std::move(object));
 
     Object* obj = objects_.back().get();
     if (obj->GetType() == Object::Type::Splat) {
         Splat* splat = static_cast<Splat*>(obj);
         totalPointCount_ += splat->GetPointCount();
-        uboPrefixSums_->Update(&totalPointCount_, 1, objects_.size() - 1);
+        uboPrefixSums_->Update(&totalPointCount_, 4, 4 * (objects_.size() - 1));
         // TODO: compress data
         ssboSplatData_.emplace_back(Backend::VkResourceManager::GetInstance().GetBufferManager().RequireBuffer({ splat->GetPointCount() * sizeof(RawGaussianPoint), BufferType::Storage}));
         ssboSplatData_.back()->Update(splat->GetPointData(), splat->GetPointCount() * sizeof(RawGaussianPoint), 0);
@@ -65,7 +67,8 @@ void Scene::UpdateData()
         for (uint32_t i = 0; i < objects_.size(); i++) {
             if (objectStatus_[i]) {
                 glm::mat4 model = objects_[i]->GetTransform();
-                uboModels_[i]->Update(&model, 16, 0);
+                uboModels_->Update(&model, 16 * 4, i * 16 * 4);
+                objectStatus_[i] = 0;
             }
         }
     }
@@ -82,6 +85,11 @@ void Scene::UpdateData()
 bool Scene::OverlayVisible()
 {
     return overlay_.IsVisible();
+}
+
+bool Scene::ObjectChanged() const
+{
+    return objectStatus_ != 0;
 }
 
 bool Scene::OverlayChanged() const

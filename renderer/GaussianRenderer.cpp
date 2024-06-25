@@ -5,9 +5,9 @@
 
 namespace X {
 
-const std::vector<float> GaussianRenderer::vboData_ = {
-    -2.0f, -2.0f, 2.0f, -2.0f, 2.0f, 2.0f, -2.0f, 2.0f
-};
+//const std::vector<float> GaussianRenderer::vboData_ = {
+//    -2.0f, -2.0f, 2.0f, -2.0f, 2.0f, 2.0f, -2.0f, 2.0f
+//};
 
 GaussianRenderer::GaussianRenderer()
     : Renderer(true)
@@ -78,6 +78,12 @@ bool GaussianRenderer::OnInit(Backend::DisplaySurface* surface)
     return true;
 }
 
+void GaussianRenderer::InitAuxiliaryBuffers(Scene* scene)
+{
+    preComputed_ = Backend::VkResourceManager::GetInstance().GetBufferManager().RequireBuffer(
+        { scene->totalPointCount_ * 64, BufferType::Storage });
+}
+
 void GaussianRenderer::RecordComputeCommands(Scene* scene)
 {
     auto cmdBuffer = GetComputeCmdBuffer();
@@ -87,9 +93,9 @@ void GaussianRenderer::RecordComputeCommands(Scene* scene)
 
     // TODO: prepare buffer from scene
     computePipeline_->BindStorageBuffers(scene->ssboSplatData_, 0, 0);
-    computePipeline_->BindStorageBuffers(preComputed_, 1, 0);
+    computePipeline_->BindStorageBuffers({ preComputed_ }, 1, 0);
     computePipeline_->BindUniformBuffers({ scene->uboPrefixSums_ }, 0, 1);
-    computePipeline_->BindUniformBuffers(scene->uboModels_, 0, 2);
+    computePipeline_->BindUniformBuffers({ scene->uboModels_ }, 0, 2);
     computePipeline_->BindUniformBuffers({ scene->uboCamera_ }, 0, 3);
     computePipeline_->BindUniformBuffers({ surface_->GetScreenSizeBuffer() }, 0, 4);
     computePipeline_->BindDescriptorSets(cmdBuffer);
@@ -107,9 +113,9 @@ void GaussianRenderer::OnRecordGraphicsCommands(Scene* scene)
     cmdBuffer.bindVertexBuffers(0, vbo_->GetHandle(), offset);
     // TODO: prepare buffer from scene
     pipeline_->BindStorageBuffers(scene->ssboSplatData_, 0, 0);
-    pipeline_->BindStorageBuffers(preComputed_, 1, 0);
+    pipeline_->BindStorageBuffers({ preComputed_ }, 1, 0);
     pipeline_->BindUniformBuffers({ scene->uboPrefixSums_ }, 0, 1);
-    pipeline_->BindUniformBuffers(scene->uboModels_, 0, 2);
+    pipeline_->BindUniformBuffers({ scene->uboModels_ }, 0, 2);
     pipeline_->BindUniformBuffers({ scene->uboCamera_ }, 0, 3);
     pipeline_->BindUniformBuffers({ surface_->GetScreenSizeBuffer() }, 0, 4);
     cmdBuffer.setViewport(0, { { 0.0f, 0.0f, static_cast<float>(surface_->GetWidth()), static_cast<float>(surface_->GetHeight()), 0.0f, 1.0f } });

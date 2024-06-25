@@ -25,6 +25,7 @@ protected:
     bool AllocateCommandBuffers();
     virtual void RecordGraphicsCommands(Scene* scene);
     virtual void RecordComputeCommands(Scene* scene) = 0;
+    virtual void InitAuxiliaryBuffers(Scene* scene) = 0;
 
     virtual void SubmitGraphicsCommands();
 
@@ -55,6 +56,7 @@ private:
     vk::CommandBuffer presentCmdBuffer_, computeCmdBuffer_;
     // data
     std::shared_ptr<Backend::Buffer> screenSize_;
+    bool auxiliaryInited = true;
 };
 
 } // namespace X

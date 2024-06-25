@@ -26,8 +26,8 @@ layout (binding = 0, std430) restrict readonly buffer SSBO_SPLATDATA {
     SplatData splatData[];
 };
 
-layout (binding = 1) uniform UBO_OBJECT_INDEX_PREFIXSUM {
-    uint prefixSums[32];
+layout (binding = 1, std140) uniform UBO_OBJECT_INDEX_PREFIXSUM {
+    uvec4 prefixSums[8];
 };
 
 layout (binding = 2) uniform UBO_MODEL {
@@ -109,7 +109,7 @@ void main()
     uint objectID = 0;
     for (int i = 0; i < 32; i++) {
         objectID = i;
-        if (prefixSums[objectID] >= index) {
+        if (prefixSums[objectID / 4][objectID % 4] >= index) {
             break;
         }
     }
@@ -119,17 +119,21 @@ void main()
     }
 
     SplatData splat = splatData[index];
+    splat.scale[0] = -splat.scale[0];
+    splat.scale[1] = -splat.scale[1];
+    splat.scale[2] = -splat.scale[2];
     vec3 center = vec3(splat.pos[0], splat.pos[1], splat.pos[2]);
     mat4 mv = view * models[objectID];
     vec4 cam = mv * vec4(center, 1.0f);
     vec4 pos2d = proj * cam;
 
     // MOVE TO VS?
-    float clip = 1.2 * pos2d.w;
-    if (pos2d.z < -pos2d.w || pos2d.z > pos2d.w || pos2d.x < -clip || pos2d.x > clip || pos2d.y < -clip || pos2d.y > clip) {
-        preprocessed[index].visible = false;
-        return;
-    }
+    // no frustum, no camera pos while debugging
+    // float clip = 1.2 * pos2d.w;
+    // if (pos2d.z < -pos2d.w || pos2d.z > pos2d.w || pos2d.x < -clip || pos2d.x > clip || pos2d.y < -clip || pos2d.y > clip) {
+    //     preprocessed[index].visible = false;
+    //     return;
+    // }
     mat3 J = mat3(
         focal.x / cam.z, 0.f, -(focal.x * cam.x) / (cam.z * cam.z),
         0.f, -focal.y / cam.z, (focal.y * cam.y) / (cam.z * cam.z),

@@ -36,6 +36,9 @@ bool Renderer::IsReady()
 
 void Renderer::UpdateScene(Scene* scene)
 {
+    if (auxiliaryInited && scene->ObjectChanged()) {
+        this->InitAuxiliaryBuffers(scene);
+    }
     // if (scene->SceneChanged()) {
         this->OnUpdateScene(scene);
     // }
@@ -49,9 +52,9 @@ void Renderer::OnUpdateScene(Scene* scene)
     }
 
     surface_->UpdateScreenSizeBuffer();
-    if (scene->SceneChanged() && !scene->GetCamera().Updated()) {
+    //if (scene->SceneChanged() && !scene->GetCamera().Updated()) {
         scene->UpdateData();
-    }
+    //}
 }
 
 void Renderer::DrawFrame()

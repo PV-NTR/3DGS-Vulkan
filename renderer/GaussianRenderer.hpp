@@ -13,6 +13,7 @@ public:
     GaussianRenderer();
 
 protected:
+    void InitAuxiliaryBuffers(Scene* scene) override;
     void RecordComputeCommands(Scene* scene) override;
 
     void SubmitGraphicsCommands() override;
@@ -28,7 +29,11 @@ protected:
     void CreateComputePipeline();
 
 private:
-    static const std::vector<float> vboData_;
+    //static const std::vector<float> vboData_;
+    const std::vector<float> vboData_ = {
+        -2.0f, -2.0f, 2.0f, -2.0f, 2.0f, 2.0f, -2.0f, 2.0f
+    };
+
     // static const std::vector<uint32_t> iboData_;
     Backend::GraphicsPipelineInfo graphicsPipelineInfo_;
     Backend::ComputePipelineInfo computePipelineInfo_;
@@ -36,7 +41,7 @@ private:
     std::shared_ptr<Backend::Buffer> vbo_;
     // std::shared_ptr<Backend::Buffer> ibo_;
 
-    std::vector<std::shared_ptr<Backend::Buffer>> preComputed_;
+    std::shared_ptr<Backend::Buffer> preComputed_;
 
     std::shared_ptr<Backend::GraphicsPipeline> pipeline_;
     std::shared_ptr<Backend::ComputePipeline> computePipeline_;

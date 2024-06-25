@@ -16,8 +16,8 @@ layout (binding = 0, std430) restrict readonly buffer SSBO_SPLATDATA {
     SplatData splatData[];
 };
 
-layout (binding = 1) uniform UBO_OBJECT_INDEX_PREFIXSUM {
-    uint prefixSums[32];
+layout (binding = 1, std140) uniform UBO_OBJECT_INDEX_PREFIXSUM {
+    uvec4 prefixSums[8];
 };
 
 layout (binding = 2) uniform UBO_MODEL {
@@ -99,7 +99,7 @@ void main()
 
     uint objectID = 0;
     for (int i = 0; i < 32; i++) {
-        if (prefixSums[objectID] >= gl_InstanceIndex) {
+        if (prefixSums[objectID / 4][object % 4] >= gl_InstanceIndex) {
             objectID = i;
             break;
         }

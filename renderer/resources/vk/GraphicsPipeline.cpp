@@ -59,7 +59,7 @@ GraphicsPipeline::GraphicsPipeline(const GraphicsPipelineInfo& info, vk::Pipelin
 void GraphicsPipeline::InitDefaultSettings()
 {
     // Specify vertex input state
-    defaultState_.vertexInputBinding.setBinding(0).setStride(2).setInputRate(vk::VertexInputRate::eVertex);
+    defaultState_.vertexInputBinding.setBinding(0).setStride(8).setInputRate(vk::VertexInputRate::eVertex);
     defaultState_.vertexInputAttribute.setLocation(0).setBinding(0).setFormat(vk::Format::eR32G32Sfloat);
     defaultState_.vertexInputState.setVertexBindingDescriptions(defaultState_.vertexInputBinding)
         .setVertexAttributeDescriptions(defaultState_.vertexInputAttribute);

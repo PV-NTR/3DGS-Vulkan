@@ -2,6 +2,9 @@
 
 #include "BaseWindow.hpp"
 
+#include <ctime>
+#include <chrono>
+
 #include "GaussianRenderer.hpp"
 #include "scenes/Scene.hpp"
 #include "resources/vk/DisplaySurface.hpp"
@@ -38,4 +41,7 @@ private:
         glm::vec2 position_;
     } mouseState_;
     bool resizing_ = false;
+
+    // TODO: create a time statistics class
+    std::chrono::time_point<std::chrono::high_resolution_clock> frameStart_;
 };
