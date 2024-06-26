@@ -32,6 +32,7 @@ void Scene::AddObject(std::unique_ptr<Object>&& object)
         uboPrefixSums_->Update(&totalPointCount_, 4, 4 * (objects_.size() - 1));
         // TODO: compress data
         ssboSplatData_.emplace_back(Backend::VkResourceManager::GetInstance().GetBufferManager().RequireBuffer({ splat->GetPointCount() * sizeof(RawGaussianPoint), BufferType::Storage}));
+        ssboSplatData_.back()->Init(0);
         ssboSplatData_.back()->Update(splat->GetPointData(), splat->GetPointCount() * sizeof(RawGaussianPoint), 0);
     }
     objectStatus_.set(objects_.size() - 1, true);
@@ -55,7 +56,7 @@ void Scene::UpdateCameraState()
 void Scene::UpdateCameraData()
 {
     CameraData data;
-    data.focal = { camera_.aspect_ * camera_.fovY_, camera_.fovY_ };
+    data.focal = glm::vec2(camera_.aspect_ * camera_.fovY_, camera_.fovY_);
     data.view = camera_.matrices_.view;
     data.proj = camera_.matrices_.perspective;
     uboCamera_->Update((void*)(&data), sizeof(CameraData), 0);

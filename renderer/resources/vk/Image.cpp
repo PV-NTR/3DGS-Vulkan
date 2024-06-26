@@ -14,7 +14,7 @@ Image::Image(VmaAllocator allocator, const ImageInfo& info) noexcept
     } else {
         flag |= vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eColorAttachment;
     }
-    image_ = VmaImage(allocator, { info.width_, info.height_, info.format_, flag, vk::MemoryPropertyFlagBits::eDeviceLocal });
+    image_ = VmaImage(allocator, { info.width_, info.height_, info.format_, flag });
 }
 
 Image::Image(vk::Image image, const ImageInfo& info, VmaImageState&& state) noexcept

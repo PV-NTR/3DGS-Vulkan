@@ -70,16 +70,18 @@ bool Renderer::AllocateCommandBuffers()
     auto device = Backend::VkContext::GetInstance().GetDevice();
 
     vk::CommandBufferAllocateInfo allocInfo{};
-    allocInfo.setCommandPool(Backend::VkContext::GetInstance().GetPresentCmdPool()).setCommandBufferCount(1);
-    auto allocRet = device.allocateCommandBuffers(&allocInfo, &presentCmdBuffer_);
+    allocInfo.setCommandPool(Backend::VkContext::GetInstance().GetPresentCmdPool()).setCommandBufferCount(surface_->GetSwapSurfaceCount());
+    presentCmdBuffers_.resize(surface_->GetSwapSurfaceCount());
+    auto allocRet = device.allocateCommandBuffers(&allocInfo, presentCmdBuffers_.data());
     if (allocRet != vk::Result::eSuccess) {
         XLOGE("allocate present commandbuffer failed, errCode: %d", allocRet);
         return false;
     }
 
     if (needCompute_) {
-        allocInfo.setCommandPool(Backend::VkContext::GetInstance().GetComputeCmdPool()).setCommandBufferCount(1);
-        allocRet = device.allocateCommandBuffers(&allocInfo, &computeCmdBuffer_);
+        allocInfo.setCommandPool(Backend::VkContext::GetInstance().GetComputeCmdPool()).setCommandBufferCount(surface_->GetSwapSurfaceCount());
+        computeCmdBuffers_.resize(surface_->GetSwapSurfaceCount());
+        allocRet = device.allocateCommandBuffers(&allocInfo, computeCmdBuffers_.data());
         if (allocRet != vk::Result::eSuccess) {
             XLOGE("allocate compute commandbuffer failed, errCode: %d", allocRet);
             return false;
@@ -90,40 +92,37 @@ bool Renderer::AllocateCommandBuffers()
 
 void Renderer::RecordGraphicsCommands(Scene* scene)
 {
-    // TODO: restore to commandbuffers, record all
-    auto cmdBuffer = GetPresentCmdBuffer();
-    vk::CommandBufferBeginInfo cmdBufferBeginInfo{};
-    cmdBufferBeginInfo.setFlags(vk::CommandBufferUsageFlagBits::eSimultaneousUse);
-    cmdBuffer.begin(cmdBufferBeginInfo);
+    for (uint32_t i = 0; i < presentCmdBuffers_.size(); i++) {
+        auto cmdBuffer = presentCmdBuffers_[i];
+        vk::CommandBufferBeginInfo cmdBufferBeginInfo{};
+        cmdBufferBeginInfo.setFlags(vk::CommandBufferUsageFlagBits::eSimultaneousUse);
+        cmdBuffer.begin(cmdBufferBeginInfo);
 
-    surface_->GetCurrentDisplayImage()->Barrier(cmdBuffer,
-        { vk::ImageLayout::eColorAttachmentOptimal, vk::AccessFlagBits::eColorAttachmentWrite, vk::PipelineStageFlagBits::eColorAttachmentOutput },
-        vk::ImageAspectFlagBits::eColor);
+        auto swapSurface = surface_->GetSwapSurfaces()[i];
+        vk::RenderPassBeginInfo beginInfo{};
+        std::array<vk::ClearValue, 2> clearValues;
+        clearValues[0].setColor({ 0.0f, 0.0f, 0.0f, 1.0f });
+        clearValues[1].setDepthStencil({ 1.0f, 0 });
+        beginInfo.setRenderPass(swapSurface->GetRenderPass()->GetHandle())
+            .setFramebuffer(swapSurface->GetFramebuffer()->get())
+            .setClearValues(clearValues)
+            .setRenderArea({ {0, 0}, {surface_->GetWidth(), surface_->GetHeight()} });
+        cmdBuffer.beginRenderPass(beginInfo, { vk::SubpassContents::eInline });
+        this->OnRecordGraphicsCommands(scene, cmdBuffer);
 
-    auto swapSurface = surface_->GetCurrentSwapSurface();
-    vk::RenderPassBeginInfo beginInfo{};
-    std::array<vk::ClearValue, 2> clearValues;
-    clearValues[0].setColor({ 1.0f, 1.0f, 1.0f, 1.0f });
-    clearValues[1].setDepthStencil({1.0f, 0});
-    beginInfo.setRenderPass(swapSurface->GetRenderPass()->GetHandle())
-        .setFramebuffer(swapSurface->GetFramebuffer()->get())
-        .setClearValues(clearValues)
-        .setRenderArea({ {0, 0}, {surface_->GetWidth(), surface_->GetHeight()} });
-    cmdBuffer.beginRenderPass(beginInfo, { vk::SubpassContents::eInline });
-    this->OnRecordGraphicsCommands(scene);
-
-    cmdBuffer.endRenderPass();
-    cmdBuffer.end();
+        cmdBuffer.endRenderPass();
+        cmdBuffer.end();
+    }
 }
 
 void Renderer::SubmitGraphicsCommands()
 {
-    auto cmdBuffer = GetPresentCmdBuffer();
+    auto cmdBuffer = GetCurrentPresentCmdBuffer();
 
     auto queue = Backend::VkContext::GetInstance().AcquireGraphicsQueue(surface_->GetPresentQueueIdx());
     vk::SubmitInfo submitInfo{};
     std::vector<vk::PipelineStageFlags> waitStageMask{ vk::PipelineStageFlagBits::eColorAttachmentOutput };
-    submitInfo.setCommandBuffers(presentCmdBuffer_)
+    submitInfo.setCommandBuffers(cmdBuffer)
         .setWaitSemaphoreCount(1)
         .setPWaitSemaphores(&surface_->GetAcquireFrameSignalSemaphore())
         .setWaitDstStageMask(waitStageMask)

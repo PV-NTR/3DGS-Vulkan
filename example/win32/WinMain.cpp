@@ -16,7 +16,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR pCmdLine, int nCmdSho
 {
     g_window = new VulkanWindow();
     INIT_LOGGER(plog::debug, "Logs.txt", 5000, 3); // Initialize logging to the file.
-    if (!g_window->Setup("Gaussian Splatting Renderer", hInstance, WndProc, WS_OVERLAPPEDWINDOW, WS_OVERLAPPEDWINDOW)) {
+    if (!g_window->Setup("Gaussian Splatting Renderer", hInstance, WndProc, 1959, 1090)) {
         return 0;
     }
     g_window->InitBackend();

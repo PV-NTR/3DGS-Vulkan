@@ -20,8 +20,7 @@ private:
             uint32_t height_ : 14;
             uint32_t format_ : 10;
             uint32_t usage_ : 10;
-            uint32_t memProps_ : 9;
-            uint32_t padding_ : 7;
+            uint32_t padding_ : 16;
         };
         uint64_t packed_;
     };

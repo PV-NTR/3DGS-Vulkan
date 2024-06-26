@@ -10,10 +10,10 @@ ImageManager::ImageKey ImageManager::GetKeyFromImageInfo(const ImageInfo& info)
     key.width_ = info.width_;
     key.height_ = info.height_;
     key.format_ = static_cast<uint32_t>(info.format_);
-    key.usage_ = static_cast<uint32_t>(vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst |
-        vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eColorAttachment |
-        vk::ImageUsageFlagBits::eInputAttachment);
-    key.memProps_ = static_cast<uint32_t>(vk::MemoryPropertyFlagBits::eDeviceLocal);
+    vk::ImageUsageFlags flag = vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst |
+        vk::ImageUsageFlagBits::eInputAttachment;
+    key.usage_ = static_cast<uint32_t>(info.depthStencil_ ? flag | vk::ImageUsageFlagBits::eDepthStencilAttachment :
+        flag | vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eColorAttachment);
     key.padding_ = 0;
     return key;
 }

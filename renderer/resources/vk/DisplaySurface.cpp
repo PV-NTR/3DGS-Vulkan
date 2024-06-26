@@ -92,7 +92,7 @@ void DisplaySurface::SetupSwapchain()
         .setImageColorSpace(vk::ColorSpaceKHR::eSrgbNonlinear)
         .setImageExtent({ width_, height_ })
         .setImageArrayLayers(1)
-        .setImageUsage(vk::ImageUsageFlagBits::eColorAttachment)
+        .setImageUsage(vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst)
         .setImageSharingMode(vk::SharingMode::eExclusive)
         .setQueueFamilyIndices(presentQueueIdx_)
         .setPreTransform(vk::SurfaceTransformFlagBitsKHR::eIdentity)
@@ -151,15 +151,16 @@ void DisplaySurface::SetupSwapSurfaces(bool enableDepthStencil)
     enableDepthStencil_ = enableDepthStencil;
     auto images = GetImagesFromSwapchain();
     if (enableDepthStencil) {
-        depthStencil_ = VkResourceManager::GetInstance().GetImageManager().RequireImage({ width_, height_, vk::Format::eD32SfloatS8Uint });
+        depthStencil_ = VkResourceManager::GetInstance().GetImageManager().RequireImage({ width_, height_, vk::Format::eD32SfloatS8Uint, true });
     } else {
         depthStencil_ = nullptr;
     }
     std::vector<std::shared_ptr<Image>> attachmentResources(2);
     attachmentResources[1] = depthStencil_;
+    auto renderPass = RenderPass::MakeDisplay(vk::Format::eR8G8B8A8Unorm, enableDepthStencil);
     for (const auto& image : images) {
         attachmentResources[0] = image;
-        auto swapSurface = Surface::Make(attachmentResources);
+        auto swapSurface = Surface::Make(renderPass, attachmentResources);
         swapSurface->Init();
         swapSurfaces_.emplace_back(std::move(swapSurface));
     }

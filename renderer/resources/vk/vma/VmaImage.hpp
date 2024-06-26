@@ -11,7 +11,6 @@ struct VmaImageInfo {
     uint32_t height_;
     vk::Format format_;
     vk::ImageUsageFlags usage_;
-    vk::MemoryPropertyFlags memProps_;
     // TODO: consider ycbcr and mipmap
 };
 

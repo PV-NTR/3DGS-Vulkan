@@ -5,15 +5,21 @@
 
 namespace X {
 
-//const std::vector<float> GaussianRenderer::vboData_ = {
-//    -2.0f, -2.0f, 2.0f, -2.0f, 2.0f, 2.0f, -2.0f, 2.0f
-//};
+const std::vector<float> GaussianRenderer::vboData_ = {
+    -2.0f, -2.0f, 2.0f, -2.0f, 2.0f, 2.0f, -2.0f, 2.0f
+};
+
+const std::vector<uint16_t> GaussianRenderer::iboData_ = {
+    0, 1, 2, 2, 3, 0
+};
 
 GaussianRenderer::GaussianRenderer()
     : Renderer(true)
 {
     vbo_ = Backend::VkResourceManager::GetInstance().GetBufferManager().RequireBuffer({ vboData_.size() * sizeof(float), BufferType::Vertex });
     vbo_->Update(vboData_.data(), vboData_.size() * sizeof(float), 0);
+    ibo_ = Backend::VkResourceManager::GetInstance().GetBufferManager().RequireBuffer({ iboData_.size() * sizeof(uint16_t), BufferType::Index });
+    ibo_->Update(iboData_.data(), iboData_.size() * sizeof(uint16_t), 0);
     SetDescriptorSetLayouts();
     SetBlendState();
     preprocessComplete_ = Backend::VkContext::GetInstance().GetDevice().createSemaphore({}).value;
@@ -86,31 +92,31 @@ void GaussianRenderer::InitAuxiliaryBuffers(Scene* scene)
 
 void GaussianRenderer::RecordComputeCommands(Scene* scene)
 {
-    auto cmdBuffer = GetComputeCmdBuffer();
-    vk::CommandBufferBeginInfo cmdBufferBeginInfo{};
-    cmdBufferBeginInfo.setFlags(vk::CommandBufferUsageFlagBits::eSimultaneousUse);
-    cmdBuffer.begin(cmdBufferBeginInfo);
+    for (auto cmdBuffer : computeCmdBuffers_) {
+        vk::CommandBufferBeginInfo cmdBufferBeginInfo{};
+        cmdBufferBeginInfo.setFlags(vk::CommandBufferUsageFlagBits::eSimultaneousUse);
+        cmdBuffer.begin(cmdBufferBeginInfo);
 
-    // TODO: prepare buffer from scene
-    computePipeline_->BindStorageBuffers(scene->ssboSplatData_, 0, 0);
-    computePipeline_->BindStorageBuffers({ preComputed_ }, 1, 0);
-    computePipeline_->BindUniformBuffers({ scene->uboPrefixSums_ }, 0, 1);
-    computePipeline_->BindUniformBuffers({ scene->uboModels_ }, 0, 2);
-    computePipeline_->BindUniformBuffers({ scene->uboCamera_ }, 0, 3);
-    computePipeline_->BindUniformBuffers({ surface_->GetScreenSizeBuffer() }, 0, 4);
-    computePipeline_->BindDescriptorSets(cmdBuffer);
-    if (scene->totalPointCount_ != 0) {
-        cmdBuffer.dispatch((scene->totalPointCount_ + 255) / 256, 1, 1);
+        // TODO: prepare buffer from scene
+        computePipeline_->BindStorageBuffers(scene->ssboSplatData_, 0, 0);
+        computePipeline_->BindStorageBuffers({ preComputed_ }, 1, 0);
+        computePipeline_->BindUniformBuffers({ scene->uboPrefixSums_ }, 0, 1);
+        computePipeline_->BindUniformBuffers({ scene->uboModels_ }, 0, 2);
+        computePipeline_->BindUniformBuffers({ scene->uboCamera_ }, 0, 3);
+        computePipeline_->BindUniformBuffers({ surface_->GetScreenSizeBuffer() }, 0, 4);
+        computePipeline_->BindDescriptorSets(cmdBuffer);
+        if (scene->totalPointCount_ != 0) {
+            cmdBuffer.dispatch((scene->totalPointCount_ + 255) / 256, 1, 1);
+        }
+        cmdBuffer.end();
     }
-
-    cmdBuffer.end();
 }
 
-void GaussianRenderer::OnRecordGraphicsCommands(Scene* scene)
+void GaussianRenderer::OnRecordGraphicsCommands(Scene* scene, vk::CommandBuffer cmdBuffer)
 {
-    auto cmdBuffer = GetPresentCmdBuffer();
     vk::DeviceSize offset = 0;
     cmdBuffer.bindVertexBuffers(0, vbo_->GetHandle(), offset);
+    cmdBuffer.bindIndexBuffer(ibo_->GetHandle(), 0, vk::IndexType::eUint16);
     // TODO: prepare buffer from scene
     pipeline_->BindStorageBuffers(scene->ssboSplatData_, 0, 0);
     pipeline_->BindStorageBuffers({ preComputed_ }, 1, 0);
@@ -121,12 +127,13 @@ void GaussianRenderer::OnRecordGraphicsCommands(Scene* scene)
     cmdBuffer.setViewport(0, { { 0.0f, 0.0f, static_cast<float>(surface_->GetWidth()), static_cast<float>(surface_->GetHeight()), 0.0f, 1.0f } });
     cmdBuffer.setScissor(0, { { { 0, 0 }, { surface_->GetWidth(), surface_->GetHeight() } } });
     pipeline_->BindDescriptorSets(cmdBuffer);
-    cmdBuffer.draw(4, scene->totalPointCount_, 0, 0);
+    // cmdBuffer.draw(4, scene->totalPointCount_, 0, 0);
+    cmdBuffer.drawIndexed(6, 1, 0, 0, 16);
 }
 
 void GaussianRenderer::SubmitGraphicsCommands()
 {
-    auto cmdBuffer = GetPresentCmdBuffer();
+    auto cmdBuffer = GetCurrentPresentCmdBuffer();
     auto queue = Backend::VkContext::GetInstance().AcquireGraphicsQueue(surface_->GetPresentQueueIdx());
     std::array<vk::Semaphore, 2> signalSemaphores { surface_->GetPresentWaitSemaphore(), preprocessComplete_ };
     vk::SubmitInfo submitInfo{};
@@ -145,7 +152,7 @@ void GaussianRenderer::SubmitGraphicsCommands()
 
 void GaussianRenderer::SubmitComputeCommands()
 {
-    auto cmdBuffer = GetComputeCmdBuffer();
+    auto cmdBuffer = GetCurrentComputeCmdBuffer();
 
     auto queue = Backend::VkContext::GetInstance().AcquireCurrentComputeQueue().second;
     vk::SubmitInfo submitInfo{};

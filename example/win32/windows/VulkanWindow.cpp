@@ -16,8 +16,8 @@ void VulkanWindow::HandleMouseMove(int32_t x, int32_t y)
     bool handled = false;
 
     if (scene_->OverlayVisible()) {
-        ImGuiIO& io = ImGui::GetIO();
-        handled = io.WantCaptureMouse;
+        // ImGuiIO& io = ImGui::GetIO();
+        // handled = io.WantCaptureMouse;
     }
 
     if (handled) {
@@ -182,9 +182,11 @@ void VulkanWindow::LoadScene()
 {
     scene_ = std::make_unique<X::Scene>();
     // TODO: use gui callback to load splat file
-    auto splat = X::Splat::MakeUnique(GetAssetPath() + "/demo_fox_gs.ply");
+    auto splat = X::Splat::MakeUnique(GetAssetPath() + "/train_7000.ply");
     scene_->AddObject(std::move(splat));
-    scene_->GetCamera().SetPerspective(1.0f, 1.0f, 0.001f, 100.f);
+    scene_->GetCamera().SetPerspective(60.0f, surface_->GetWidth() / surface_->GetHeight(), 0.1f, 100.0f);
+    scene_->GetCamera().SetPosition({ -3.2220859161562747, -0.12122555982278989, -4.121658614000104 });
+    scene_->GetCamera().SetRotation({ 4.09186180, 9.18982295, -0.68224275 });
 }
 
 void VulkanWindow::RenderLoop()

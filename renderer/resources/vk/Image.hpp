@@ -12,7 +12,7 @@ class ImageManager;
 struct ImageInfo {
     uint32_t width_;
     uint32_t height_;
-    vk::Format format_;
+    vk::Format format_ = vk::Format::eR8G8B8A8Unorm;
     bool depthStencil_ = false;
     // TODO: support other colortype
     // ColorType colorType_;
