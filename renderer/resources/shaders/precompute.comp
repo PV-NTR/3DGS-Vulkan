@@ -1,6 +1,6 @@
 #version 450
 
-#define GROUP_SIZE 256
+#define GROUP_SIZE 1024
 // TODO: compress data
 struct SplatData {
     float pos[3];

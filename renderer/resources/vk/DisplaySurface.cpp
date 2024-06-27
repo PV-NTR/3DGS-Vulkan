@@ -126,7 +126,8 @@ std::vector<std::shared_ptr<Image>> DisplaySurface::GetImagesFromSwapchain()
 
 uint32_t DisplaySurface::NextFrame()
 {
-    VkContext::GetInstance().GetDevice().waitIdle();
+    auto ret = VkContext::GetInstance().GetDevice().waitIdle();
+    assert(ret == vk::Result::eSuccess);
     auto nextIndex = VkContext::GetInstance().GetDevice().acquireNextImageKHR(*swapchain_, UINT64_MAX, acquireFrameSignalSemaphore_, {});
     currentFrame_ = nextIndex.value;
     return currentFrame_;
@@ -148,6 +149,7 @@ void DisplaySurface::Present()
 
 void DisplaySurface::SetupSwapSurfaces(bool enableDepthStencil)
 {
+    swapSurfaces_.clear();
     enableDepthStencil_ = enableDepthStencil;
     auto images = GetImagesFromSwapchain();
     if (enableDepthStencil) {
@@ -157,7 +159,7 @@ void DisplaySurface::SetupSwapSurfaces(bool enableDepthStencil)
     }
     std::vector<std::shared_ptr<Image>> attachmentResources(2);
     attachmentResources[1] = depthStencil_;
-    auto renderPass = RenderPass::MakeDisplay(vk::Format::eR8G8B8A8Unorm, enableDepthStencil);
+    auto renderPass = RenderPass::MakeDisplay(vk::Format::eR8G8B8A8Unorm, enableDepthStencil_);
     for (const auto& image : images) {
         attachmentResources[0] = image;
         auto swapSurface = Surface::Make(renderPass, attachmentResources);

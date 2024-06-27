@@ -14,7 +14,8 @@ struct CameraData {
 Scene::Scene()
 {
     uboCamera_ = Backend::VkResourceManager::GetInstance().GetBufferManager().RequireBuffer({ sizeof(CameraData), BufferType::Uniform });
-    UpdateCameraData();
+    uboCamera_->Init(0);
+    // UpdateCameraData();
     uboPrefixSums_ = Backend::VkResourceManager::GetInstance().GetBufferManager().RequireBuffer({ 32 * 4, BufferType::Uniform });
     uboPrefixSums_->Init(0);
     uboModels_ = Backend::VkResourceManager::GetInstance().GetBufferManager().RequireBuffer({ 32 * sizeof(glm::mat4), BufferType::Uniform });
@@ -53,16 +54,17 @@ void Scene::UpdateCameraState()
 
 }
 
-void Scene::UpdateCameraData()
+void Scene::UpdateCameraData(Backend::DisplaySurface* surface)
 {
     CameraData data;
-    data.focal = glm::vec2(camera_.aspect_ * camera_.fovY_, camera_.fovY_);
+    float tanFovY = 2.0f * glm::tan(glm::radians(camera_.fovY_ * 0.5f));
+    data.focal = glm::vec2(surface->GetWidth() / (camera_.aspect_ * tanFovY), surface->GetHeight() / tanFovY);
     data.view = camera_.matrices_.view;
     data.proj = camera_.matrices_.perspective;
     uboCamera_->Update((void*)(&data), sizeof(CameraData), 0);
 }
 
-void Scene::UpdateData()
+void Scene::UpdateData(Backend::DisplaySurface* surface)
 {
     if (objectStatus_ != 0) {
         for (uint32_t i = 0; i < objects_.size(); i++) {
@@ -74,8 +76,8 @@ void Scene::UpdateData()
         }
     }
 
-    if (camera_.Updated()) {
-        UpdateCameraData();
+    if (camera_.Updated() || surface->Resized()) {
+        UpdateCameraData(surface);
     }
 
     if (OverlayChanged()) {

@@ -8,6 +8,7 @@
 #include "Object.hpp"
 #include "UIOverlay.hpp"
 
+#include "resources/vk/DisplaySurface.hpp"
 #include "resources/vk/Buffer.hpp"
 
 namespace X {
@@ -27,11 +28,11 @@ public:
     bool SceneChanged() const;
     bool OverlayChanged() const;
     Camera& GetCamera() { return camera_; }
-    void UpdateData();
+    void UpdateData(Backend::DisplaySurface* surface);
 
 private:
     Scene(const Scene& other) = delete;
-    void UpdateCameraData();
+    void UpdateCameraData(Backend::DisplaySurface* surface);
 
 private:
     friend class Renderer;

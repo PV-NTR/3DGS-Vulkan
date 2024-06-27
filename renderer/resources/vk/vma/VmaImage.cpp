@@ -7,12 +7,14 @@ VmaImage::VmaImage(VmaAllocator allocator, const VmaImageInfo& info) noexcept
 {
     assert(allocator_ != VK_NULL_HANDLE);
     VkImageCreateInfo imageCI {};
+    imageCI.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     imageCI.imageType = VkImageType::VK_IMAGE_TYPE_2D;
     imageCI.format = static_cast<VkFormat>(info.format_);
     imageCI.extent = VkExtent3D { info.width_, info.height_, 1 };
     imageCI.mipLevels = 1;
     imageCI.arrayLayers = 1;
     imageCI.usage = static_cast<VkImageUsageFlags>(info.usage_);
+    imageCI.samples = VK_SAMPLE_COUNT_1_BIT;
 
     VmaAllocationCreateInfo allocationCI {};
 
@@ -35,7 +37,7 @@ VmaImage::~VmaImage() noexcept
 }
 
 VmaImage::VmaImage(VmaImage&& other) noexcept
-    : VmaObject(std::move(other)), handle_(other.handle_), state_(other.state_), external_(other.external_)
+    : VmaObject(std::move(other)), handle_(other.handle_), state_(std::move(other.state_)), external_(other.external_)
 {
     other.handle_ = nullptr;
 }

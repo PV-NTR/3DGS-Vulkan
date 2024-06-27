@@ -27,9 +27,11 @@ std::vector<const char*> VkContext::requiredInstanceLayers_ = {
 std::vector<const char*> VkContext::requiredDeviceExts_ = {
 #ifdef HOST_WIN32
     "VK_KHR_swapchain",
+    "VK_NV_device_diagnostic_checkpoints",
 #endif
     "VK_KHR_buffer_device_address",
     "VK_KHR_synchronization2",
+    "VK_EXT_descriptor_indexing",
     "VK_KHR_timeline_semaphore"
 };
 
@@ -316,9 +318,14 @@ bool VkContext::CreateDeviceAndQueues()
 
     // TODO: set device layers
 
-    // set device features
-    vk::PhysicalDeviceFeatures2 features = physicalDevice_.getFeatures2();
-    deviceCI.setPNext((void*)&features);
+    // set device features: descriptor indexing
+    vk::PhysicalDeviceFeatures2 features{};
+    vk::PhysicalDeviceDescriptorIndexingFeatures descriptorIndexing{};
+    features.setPNext(&descriptorIndexing);
+    /// check indexing support
+    physicalDevice_.getFeatures2(&features);
+
+    deviceCI.setPNext(&features);
 
     auto [ret, device] = physicalDevice_.createDeviceUnique(deviceCI, nullptr);
     if (ret != vk::Result::eSuccess) {
@@ -367,7 +374,7 @@ bool VkContext::InitAllocator()
 #undef COPY_FUNCTION
 #undef COPY_FUNCTION_KHR
     VmaAllocatorCreateInfo allocatorCI {};
-    allocatorCI.flags = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
+    allocatorCI.flags = 0;
     allocatorCI.physicalDevice = physicalDevice_;
     allocatorCI.device = device_;
     allocatorCI.preferredLargeHeapBlockSize = 1024;     // TODO: Find a property value

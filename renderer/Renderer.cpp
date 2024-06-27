@@ -51,10 +51,10 @@ void Renderer::OnUpdateScene(Scene* scene)
         this->RecordComputeCommands(scene);
     }
 
-    surface_->UpdateScreenSizeBuffer();
     //if (scene->SceneChanged() && !scene->GetCamera().Updated()) {
-        scene->UpdateData();
+        scene->UpdateData(surface_);
     //}
+    surface_->UpdateScreenSizeBuffer();
 }
 
 void Renderer::DrawFrame()
@@ -96,12 +96,16 @@ void Renderer::RecordGraphicsCommands(Scene* scene)
         auto cmdBuffer = presentCmdBuffers_[i];
         vk::CommandBufferBeginInfo cmdBufferBeginInfo{};
         cmdBufferBeginInfo.setFlags(vk::CommandBufferUsageFlagBits::eSimultaneousUse);
-        cmdBuffer.begin(cmdBufferBeginInfo);
+        auto ret = cmdBuffer.begin(cmdBufferBeginInfo);
+        if (ret != vk::Result::eSuccess) {
+            XLOGE("BeginCommandBuffer failed, errCode: %d", ret);
+            return;
+        }
 
         auto swapSurface = surface_->GetSwapSurfaces()[i];
         vk::RenderPassBeginInfo beginInfo{};
         std::array<vk::ClearValue, 2> clearValues;
-        clearValues[0].setColor({ 0.0f, 0.0f, 0.0f, 1.0f });
+        clearValues[0].setColor({ 1.0f, 0.0f, 0.0f, 0.0f });
         clearValues[1].setDepthStencil({ 1.0f, 0 });
         beginInfo.setRenderPass(swapSurface->GetRenderPass()->GetHandle())
             .setFramebuffer(swapSurface->GetFramebuffer()->get())
@@ -111,7 +115,11 @@ void Renderer::RecordGraphicsCommands(Scene* scene)
         this->OnRecordGraphicsCommands(scene, cmdBuffer);
 
         cmdBuffer.endRenderPass();
-        cmdBuffer.end();
+        ret = cmdBuffer.end();
+        if (ret != vk::Result::eSuccess) {
+            XLOGE("EndCommandBuffer failed, errCode: %d", ret);
+            return;
+        }
     }
 }
 
@@ -128,7 +136,11 @@ void Renderer::SubmitGraphicsCommands()
         .setWaitDstStageMask(waitStageMask)
         .setSignalSemaphoreCount(1)
         .setPSignalSemaphores(&surface_->GetPresentWaitSemaphore());
-    queue.submit(submitInfo);
+    auto ret = queue.submit(submitInfo);
+    if (ret != vk::Result::eSuccess) {
+        XLOGE("Submit graphics commands failed, errCode: %d", ret);
+        abort();
+    }
 }
 
 void Renderer::OnDrawFrame()

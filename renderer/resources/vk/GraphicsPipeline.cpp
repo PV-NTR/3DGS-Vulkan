@@ -30,6 +30,9 @@ GraphicsPipeline::GraphicsPipeline(const GraphicsPipelineInfo& info, vk::Pipelin
 
     assert(info.renderPass != nullptr);
     vk::GraphicsPipelineCreateInfo pipelineCI {};
+    if (info.renderPass->DepthStencilAttachmentID() != UINT32_MAX) {
+        defaultState_.depthStencilState.setDepthTestEnable(vk::True).setStencilTestEnable(vk::True);
+    }
     pipelineCI.setRenderPass(info.renderPass->GetHandle())
         .setLayout(*layout_)
         .setPVertexInputState(&defaultState_.vertexInputState)
@@ -67,7 +70,7 @@ void GraphicsPipeline::InitDefaultSettings()
     defaultState_.rasterizationState.setPolygonMode(vk::PolygonMode::eFill).setCullMode(vk::CullModeFlagBits::eNone)
         .setFrontFace(vk::FrontFace::eClockwise);
     defaultState_.multisampleState.setRasterizationSamples(vk::SampleCountFlagBits::e1);
-    defaultState_.depthStencilState.setDepthTestEnable(vk::True).setStencilTestEnable(vk::True)
+    defaultState_.depthStencilState.setDepthTestEnable(vk::False).setStencilTestEnable(vk::False)
         .setDepthCompareOp(vk::CompareOp::eLessOrEqual);
     defaultState_.viewportState.setViewportCount(1).setScissorCount(1);
     defaultState_.dynamicState.setDynamicStates(defaultState_.dynamicStateEnables);

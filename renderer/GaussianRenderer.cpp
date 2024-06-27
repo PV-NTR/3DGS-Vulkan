@@ -106,7 +106,7 @@ void GaussianRenderer::RecordComputeCommands(Scene* scene)
         computePipeline_->BindUniformBuffers({ surface_->GetScreenSizeBuffer() }, 0, 4);
         computePipeline_->BindDescriptorSets(cmdBuffer);
         if (scene->totalPointCount_ != 0) {
-            cmdBuffer.dispatch((scene->totalPointCount_ + 255) / 256, 1, 1);
+            cmdBuffer.dispatch((scene->totalPointCount_ + 1023) / 1024, 1, 1);
         }
         cmdBuffer.end();
     }
@@ -127,8 +127,8 @@ void GaussianRenderer::OnRecordGraphicsCommands(Scene* scene, vk::CommandBuffer 
     cmdBuffer.setViewport(0, { { 0.0f, 0.0f, static_cast<float>(surface_->GetWidth()), static_cast<float>(surface_->GetHeight()), 0.0f, 1.0f } });
     cmdBuffer.setScissor(0, { { { 0, 0 }, { surface_->GetWidth(), surface_->GetHeight() } } });
     pipeline_->BindDescriptorSets(cmdBuffer);
-    // cmdBuffer.draw(4, scene->totalPointCount_, 0, 0);
-    cmdBuffer.drawIndexed(6, 1, 0, 0, 16);
+    // cmdBuffer.drawIndexed(6, scene->totalPointCount_, 0, 0, 0);
+    cmdBuffer.drawIndexed(6, 1, 0, 0, 0);
 }
 
 void GaussianRenderer::SubmitGraphicsCommands()
@@ -147,7 +147,9 @@ void GaussianRenderer::SubmitGraphicsCommands()
     auto ret = queue.submit(submitInfo);
     if (ret != vk::Result::eSuccess) {
         XLOGE("Submit graphics commands failed, errCode: %d", ret);
+        abort();
     }
+    assert(ret == vk::Result::eSuccess);
 }
 
 void GaussianRenderer::SubmitComputeCommands()
@@ -166,7 +168,9 @@ void GaussianRenderer::SubmitComputeCommands()
     auto ret = queue.submit(submitInfo);
     if (ret != vk::Result::eSuccess) {
         XLOGE("Submit compute commands failed, errCode: %d", ret);
+        abort();
     }
+    assert(ret == vk::Result::eSuccess);
 }
 
 void GaussianRenderer::OnDrawFrame()

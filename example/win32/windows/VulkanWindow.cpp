@@ -184,9 +184,10 @@ void VulkanWindow::LoadScene()
     // TODO: use gui callback to load splat file
     auto splat = X::Splat::MakeUnique(GetAssetPath() + "/train_7000.ply");
     scene_->AddObject(std::move(splat));
-    scene_->GetCamera().SetPerspective(60.0f, surface_->GetWidth() / surface_->GetHeight(), 0.1f, 100.0f);
-    scene_->GetCamera().SetPosition({ -3.2220859161562747, -0.12122555982278989, -4.121658614000104 });
-    scene_->GetCamera().SetRotation({ 4.09186180, 9.18982295, -0.68224275 });
+    scene_->GetCamera().SetPerspective(50.154269299972504, surface_->GetWidth() * 1164.6601287484507 / 1159.5880733038064 / surface_->GetHeight(), 0.001f, 10.0f);
+    scene_->GetCamera().SetPosition({-3.0089893469241797, -0.11086489695181866, -3.7527640949141428});
+    // scene_->GetCamera().SetRotation({ 2.5534724, 28.6107985, -3.4906808 });
+    scene_->GetCamera().SetRotation({ 3.756929, 28.4939513, -4.5199111 });
 }
 
 void VulkanWindow::RenderLoop()

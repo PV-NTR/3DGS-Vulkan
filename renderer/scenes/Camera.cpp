@@ -22,7 +22,7 @@ void Camera::SetPerspective(float fovY, float aspect, float zNear, float zFar)
     this->aspect_ = aspect;
     this->zNear_ = zNear;
     this->zFar_ = zFar;
-    matrices_.perspective = glm::perspective(glm::radians(fovY), aspect, zNear, zFar);
+    matrices_.perspective = glm::perspective(fovY, aspect, zNear, zFar);
     if (matrices_.view != currentMatrix) {
         updated_ = true;
     }
@@ -62,7 +62,7 @@ void Camera::UpdateAspectRatio(float aspect)
 {
     this->aspect_ = aspect;
     glm::mat4 currentMatrix = matrices_.perspective;
-    matrices_.perspective = glm::perspective(glm::radians(fovY_), aspect, zNear_, zFar_);
+    matrices_.perspective = glm::perspective(fovY_, aspect, zNear_, zFar_);
     if (matrices_.view != currentMatrix) {
         updated_ = true;
     }
@@ -71,9 +71,9 @@ void Camera::UpdateAspectRatio(float aspect)
 glm::vec3 Camera::GetCameraFront()
 {
     glm::vec3 camFront;
-    camFront.x = -cos(glm::radians(rotation_.x)) * sin(glm::radians(rotation_.y));
-    camFront.y = sin(glm::radians(rotation_.x));
-    camFront.z = cos(glm::radians(rotation_.x)) * cos(glm::radians(rotation_.y));
+    camFront.x = -cos(rotation_.x) * sin(rotation_.y);
+    camFront.y = sin(rotation_.x);
+    camFront.z = cos(rotation_.x) * cos(rotation_.y);
     return glm::normalize(camFront);
 }
 
@@ -176,9 +176,9 @@ void Camera::UpdateViewMatrix()
     glm::mat4 rotM = glm::mat4(1.0f);
     glm::mat4 transM;
 
-    rotM = glm::rotate(rotM, glm::radians(rotation_.x), glm::vec3(1.0f, 0.0f, 0.0f));
-    rotM = glm::rotate(rotM, glm::radians(rotation_.y), glm::vec3(0.0f, 1.0f, 0.0f));
-    rotM = glm::rotate(rotM, glm::radians(rotation_.z), glm::vec3(0.0f, 0.0f, 1.0f));
+    rotM = glm::rotate(rotM, rotation_.x, glm::vec3(1.0f, 0.0f, 0.0f));
+    rotM = glm::rotate(rotM, rotation_.y, glm::vec3(0.0f, 1.0f, 0.0f));
+    rotM = glm::rotate(rotM, rotation_.z, glm::vec3(0.0f, 0.0f, 1.0f));
 
     glm::vec3 translation = position_;
     transM = glm::translate(glm::mat4(1.0f), translation);
