@@ -95,7 +95,6 @@ void Renderer::RecordGraphicsCommands(Scene* scene)
     for (uint32_t i = 0; i < presentCmdBuffers_.size(); i++) {
         auto cmdBuffer = presentCmdBuffers_[i];
         vk::CommandBufferBeginInfo cmdBufferBeginInfo{};
-        cmdBufferBeginInfo.setFlags(vk::CommandBufferUsageFlagBits::eSimultaneousUse);
         auto ret = cmdBuffer.begin(cmdBufferBeginInfo);
         if (ret != vk::Result::eSuccess) {
             XLOGE("BeginCommandBuffer failed, errCode: %d", ret);
@@ -105,7 +104,7 @@ void Renderer::RecordGraphicsCommands(Scene* scene)
         auto swapSurface = surface_->GetSwapSurfaces()[i];
         vk::RenderPassBeginInfo beginInfo{};
         std::array<vk::ClearValue, 2> clearValues;
-        clearValues[0].setColor({ 1.0f, 0.0f, 0.0f, 0.0f });
+        clearValues[0].setColor({ 0.3f, 0.0f, 0.0f, 0.5f });
         clearValues[1].setDepthStencil({ 1.0f, 0 });
         beginInfo.setRenderPass(swapSurface->GetRenderPass()->GetHandle())
             .setFramebuffer(swapSurface->GetFramebuffer()->get())

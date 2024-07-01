@@ -42,7 +42,7 @@ private:
     std::shared_ptr<Backend::Buffer> preComputed_;
 
     std::shared_ptr<Backend::GraphicsPipeline> pipeline_;
-    std::shared_ptr<Backend::ComputePipeline> computePipeline_;
+    std::shared_ptr<Backend::ComputePipeline> preprocessPipeline_, sortPipeline_;
     std::vector<std::shared_ptr<Backend::DescriptorSetLayout>> descriptorSetLayouts_;
     std::optional<Backend::BlendState> blend_;
     vk::Semaphore preprocessComplete_;

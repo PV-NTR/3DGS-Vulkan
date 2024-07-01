@@ -22,7 +22,8 @@ bool ShaderCompiler::CompileShader(const std::string& code, ShaderType type, std
     if (shaders_.find(type) == shaders_.end()) {
         shaders_.insert({ type, std::unique_ptr<glslang::TShader>(new glslang::TShader(static_cast<EShLanguage>(type))) });
     }
-    auto& shader = shaders_[type];
+    auto shader = shaders_[type].release();
+    shaders_.erase(type);
     const char* shaderStrings[1] = { code.c_str() };
     shader->setStrings(shaderStrings, 1);
     EShMessages messages = static_cast<EShMessages>(EShMsgVulkanRules | EShMsgSpvRules);

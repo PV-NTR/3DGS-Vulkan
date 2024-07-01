@@ -1,0 +1,57 @@
+#version 450
+
+struct Preprocessed {
+    vec4 pos2d;
+    vec4 color;
+    vec2 majorAxis;
+    vec2 minorAxis;
+    uint modelID;
+    bool visible;
+    bool valid;
+};
+
+layout (binding = 1, std140) uniform UBO_OBJECT_INDEX_PREFIXSUM {
+    uvec4 prefixSums[8];
+};
+
+layout (local_size_x = 1) in;
+
+layout (set = 1, binding = 0, std430) restrict readonly buffer SSBO_PREPROCESSED {
+    Preprocessed preprocessed[];
+};
+
+layout (set = 1, binding = 1, std430) restrict buffer SSBO_SORTED {
+    uint sorted[];
+};
+
+void main()
+{
+    uint totalNum = 0;
+    for (int i = 0; i < 8; i++) {
+        if (prefixSums[i].x == 0) {
+            break;
+        }
+        totalNum = max(prefixSums[i].x, totalNum);
+        totalNum = max(prefixSums[i].y, totalNum);
+        totalNum = max(prefixSums[i].z, totalNum);
+        totalNum = max(prefixSums[i].w, totalNum);
+    }
+
+    if (totalNum == 0) {
+        return;
+    }
+
+    for (uint i = 0; i < totalNum; i++) {
+        sorted[i] = i;
+    }
+
+    for (uint i = 1; i < totalNum; i++) {
+        for (uint j = 0; j < totalNum - i; j++) {
+            if (preprocessed[sorted[j]].pos2d.z / preprocessed[sorted[j]].pos2d.w > preprocessed[sorted[j + 1]].pos2d.z / preprocessed[sorted[j + 1]].pos2d.w) {
+                uint tmp = sorted[j];
+                sorted[j] = sorted[j + 1];
+                sorted[j + 1] = tmp;
+            }
+        }
+    }
+}

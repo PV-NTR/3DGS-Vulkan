@@ -25,18 +25,33 @@ Scene::Scene()
 void Scene::AddObject(std::unique_ptr<Object>&& object)
 {
     objects_.emplace_back(std::move(object));
-
-    Object* obj = objects_.back().get();
-    if (obj->GetType() == Object::Type::Splat) {
-        Splat* splat = static_cast<Splat*>(obj);
-        totalPointCount_ += splat->GetPointCount();
-        uboPrefixSums_->Update(&totalPointCount_, 4, 4 * (objects_.size() - 1));
-        // TODO: compress data
-        ssboSplatData_.emplace_back(Backend::VkResourceManager::GetInstance().GetBufferManager().RequireBuffer({ splat->GetPointCount() * sizeof(RawGaussianPoint), BufferType::Storage}));
-        ssboSplatData_.back()->Init(0);
-        ssboSplatData_.back()->Update(splat->GetPointData(), splat->GetPointCount() * sizeof(RawGaussianPoint), 0);
-    }
     objectStatus_.set(objects_.size() - 1, true);
+}
+
+void Scene::InitGPUData()
+{
+    for (auto& uniqueObj : objects_) {
+        auto obj = uniqueObj.get();
+        if (obj->GetType() == Object::Type::Splat) {
+            Splat* splat = static_cast<Splat*>(obj);
+            totalPointCount_ += splat->GetPointCount();
+            uboPrefixSums_->Update(&totalPointCount_, 4, 4 * (objects_.size() - 1));
+        }
+    }
+
+    // TODO: compress data
+    uint32_t totalPointCount = 0;
+    ssboSplatData_ = Backend::VkResourceManager::GetInstance().GetBufferManager().RequireBuffer({ totalPointCount_ * sizeof(RawGaussianPoint), BufferType::Storage});
+    for (auto& uniqueObj : objects_) {
+        auto obj = uniqueObj.get();
+        if (obj->GetType() == Object::Type::Splat) {
+            Splat* splat = static_cast<Splat*>(obj);
+            ssboSplatData_->Update(splat->GetPointData(), splat->GetPointCount() * sizeof(RawGaussianPoint), totalPointCount);
+            totalPointCount += splat->GetPointCount();
+        }
+    }
+    // ssboSortedSplats_ = Backend::VkResourceManager::GetInstance().GetBufferManager().RequireBuffer({ totalPointCount_ * sizeof(uint32_t), BufferType::Storage});
+    // ssboSplatData_->Init(0);
 }
 
 void Scene::ChangeOverlayState()

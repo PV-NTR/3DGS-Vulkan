@@ -136,7 +136,7 @@ uint32_t DisplaySurface::NextFrame()
 void DisplaySurface::Present()
 {
     auto queue = VkContext::GetInstance().AcquireGraphicsQueue(presentQueueIdx_);
-    std::array<vk::Semaphore, 2> waitSemaphores { presentWaitSemaphore_, acquireFrameSignalSemaphore_ };
+    std::array<vk::Semaphore, 1> waitSemaphores { presentWaitSemaphore_ };
     vk::PresentInfoKHR presentInfo{};
     presentInfo.setImageIndices(currentFrame_)
         .setSwapchains(*swapchain_)

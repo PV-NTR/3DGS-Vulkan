@@ -15,6 +15,10 @@ layout (set = 1, binding = 0, std430) restrict readonly buffer SSBO_PREPROCESSED
     Preprocessed preprocessed[];
 };
 
+// layout (set = 1, binding = 1, std430) restrict readonly buffer SSBO_SORTED {
+//     uint sorted[];
+// };
+
 layout (binding = 2) uniform UBO_MODEL {
     mat4 models[];
 };
@@ -37,6 +41,7 @@ layout (location = 1) out mediump vec2 outPos;
 void main()
 {
     Preprocessed data = preprocessed[gl_InstanceIndex];
+    // Preprocessed data = preprocessed[sorted[gl_InstanceIndex]];
 
     if (!data.visible) {
         gl_Position = vec4(0.0, 0.0, 2.0, 1.0);

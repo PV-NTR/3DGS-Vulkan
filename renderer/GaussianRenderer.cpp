@@ -33,6 +33,7 @@ void GaussianRenderer::SetDescriptorSetLayouts()
     descriptorSetLayouts_[0]->AddDescriptorBinding(vk::DescriptorType::eUniformBuffer, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eCompute, 4);
     descriptorSetLayouts_[0]->Update();
     descriptorSetLayouts_[1]->AddDescriptorBinding(vk::DescriptorType::eStorageBuffer, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eCompute, 1);
+    // descriptorSetLayouts_[1]->AddDescriptorBinding(vk::DescriptorType::eStorageBuffer, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eCompute, 2);
     descriptorSetLayouts_[1]->Update();
 }
 
@@ -70,11 +71,19 @@ void GaussianRenderer::CreateComputePipeline()
     std::shared_ptr<Backend::ShaderModule> cs =
         Backend::VkResourceManager::GetInstance().GetShaderManager().AddShaderModule(GetShaderPath() + "/precompute.comp", ShaderType::Compute);
     Backend::ComputePipelineInfo info = {
-        "GaussianSplatting",
+        "GaussianSplatting-preprocess",
         descriptorSetLayouts_,
         cs
     };
-    computePipeline_ = Backend::VkResourceManager::GetInstance().GetPipelineTable().RequireComputePipeline(info);
+    preprocessPipeline_ = Backend::VkResourceManager::GetInstance().GetPipelineTable().RequireComputePipeline(info);
+
+    // cs = Backend::VkResourceManager::GetInstance().GetShaderManager().AddShaderModule(GetShaderPath() + "/sort.comp", ShaderType::Compute);
+    // info = {
+    //     "GaussianSplatting-sort",
+    //     descriptorSetLayouts_,
+    //     cs
+    // };
+    // sortPipeline_ = Backend::VkResourceManager::GetInstance().GetPipelineTable().RequireComputePipeline(info);
 }
 
 bool GaussianRenderer::OnInit(Backend::DisplaySurface* surface)
@@ -94,20 +103,24 @@ void GaussianRenderer::RecordComputeCommands(Scene* scene)
 {
     for (auto cmdBuffer : computeCmdBuffers_) {
         vk::CommandBufferBeginInfo cmdBufferBeginInfo{};
-        cmdBufferBeginInfo.setFlags(vk::CommandBufferUsageFlagBits::eSimultaneousUse);
         cmdBuffer.begin(cmdBufferBeginInfo);
 
         // TODO: prepare buffer from scene
-        computePipeline_->BindStorageBuffers(scene->ssboSplatData_, 0, 0);
-        computePipeline_->BindStorageBuffers({ preComputed_ }, 1, 0);
-        computePipeline_->BindUniformBuffers({ scene->uboPrefixSums_ }, 0, 1);
-        computePipeline_->BindUniformBuffers({ scene->uboModels_ }, 0, 2);
-        computePipeline_->BindUniformBuffers({ scene->uboCamera_ }, 0, 3);
-        computePipeline_->BindUniformBuffers({ surface_->GetScreenSizeBuffer() }, 0, 4);
-        computePipeline_->BindDescriptorSets(cmdBuffer);
+        preprocessPipeline_->BindStorageBuffers({ scene->ssboSplatData_ }, 0, 0);
+        preprocessPipeline_->BindStorageBuffers({ preComputed_ }, 1, 0);
+        preprocessPipeline_->BindUniformBuffers({ scene->uboPrefixSums_ }, 0, 1);
+        preprocessPipeline_->BindUniformBuffers({ scene->uboModels_ }, 0, 2);
+        preprocessPipeline_->BindUniformBuffers({ scene->uboCamera_ }, 0, 3);
+        preprocessPipeline_->BindUniformBuffers({ surface_->GetScreenSizeBuffer() }, 0, 4);
+        preprocessPipeline_->BindDescriptorSets(cmdBuffer);
         if (scene->totalPointCount_ != 0) {
-            cmdBuffer.dispatch((scene->totalPointCount_ + 1023) / 1024, 1, 1);
+            cmdBuffer.dispatch((scene->totalPointCount_ + 127) / 128, 1, 1);
         }
+        // sortPipeline_->BindStorageBuffers({ preComputed_ }, 1, 0);
+        // sortPipeline_->BindStorageBuffers({ scene->ssboSortedSplats_ }, 1, 1);
+        // sortPipeline_->BindUniformBuffers({ scene->uboPrefixSums_ }, 0, 1);
+        // sortPipeline_->BindDescriptorSets(cmdBuffer);
+        // cmdBuffer.dispatch(1, 1, 1);
         cmdBuffer.end();
     }
 }
@@ -118,8 +131,9 @@ void GaussianRenderer::OnRecordGraphicsCommands(Scene* scene, vk::CommandBuffer 
     cmdBuffer.bindVertexBuffers(0, vbo_->GetHandle(), offset);
     cmdBuffer.bindIndexBuffer(ibo_->GetHandle(), 0, vk::IndexType::eUint16);
     // TODO: prepare buffer from scene
-    pipeline_->BindStorageBuffers(scene->ssboSplatData_, 0, 0);
+    pipeline_->BindStorageBuffers({ scene->ssboSplatData_ }, 0, 0);
     pipeline_->BindStorageBuffers({ preComputed_ }, 1, 0);
+    // pipeline_->BindStorageBuffers({ scene->ssboSortedSplats_ }, 1, 1);
     pipeline_->BindUniformBuffers({ scene->uboPrefixSums_ }, 0, 1);
     pipeline_->BindUniformBuffers({ scene->uboModels_ }, 0, 2);
     pipeline_->BindUniformBuffers({ scene->uboCamera_ }, 0, 3);
@@ -127,7 +141,7 @@ void GaussianRenderer::OnRecordGraphicsCommands(Scene* scene, vk::CommandBuffer 
     cmdBuffer.setViewport(0, { { 0.0f, 0.0f, static_cast<float>(surface_->GetWidth()), static_cast<float>(surface_->GetHeight()), 0.0f, 1.0f } });
     cmdBuffer.setScissor(0, { { { 0, 0 }, { surface_->GetWidth(), surface_->GetHeight() } } });
     pipeline_->BindDescriptorSets(cmdBuffer);
-    // cmdBuffer.drawIndexed(6, scene->totalPointCount_, 0, 0, 0);
+    // cmdBuffer.drawIndexed(6, scene->totalPointCount_ / 100, 0, 0, 0);
     cmdBuffer.drawIndexed(6, 1, 0, 0, 0);
 }
 
@@ -135,15 +149,14 @@ void GaussianRenderer::SubmitGraphicsCommands()
 {
     auto cmdBuffer = GetCurrentPresentCmdBuffer();
     auto queue = Backend::VkContext::GetInstance().AcquireGraphicsQueue(surface_->GetPresentQueueIdx());
+    std::array<vk::Semaphore, 2> waitSemaphores{ preprocessComplete_, surface_->GetAcquireFrameSignalSemaphore() };
     std::array<vk::Semaphore, 2> signalSemaphores { surface_->GetPresentWaitSemaphore(), preprocessComplete_ };
     vk::SubmitInfo submitInfo{};
-    std::vector<vk::PipelineStageFlags> waitStageMask{ vk::PipelineStageFlagBits::eColorAttachmentOutput };
+    std::array<vk::PipelineStageFlags, 2> waitStageMask{ vk::PipelineStageFlagBits::eVertexShader, vk::PipelineStageFlagBits::eColorAttachmentOutput };
     submitInfo.setCommandBuffers(cmdBuffer)
-        .setWaitSemaphoreCount(1)
-        .setPWaitSemaphores(&preprocessComplete_)
+        .setWaitSemaphores(waitSemaphores)
         .setWaitDstStageMask(waitStageMask)
-        .setSignalSemaphoreCount(2)
-        .setPSignalSemaphores(signalSemaphores.data());
+        .setSignalSemaphores(signalSemaphores);
     auto ret = queue.submit(submitInfo);
     if (ret != vk::Result::eSuccess) {
         XLOGE("Submit graphics commands failed, errCode: %d", ret);
