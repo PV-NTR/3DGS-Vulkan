@@ -33,7 +33,7 @@ void GaussianRenderer::SetDescriptorSetLayouts()
     descriptorSetLayouts_[0]->AddDescriptorBinding(vk::DescriptorType::eUniformBuffer, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eCompute, 4);
     descriptorSetLayouts_[0]->Update();
     descriptorSetLayouts_[1]->AddDescriptorBinding(vk::DescriptorType::eStorageBuffer, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eCompute, 1);
-    // descriptorSetLayouts_[1]->AddDescriptorBinding(vk::DescriptorType::eStorageBuffer, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eCompute, 2);
+    descriptorSetLayouts_[1]->AddDescriptorBinding(vk::DescriptorType::eStorageBuffer, vk::ShaderStageFlagBits::eVertex, 1);
     descriptorSetLayouts_[1]->Update();
 }
 
@@ -42,10 +42,10 @@ void GaussianRenderer::SetBlendState()
     Backend::BlendState blend;
     blend.colorOp_ = 0;	// func_add
     blend.alphaOp_ = 0;	// func_add
-    blend.srcColor_ = static_cast<uint32_t>(vk::BlendFactor::eOne);
-    blend.dstColor_ = static_cast<uint32_t>(vk::BlendFactor::eOneMinusSrcAlpha);
-    blend.srcAlpha_ = static_cast<uint32_t>(vk::BlendFactor::eOne);
-    blend.dstAlpha_ = static_cast<uint32_t>(vk::BlendFactor::eOneMinusSrcAlpha);
+    blend.srcColor_ = static_cast<uint32_t>(vk::BlendFactor::eOneMinusDstAlpha);
+    blend.dstColor_ = static_cast<uint32_t>(vk::BlendFactor::eOne);
+    blend.srcAlpha_ = static_cast<uint32_t>(vk::BlendFactor::eOneMinusDstAlpha);
+    blend.dstAlpha_ = static_cast<uint32_t>(vk::BlendFactor::eOne);
     blend_.emplace(blend);
 }
 
@@ -133,7 +133,7 @@ void GaussianRenderer::OnRecordGraphicsCommands(Scene* scene, vk::CommandBuffer 
     // TODO: prepare buffer from scene
     pipeline_->BindStorageBuffers({ scene->ssboSplatData_ }, 0, 0);
     pipeline_->BindStorageBuffers({ preComputed_ }, 1, 0);
-    // pipeline_->BindStorageBuffers({ scene->ssboSortedSplats_ }, 1, 1);
+    pipeline_->BindStorageBuffers({ scene->ssboSortedSplats_ }, 1, 1);
     pipeline_->BindUniformBuffers({ scene->uboPrefixSums_ }, 0, 1);
     pipeline_->BindUniformBuffers({ scene->uboModels_ }, 0, 2);
     pipeline_->BindUniformBuffers({ scene->uboCamera_ }, 0, 3);
@@ -141,8 +141,9 @@ void GaussianRenderer::OnRecordGraphicsCommands(Scene* scene, vk::CommandBuffer 
     cmdBuffer.setViewport(0, { { 0.0f, 0.0f, static_cast<float>(surface_->GetWidth()), static_cast<float>(surface_->GetHeight()), 0.0f, 1.0f } });
     cmdBuffer.setScissor(0, { { { 0, 0 }, { surface_->GetWidth(), surface_->GetHeight() } } });
     pipeline_->BindDescriptorSets(cmdBuffer);
-    // cmdBuffer.drawIndexed(6, scene->totalPointCount_ / 100, 0, 0, 0);
-    cmdBuffer.drawIndexed(6, 1, 0, 0, 0);
+    cmdBuffer.drawIndexed(6, scene->totalPointCount_, 0, 0, 0);
+    // cmdBuffer.drawIndexed(6, 128, 0, 0, 0);
+    // cmdBuffer.drawIndexed(6, 1, 0, 0, 0);
 }
 
 void GaussianRenderer::SubmitGraphicsCommands()

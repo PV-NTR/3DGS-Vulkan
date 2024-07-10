@@ -1,6 +1,8 @@
 #include "Scene.hpp"
 #include "Splat.hpp"
 
+#include <numeric>
+
 #include "resources/vk/VkResourceManager.hpp"
 
 namespace X {
@@ -30,14 +32,16 @@ void Scene::AddObject(std::unique_ptr<Object>&& object)
 
 void Scene::InitGPUData()
 {
+    prefixSums_.reserve(objects_.size());
     for (auto& uniqueObj : objects_) {
         auto obj = uniqueObj.get();
         if (obj->GetType() == Object::Type::Splat) {
             Splat* splat = static_cast<Splat*>(obj);
             totalPointCount_ += splat->GetPointCount();
-            uboPrefixSums_->Update(&totalPointCount_, 4, 4 * (objects_.size() - 1));
+            prefixSums_.emplace_back(totalPointCount_);
         }
     }
+    uboPrefixSums_->Update(prefixSums_.data(), prefixSums_.size() * sizeof(uint32_t), 0);
 
     // TODO: compress data
     uint32_t totalPointCount = 0;
@@ -50,8 +54,9 @@ void Scene::InitGPUData()
             totalPointCount += splat->GetPointCount();
         }
     }
-    // ssboSortedSplats_ = Backend::VkResourceManager::GetInstance().GetBufferManager().RequireBuffer({ totalPointCount_ * sizeof(uint32_t), BufferType::Storage});
-    // ssboSplatData_->Init(0);
+    sortedSplatIndices_.resize(totalPointCount_);
+    std::iota(sortedSplatIndices_.begin(), sortedSplatIndices_.end(), 0);
+    ssboSortedSplats_ = Backend::VkResourceManager::GetInstance().GetBufferManager().RequireBuffer({ totalPointCount_ * sizeof(uint32_t), BufferType::Storage});
 }
 
 void Scene::ChangeOverlayState()
@@ -79,6 +84,32 @@ void Scene::UpdateCameraData(Backend::DisplaySurface* surface)
     uboCamera_->Update((void*)(&data), sizeof(CameraData), 0);
 }
 
+float Scene::GetDepth(uint32_t index)
+{
+    assert(index < totalPointCount_);
+    uint32_t objectId = std::upper_bound(prefixSums_.begin(), prefixSums_.end(), index) - prefixSums_.begin();
+    // if non-splat objects exist, upper_bound of prefixSum_ garanetees that current objectId is a splat
+    Splat* splat = static_cast<Splat*>(objects_[objectId].get());
+    if (objectId != 0) {
+        index -= prefixSums_[objectId - 1];
+    }
+    auto gaussianData = splat->GetPointData(index);
+    glm::vec4 center(gaussianData.pos[0], gaussianData.pos[1], gaussianData.pos[2], 1.0f);
+    glm::vec4 pos2d = camera_.matrices_.perspective * camera_.matrices_.view * splat->GetTransform() * center;
+    // TODO: divider zero check
+    float depth = pos2d.z / pos2d.w;
+    return depth;
+}
+
+void Scene::SortSplatsByDepth()
+{
+    std::sort(sortedSplatIndices_.begin(), sortedSplatIndices_.end(), [this](uint32_t i, uint32_t j) {
+        // return i < j;
+        return GetDepth(i) < GetDepth(j);
+    });
+    ssboSortedSplats_->Update(sortedSplatIndices_.data(), sortedSplatIndices_.size() * sizeof(uint32_t), 0);
+}
+
 void Scene::UpdateData(Backend::DisplaySurface* surface)
 {
     if (objectStatus_ != 0) {
@@ -93,6 +124,7 @@ void Scene::UpdateData(Backend::DisplaySurface* surface)
 
     if (camera_.Updated() || surface->Resized()) {
         UpdateCameraData(surface);
+        SortSplatsByDepth();
     }
 
     if (OverlayChanged()) {

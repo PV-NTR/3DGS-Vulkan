@@ -1,6 +1,7 @@
 #include "Splat.hpp"
 
 #include <fstream>
+#include <cmath>
 
 #include "common/LogCommon.hpp"
 
@@ -38,6 +39,12 @@ std::vector<RawGaussianPoint> loadPly(std::string fileName)
     // Read all Gaussians at once (AoS)
     std::vector<RawGaussianPoint> points(count);
     infile.read((char*)(points.data()), count * sizeof(RawGaussianPoint));
+    for (auto& point : points) {
+        point.scale[0] = std::exp(point.scale[0]);
+        point.scale[1] = std::exp(point.scale[1]);
+        point.scale[2] = std::exp(point.scale[2]);
+        point.opacity = 1.0f / (1.0f + std::exp(-point.opacity));
+    }
 
     // TODO: z-order for tiling, no need for graphics pipeline?
     return points;
@@ -57,6 +64,11 @@ Splat::Splat(std::string fileName) : Object(Type::Splat)
 {
     // TODO: load data from file
     data_ = loadPly(fileName);
+}
+
+RawGaussianPoint Splat::GetPointData(uint32_t index) const
+{
+    return data_[index];
 }
 
 } // namespace X

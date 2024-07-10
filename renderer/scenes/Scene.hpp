@@ -37,6 +37,8 @@ private:
     friend class GaussianRenderer;
     Scene(const Scene& other) = delete;
     void UpdateCameraData(Backend::DisplaySurface* surface);
+    void SortSplatsByDepth();
+    float GetDepth(uint32_t index);
 
 private:
     std::vector<std::unique_ptr<Object>> objects_;
@@ -44,8 +46,10 @@ private:
     Camera camera_;
 
     std::bitset<32> objectStatus_ = 0;
+    std::vector<uint32_t> sortedSplatIndices_;
+    std::vector<uint32_t> prefixSums_;
     std::shared_ptr<Backend::Buffer> ssboSplatData_;
-    // std::shared_ptr<Backend::Buffer> ssboSortedSplats_;
+    std::shared_ptr<Backend::Buffer> ssboSortedSplats_;
     std::shared_ptr<Backend::Buffer> uboPrefixSums_;
     std::shared_ptr<Backend::Buffer> uboModels_;
     std::shared_ptr<Backend::Buffer> uboCamera_;

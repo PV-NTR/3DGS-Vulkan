@@ -104,7 +104,7 @@ void Renderer::RecordGraphicsCommands(Scene* scene)
         auto swapSurface = surface_->GetSwapSurfaces()[i];
         vk::RenderPassBeginInfo beginInfo{};
         std::array<vk::ClearValue, 2> clearValues;
-        clearValues[0].setColor({ 0.3f, 0.0f, 0.0f, 0.5f });
+        clearValues[0].setColor({ 0.0f, 0.0f, 0.0f, 0.0f });
         clearValues[1].setDepthStencil({ 1.0f, 0 });
         beginInfo.setRenderPass(swapSurface->GetRenderPass()->GetHandle())
             .setFramebuffer(swapSurface->GetFramebuffer()->get())

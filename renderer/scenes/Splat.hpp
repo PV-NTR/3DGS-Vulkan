@@ -23,6 +23,7 @@ public:
     [[nodiscard]] static std::shared_ptr<Splat> MakeShared(std::string fileName);
     uint32_t GetPointCount() const { return data_.size(); }
     const void* GetPointData() const { return data_.data(); }
+    RawGaussianPoint GetPointData(uint32_t index) const;
 
 protected:
     Splat() : Object(Type::Splat) {}

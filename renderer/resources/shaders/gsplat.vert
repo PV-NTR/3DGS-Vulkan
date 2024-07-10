@@ -94,7 +94,7 @@ vec3 CalcColor(vec3 color, float[45] shsFloats, float x, float y, float z)
 
 void main()
 {
-    // TODO: move common instance computing into compute shader to reduce computation
+    // TODO: fix errors
     SplatData splat = splatData[gl_InstanceIndex];
 
     uint objectID = 0;
