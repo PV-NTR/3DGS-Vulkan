@@ -19,7 +19,8 @@ GraphicsPipeline::GraphicsPipeline(const GraphicsPipelineInfo& info, vk::Pipelin
             .setSrcAlphaBlendFactor(static_cast<vk::BlendFactor>(blendState.srcAlpha_))
             .setDstAlphaBlendFactor(static_cast<vk::BlendFactor>(blendState.dstAlpha_))
             .setColorBlendOp(blendState.GetColorBlendOp())
-            .setAlphaBlendOp(blendState.GetAlphaBlendOp());
+            .setAlphaBlendOp(blendState.GetAlphaBlendOp())
+            .setColorWriteMask(vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA);
     }
     defaultState_.colorBlendState.setAttachments(blendAttachmentState);
 
@@ -30,6 +31,9 @@ GraphicsPipeline::GraphicsPipeline(const GraphicsPipelineInfo& info, vk::Pipelin
 
     assert(info.renderPass != nullptr);
     vk::GraphicsPipelineCreateInfo pipelineCI {};
+    if (info.renderPass->DepthStencilAttachmentID() != UINT32_MAX) {
+        defaultState_.depthStencilState.setDepthTestEnable(vk::True).setStencilTestEnable(vk::False).setDepthCompareOp(vk::CompareOp::eLessOrEqual);
+    }
     pipelineCI.setRenderPass(info.renderPass->GetHandle())
         .setLayout(*layout_)
         .setPVertexInputState(&defaultState_.vertexInputState)
@@ -59,7 +63,7 @@ GraphicsPipeline::GraphicsPipeline(const GraphicsPipelineInfo& info, vk::Pipelin
 void GraphicsPipeline::InitDefaultSettings()
 {
     // Specify vertex input state
-    defaultState_.vertexInputBinding.setBinding(0).setStride(2).setInputRate(vk::VertexInputRate::eVertex);
+    defaultState_.vertexInputBinding.setBinding(0).setStride(8).setInputRate(vk::VertexInputRate::eVertex);
     defaultState_.vertexInputAttribute.setLocation(0).setBinding(0).setFormat(vk::Format::eR32G32Sfloat);
     defaultState_.vertexInputState.setVertexBindingDescriptions(defaultState_.vertexInputBinding)
         .setVertexAttributeDescriptions(defaultState_.vertexInputAttribute);
@@ -67,8 +71,7 @@ void GraphicsPipeline::InitDefaultSettings()
     defaultState_.rasterizationState.setPolygonMode(vk::PolygonMode::eFill).setCullMode(vk::CullModeFlagBits::eNone)
         .setFrontFace(vk::FrontFace::eClockwise);
     defaultState_.multisampleState.setRasterizationSamples(vk::SampleCountFlagBits::e1);
-    defaultState_.depthStencilState.setDepthTestEnable(vk::True).setStencilTestEnable(vk::True)
-        .setDepthCompareOp(vk::CompareOp::eLessOrEqual);
+    defaultState_.depthStencilState.setDepthTestEnable(vk::False).setStencilTestEnable(vk::False);
     defaultState_.viewportState.setViewportCount(1).setScissorCount(1);
     defaultState_.dynamicState.setDynamicStates(defaultState_.dynamicStateEnables);
 }

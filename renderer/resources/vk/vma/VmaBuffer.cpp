@@ -16,6 +16,7 @@ VmaBuffer::VmaBuffer(VmaAllocator allocator, const VmaBufferInfo& info) noexcept
 
     VkBuffer handle;
     auto ret = vmaCreateBuffer(allocator_, &bufferCI, &allocationCI, &handle, &allocation_, &allocationInfo_);
+    assert(ret == VK_SUCCESS);
     SetMappedData();
     handle_ = handle;
 }

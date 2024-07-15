@@ -89,7 +89,7 @@ void RenderPass::Init()
         .setDstSubpass(0)
         .setSrcStageMask(vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests)
         .setDstStageMask(vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests)
-        .setSrcAccessMask(vk::AccessFlagBits::eNone)
+        .setSrcAccessMask(vk::AccessFlagBits::eDepthStencilAttachmentWrite)
         .setDstAccessMask(vk::AccessFlagBits::eDepthStencilAttachmentWrite | vk::AccessFlagBits::eDepthStencilAttachmentRead);
 
     dependencies[1].setSrcSubpass(vk::SubpassExternal)

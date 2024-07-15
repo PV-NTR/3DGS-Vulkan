@@ -44,6 +44,9 @@ android {
             version '3.22.1'
         }
     }
+    sourceSets {
+        main.assets.srcDirs = ['assets']
+    }
 }
 
 dependencies {
@@ -55,3 +58,19 @@ dependencies {
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core
 }
+
+task copyTask {
+    copy {
+        from rootProject.ext.shaderPath
+        into 'assets/shaders'
+        include '*.*'
+    }
+
+    copy {
+        from rootProject.ext.assetPath
+        into 'assets/models'
+        include 'train_7000.ply'
+    }
+}
+
+preBuild.dependsOn copyTask

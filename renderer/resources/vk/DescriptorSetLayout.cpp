@@ -21,7 +21,11 @@ void DescriptorSetLayout::Update()
         }
     }
     vk::DescriptorSetLayoutCreateInfo layoutCI{};
-    layoutCI.setFlags(vk::DescriptorSetLayoutCreateFlagBits::eUpdateAfterBindPool).setBindings(bindings);
+    vk::DescriptorSetLayoutBindingFlagsCreateInfo bindingFlagsCI{};
+    std::vector<vk::DescriptorBindingFlags> bindingFlags(bindings.size(), vk::DescriptorBindingFlagBits::eUpdateAfterBind);
+    bindingFlagsCI.setBindingFlags(bindingFlags);
+    layoutCI.setFlags(vk::DescriptorSetLayoutCreateFlagBits::eUpdateAfterBindPool).setBindings(bindings)
+        .setPNext(&bindingFlagsCI);
     auto [ret, uniqueDescLayout] = VkContext::GetInstance().GetDevice().createDescriptorSetLayoutUnique(layoutCI);
     if (ret != vk::Result::eSuccess) {
         XLOGE("CreateDescriptorSetLayout failed, errCode: %d", ret);

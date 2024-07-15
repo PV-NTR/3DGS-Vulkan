@@ -6,6 +6,7 @@
 #include "Renderer.hpp"
 #include "resources/vk/VkContext.hpp"
 #include "resources/vk/VkResourceManager.hpp"
+#include "scenes/Splat.hpp"
 
 void VulkanWindow::HandleMouseMove(int32_t x, int32_t y)
 {
@@ -15,8 +16,8 @@ void VulkanWindow::HandleMouseMove(int32_t x, int32_t y)
     bool handled = false;
 
     if (scene_->OverlayVisible()) {
-        ImGuiIO& io = ImGui::GetIO();
-        handled = io.WantCaptureMouse;
+        // ImGuiIO& io = ImGui::GetIO();
+        // handled = io.WantCaptureMouse;
     }
 
     if (handled) {
@@ -158,6 +159,14 @@ void VulkanWindow::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
     OnHandleMessage(uMsg, wParam, lParam);
 }
 
+void VulkanWindow::Init()
+{
+    InitBackend();
+    InitSurface();
+    InitRenderer();
+    LoadScene();
+}
+
 void VulkanWindow::InitBackend()
 {
     X::Backend::VkContext::GetInstance().Init();
@@ -180,6 +189,14 @@ void VulkanWindow::InitSurface()
 void VulkanWindow::LoadScene()
 {
     scene_ = std::make_unique<X::Scene>();
+    // TODO: use gui callback to load splat file
+    auto splat = X::Splat::MakeUnique(GetAssetPath() + "/train_7000.ply");
+    scene_->AddObject(std::move(splat));
+    scene_->GetCamera().SetPerspective(50.154269299972504, surface_->GetWidth() * 1164.6601287484507 / 1159.5880733038064 / surface_->GetHeight(), 0.2f, 200.0f);
+    scene_->GetCamera().SetPosition({-3.0089893469241797, -0.11086489695181866, -3.7527640949141428});
+    scene_->GetCamera().SetRotation({ 2.5534724, 28.6107985, -3.4906808 });
+    // scene_->GetCamera().SetRotation({ 3.756929, 28.4939513, -4.5199111 });
+    scene_->InitGPUData();
 }
 
 void VulkanWindow::RenderLoop()
@@ -195,6 +212,10 @@ void VulkanWindow::RenderLoop()
                 break;
             }
         }
+        auto current = std::chrono::high_resolution_clock::now();
+        auto frameTime = std::chrono::duration<double, std::milli>(current - frameStart_).count() / 1000.0f;
+        frameStart_ = current;
+        scene_->GetCamera().Update(frameTime);
         renderer_->UpdateScene(scene_.get());
         renderer_->DrawFrame();
     }
@@ -203,6 +224,7 @@ void VulkanWindow::RenderLoop()
 void VulkanWindow::WindowResize()
 {
     X::Backend::VkContext::GetInstance().GetDevice().waitIdle();
+    // surface_->CleanSwapchain();
     surface_->SetupSwapchain();
     surface_->SetupSwapSurfaces();
 }

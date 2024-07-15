@@ -16,6 +16,8 @@ source_group("Shaders" FILES ${SHADERS})
 
 # Asset and shader path selection
 add_definitions(-DSHADER_DIR=\"${SHADER_DIR}\")
+set(ASSETS_DIR ${CMAKE_SOURCE_DIR}/../../assets)
+add_definitions(-DASSET_DIR=\"${ASSETS_DIR}\")
 
 # add vulkan lib
 find_package(Vulkan REQUIRED)
@@ -52,11 +54,9 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     ${VMA_DIR})
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    message(STATUS "debug============================")
     link_directories(${CMAKE_SOURCE_DIR}/../../libs/glslang/win32/debug)
     file(GLOB GLSLANG_LIBS ${CMAKE_SOURCE_DIR}/../../libs/glslang/win32/debug/*.lib)
 elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
-    message(STATUS "release============================")
     link_directories(${CMAKE_SOURCE_DIR}/../../libs/glslang/win32/release)
     file(GLOB GLSLANG_LIBS ${CMAKE_SOURCE_DIR}/../../libs/glslang/win32/release/*.lib)
 endif()

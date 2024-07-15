@@ -20,6 +20,12 @@ std::shared_ptr<Surface> Surface::Make(const std::vector<std::shared_ptr<Image>>
 	return std::shared_ptr<Surface>(new Surface(std::move(renderPass), attachmentResources));
 }
 
+std::shared_ptr<Surface> Surface::Make(std::shared_ptr<RenderPass> renderPass, const std::vector<std::shared_ptr<Image>>& attachmentResources)
+{
+	assert(attachmentResources.size() == 2);
+	assert(renderPass->Inited());
+	return std::shared_ptr<Surface>(new Surface(std::move(renderPass), attachmentResources));
+}
 
 std::shared_ptr<Surface> Surface::FromThis()
 {

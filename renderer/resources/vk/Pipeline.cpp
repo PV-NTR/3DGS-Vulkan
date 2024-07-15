@@ -31,7 +31,7 @@ bool Pipeline::CreateDescriptorPool(const std::vector<std::shared_ptr<Descriptor
                 continue;
             }
             setCnt += bindingInfo.second;
-            descriptorCnts[bindingInfo.first.type_]++;
+            descriptorCnts[bindingInfo.first.type_] += bindingInfo.second;
         }
     }
     std::vector<vk::DescriptorPoolSize> poolSizes;

@@ -1,18 +1,18 @@
 [submodule "3rdparty/glm"]
-	path = 3rdparty/glm
-	url = https://github.com/icaven/glm.git
+    path = 3rdparty/glm
+    url = https://github.com/g-truc/glm.git
 [submodule "3rdparty/plog"]
-	path = 3rdparty/plog
-	url = https://github.com/SergiusTheBest/plog.git
+    path = 3rdparty/plog
+    url = https://github.com/SergiusTheBest/plog.git
 [submodule "3rdparty/vma"]
-	path = 3rdparty/vma
-	url = https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git
+    path = 3rdparty/vma
+    url = https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git
 [submodule "3rdparty/imgui"]
-	path = 3rdparty/imgui
-	url = https://github.com/ocornut/imgui.git
+    path = 3rdparty/imgui
+    url = https://github.com/ocornut/imgui.git
 [submodule "3rdparty/vulkan-headers"]
-	path = 3rdparty/vulkan-headers
-	url = https://github.com/KhronosGroup/Vulkan-Headers.git
+    path = 3rdparty/vulkan-headers
+    url = https://github.com/KhronosGroup/Vulkan-Headers.git
 [submodule "3rdparty/glslang"]
-	path = 3rdparty/glslang
-	url = https://github.com/KhronosGroup/glslang.git
+    path = 3rdparty/glslang
+    url = https://github.com/KhronosGroup/glslang.git

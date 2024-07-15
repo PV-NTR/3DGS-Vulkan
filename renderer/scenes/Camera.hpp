@@ -70,9 +70,9 @@ private:
     glm::vec3 position_ = glm::vec3();
 
     // intrinsic param
-    float fovY_;
-    float aspect_;
-    float zNear_, zFar_;
+    float fovY_ = 45.0f;
+    float aspect_ = 1.0f;
+    float zNear_ = 0.001f, zFar_ = 100.0f;
 
     // cached MVP
     struct {

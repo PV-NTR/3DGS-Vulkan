@@ -3,6 +3,10 @@
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$/../.." vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../../3rdparty/glm" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../../3rdparty/glslang" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../../3rdparty/glslang/External/googletest" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../../3rdparty/glslang/External/spirv-tools" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../../3rdparty/glslang/External/spirv-tools/external/spirv-headers" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../../3rdparty/imgui" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../../3rdparty/plog" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../../3rdparty/vma" vcs="Git" />

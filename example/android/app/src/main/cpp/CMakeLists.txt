@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.22.1)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} \
-        -std=c++17 -Wall -Wno-unused-variable \
-        -Wno-delete-non-virtual-dtor -DVK_USE_PLATFORM_ANDROID_KHR")
+        -std=c++17 -Wno-unused-variable \
+        -Wno-delete-non-virtual-dtor")
 
 project("vkrenderer")
 
@@ -28,6 +28,7 @@ set(IMGUI_DIR ${3RDPARTY_DIR}/imgui/)
 file(GLOB IMGUI_SRC ${IMGUI_DIR}/*.cpp)
 ## vulkan headers
 add_definitions(-DVULKAN_HPP_TYPESAFE_CONVERSION)
+add_definitions(-DVK_USE_PLATFORM_ANDROID_KHR)
 set(VULKAN_HEADER_DIR ${3RDPARTY_DIR}/vulkan-headers/include)
 ## glslang
 set(GLSLANG_DIR ${3RDPARTY_DIR}/glslang)
@@ -44,10 +45,12 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         ${RENDERER_SRC}
         ${IMGUI_SRC}
         GameActivitySources.cpp
+        AndroidWindow.cpp
         AndroidMain.cpp)
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ASSET_MANAGER
+        ${CMAKE_SOURCE_DIR}
         ${ANDROID_NDK}/sources/android/native_app_glue
         ${VULKAN_HEADER_DIR}
         ${RENDERER_DIR}

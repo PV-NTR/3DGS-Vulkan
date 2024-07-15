@@ -10,7 +10,15 @@ public:
     VmaObject(VmaAllocator allocator, bool coherent = false, bool persistent = false) noexcept
         : allocator_(allocator), coherent_(coherent), persistent_(persistent) {}
 
-    VmaObject(VmaObject&& other) noexcept = default;
+    VmaObject(VmaObject&& other) noexcept
+        : allocator_(other.allocator_), allocation_(other.allocation_), allocationInfo_(other.allocationInfo_),
+          mappedData_(other.mappedData_), coherent_(other.coherent_), persistent_(other.persistent_)
+    {
+        other.allocator_ = VK_NULL_HANDLE;
+        other.allocation_ = VK_NULL_HANDLE;
+        other.allocationInfo_ = {};
+        other.mappedData_ = nullptr;
+    }
 
     bool Mapped() const
     {

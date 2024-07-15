@@ -15,13 +15,9 @@ public:
 
 protected:
     friend class ShaderManager;
-    ShaderModule(std::string fileName, ShaderType type);
+    ShaderModule(const std::string& fileName, const std::string& shaderCode, ShaderType type);
     ShaderModule(ShaderModule&& other) noexcept
         : type_(other.type_), shaderName_(other.shaderName_), shaderUnique_(std::move(other.shaderUnique_)), shader_(*shaderUnique_) {}
-
-private:
-    static std::string ReadShader(std::string fileName);
-    static std::string GenerateShaderName(std::string fileName);
 
 private:
     ShaderType type_;

@@ -12,10 +12,13 @@ ImageView::ImageView(std::shared_ptr<Image> image) noexcept
     subreourceRange.setAspectMask(vk::ImageAspectFlagBits::eColor)
         .setLevelCount(1)
         .setLayerCount(1);
+    if (image->GetInfo().depthStencil_) {
+        subreourceRange.setAspectMask(vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil);
+    }
     viewCI.setViewType(vk::ImageViewType::e2D)
         .setImage(image->GetHandle())
         // TODO: format from info, ycbcr or astc or other info
-        .setFormat(vk::Format::eR8G8B8A8Unorm)
+        .setFormat(image->GetInfo().format_)
         .setComponents({ vk::ComponentSwizzle::eR, vk::ComponentSwizzle::eG, vk::ComponentSwizzle::eB, vk::ComponentSwizzle::eA })
         .setSubresourceRange(subreourceRange);
     auto [ret, uniqueView] = VkContext::GetInstance().GetDevice().createImageViewUnique(viewCI);

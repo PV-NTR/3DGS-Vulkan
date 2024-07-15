@@ -11,6 +11,7 @@ class Surface {
 public:
     [[nodiscard]] static std::shared_ptr<Surface> Make(uint32_t width, uint32_t height, std::shared_ptr<RenderPass> renderPass = nullptr);
     [[nodiscard]] static std::shared_ptr<Surface> Make(const std::vector<std::shared_ptr<Image>>& attachmentResources);
+    [[nodiscard]] static std::shared_ptr<Surface> Make(std::shared_ptr<RenderPass> renderPass, const std::vector<std::shared_ptr<Image>>& attachmentResources);
     [[nodiscard]] std::shared_ptr<Surface> FromThis();
     void AddAttachment(vk::Format format, bool depthStencil, bool present);
     void Init();

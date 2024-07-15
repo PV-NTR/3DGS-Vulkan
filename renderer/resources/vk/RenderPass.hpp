@@ -29,7 +29,7 @@ protected:
 private:
     vk::UniqueRenderPass renderPassUnique_;
     vk::RenderPass renderPass_;
-    std::vector<vk::AttachmentDescription> attachments_;
+    std::vector<vk::AttachmentDescription> attachments_ {};
     // we only support at most 1 display image and 1 depthStencil image for one render pass!
     uint32_t display_ = UINT32_MAX;
     uint32_t depthStencil_ = UINT32_MAX;

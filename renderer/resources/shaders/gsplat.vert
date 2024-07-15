@@ -16,8 +16,8 @@ layout (binding = 0, std430) restrict readonly buffer SSBO_SPLATDATA {
     SplatData splatData[];
 };
 
-layout (binding = 1) uniform UBO_OBJECT_INDEX_PREFIXSUM {
-    uint prefixSums[32];
+layout (binding = 1, std140) uniform UBO_OBJECT_INDEX_PREFIXSUM {
+    uvec4 prefixSums[8];
 };
 
 layout (binding = 2) uniform UBO_MODEL {
@@ -94,12 +94,12 @@ vec3 CalcColor(vec3 color, float[45] shsFloats, float x, float y, float z)
 
 void main()
 {
-    // TODO: move common instance computing into compute shader to reduce computation
+    // TODO: fix errors
     SplatData splat = splatData[gl_InstanceIndex];
 
     uint objectID = 0;
     for (int i = 0; i < 32; i++) {
-        if (prefixSums[objectID] >= gl_InstanceIndex) {
+        if (prefixSums[objectID / 4][object % 4] >= gl_InstanceIndex) {
             objectID = i;
             break;
         }
