@@ -68,6 +68,20 @@ void DisplaySurface::SetupSwapchain()
 
     imageCount_ = std::max(std::min(imageCount_, surfCaps.maxImageCount), surfCaps.minImageCount);
 
+    // Find a format for surface
+    // WARNING: check result
+    std::vector<vk::SurfaceFormatKHR> formats = VkContext::GetInstance().GetPhysicalDevice().getSurfaceFormatsKHR(surface_).value;
+    vk::Format chosenFormat = vk::Format::eUndefined;
+    vk::ColorSpaceKHR chosenColorSpace = vk::ColorSpaceKHR::eSrgbNonlinear;
+    for (const auto& format : formats) {
+        if (format.format == vk::Format::eR8G8B8A8Unorm) {
+            chosenFormat = format.format;
+            chosenColorSpace = format.colorSpace;
+            break;
+        }
+    }
+    assert(chosenFormat == vk::Format::eR8G8B8A8Unorm);
+
     // Find a supported composite alpha format (not all devices support alpha opaque)
     vk::CompositeAlphaFlagBitsKHR compositeAlpha = vk::CompositeAlphaFlagBitsKHR::eOpaque;
     // Simply select the first composite alpha format available
@@ -88,18 +102,18 @@ void DisplaySurface::SetupSwapchain()
     // TODO: can unique handle set old swapchain?
     swapchainCI.setSurface(surface_)
         .setMinImageCount(imageCount_)
-        .setImageFormat(vk::Format::eR8G8B8A8Unorm)
-        .setImageColorSpace(vk::ColorSpaceKHR::eSrgbNonlinear)
+        .setImageFormat(chosenFormat)
+        .setImageColorSpace(chosenColorSpace)
         .setImageExtent({ width_, height_ })
         .setImageArrayLayers(1)
-        .setImageUsage(vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst)
+        .setImageUsage(vk::ImageUsageFlagBits::eColorAttachment)
         .setImageSharingMode(vk::SharingMode::eExclusive)
         .setQueueFamilyIndices(presentQueueIdx_)
         .setPreTransform(vk::SurfaceTransformFlagBitsKHR::eIdentity)
         .setCompositeAlpha(compositeAlpha)
         .setPresentMode(vk::PresentModeKHR::eFifo)
-        .setClipped(vk::True)
-        .setOldSwapchain(*swapchain_);
+        .setClipped(vk::True);
+        //.setOldSwapchain(*swapchain_);
 
     auto [ret, swapchainUnique] = VkContext::GetInstance().GetDevice().createSwapchainKHRUnique(swapchainCI);
     if (ret != vk::Result::eSuccess) {
@@ -113,7 +127,8 @@ std::vector<std::shared_ptr<Image>> DisplaySurface::GetImagesFromSwapchain()
 {
     // WARNING: check return
     auto vkImages = VkContext::GetInstance().GetDevice().getSwapchainImagesKHR(*swapchain_).value;
-    assert(vkImages.size() == imageCount_);
+    imageCount_ = vkImages.size();
+    // assert(vkImages.size() == imageCount_);
 
     std::vector<std::shared_ptr<Image>> images;
     images.reserve(imageCount_);
@@ -127,7 +142,7 @@ std::vector<std::shared_ptr<Image>> DisplaySurface::GetImagesFromSwapchain()
 uint32_t DisplaySurface::NextFrame()
 {
     auto ret = VkContext::GetInstance().GetDevice().waitIdle();
-    assert(ret == vk::Result::eSuccess);
+    assert(ret != vk::Result::eErrorDeviceLost);
     auto nextIndex = VkContext::GetInstance().GetDevice().acquireNextImageKHR(*swapchain_, UINT64_MAX, acquireFrameSignalSemaphore_, {});
     currentFrame_ = nextIndex.value;
     return currentFrame_;
@@ -172,7 +187,7 @@ void DisplaySurface::SetupSwapSurfaces(bool enableDepthStencil)
 void DisplaySurface::UpdateScreenSizeBuffer()
 {
     if (resized_) {
-        float data[2] = { width_, height_ };
+        float data[2] = { static_cast<float>(width_), static_cast<float>(height_) };
         screenSize_->Update(data, 8, 0);
         resized_ = false;
     }

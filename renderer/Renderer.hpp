@@ -37,7 +37,9 @@ protected:
     vk::CommandBuffer GetCurrentComputeCmdBuffer() { return computeCmdBuffers_[surface_->GetCurrentFrameIdx()]; }
     const std::string GetShaderPath()
     {
-#ifdef SHADER_DIR
+#ifdef HOST_ANDROID
+        return "shaders";
+#elif defined SHADER_DIR
         return SHADER_DIR;
 #else
         return "";
@@ -46,6 +48,7 @@ protected:
 
 protected:
     Backend::DisplaySurface* surface_ = nullptr;
+    vk::Fence fence_;
     std::vector<vk::CommandBuffer> presentCmdBuffers_, computeCmdBuffers_;
 
 private:

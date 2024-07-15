@@ -8,7 +8,7 @@ namespace X {
 
 Renderer::Renderer(bool needCompute) : needCompute_(needCompute)
 {
-
+    fence_ = Backend::VkContext::GetInstance().GetDevice().createFence({}).value;
 }
 
 Renderer::~Renderer()
@@ -60,8 +60,10 @@ void Renderer::OnUpdateScene(Scene* scene)
 void Renderer::DrawFrame()
 {
     this->OnDrawFrame();
+    Backend::VkContext::GetInstance().GetDevice().waitForFences(fence_, vk::True, 100000000);
     surface_->Present();
     surface_->NextFrame();
+    Backend::VkContext::GetInstance().GetDevice().resetFences(fence_);
 }
 
 
@@ -129,17 +131,21 @@ void Renderer::SubmitGraphicsCommands()
     auto queue = Backend::VkContext::GetInstance().AcquireGraphicsQueue(surface_->GetPresentQueueIdx());
     vk::SubmitInfo submitInfo{};
     std::vector<vk::PipelineStageFlags> waitStageMask{ vk::PipelineStageFlagBits::eColorAttachmentOutput };
+    auto waitSemaphore = surface_->GetAcquireFrameSignalSemaphore();
+    auto signalSemaphore = surface_->GetPresentWaitSemaphore();
     submitInfo.setCommandBuffers(cmdBuffer)
         .setWaitSemaphoreCount(1)
-        .setPWaitSemaphores(&surface_->GetAcquireFrameSignalSemaphore())
+        .setPWaitSemaphores(&waitSemaphore)
         .setWaitDstStageMask(waitStageMask)
         .setSignalSemaphoreCount(1)
-        .setPSignalSemaphores(&surface_->GetPresentWaitSemaphore());
-    auto ret = queue.submit(submitInfo);
+        .setPSignalSemaphores(&signalSemaphore);
+    // auto ret = queue.submit(submitInfo);
+    auto ret = queue.submit(submitInfo, fence_);
     if (ret != vk::Result::eSuccess) {
         XLOGE("Submit graphics commands failed, errCode: %d", ret);
-        abort();
+        // abort();
     }
+    assert(ret != vk::Result::eErrorDeviceLost);
 }
 
 void Renderer::OnDrawFrame()

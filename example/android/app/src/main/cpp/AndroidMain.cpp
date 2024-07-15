@@ -1,54 +1,28 @@
-#include <plog/Log.h>
-#include <game-activity/native_app_glue/android_native_app_glue.h>
-#include "Renderer.hpp"
+#include "AndroidMain.hpp"
 
-X::Renderer g_renderer;
+#include "common/LogCommon.hpp"
+
+#include "AndroidWindow.hpp"
+
 android_app* g_androidAppCtx = nullptr;
+plog::AndroidAppender<plog::TxtFormatter> androidAppender("3DGS_Vulkan");
 
-bool InitVulkan(android_app* app)
+void HandleAppCommand(android_app* app, int32_t cmd)
 {
+    assert(app->userData != nullptr);
+    AndroidWindow* window = reinterpret_cast<AndroidWindow*>(app->userData);
+    window->HandleAppCommand(cmd);
+}
+
+void android_main(android_app* app) {
+    INIT_LOGGER(plog::debug, &androidAppender);
+    AndroidWindow* window = new AndroidWindow();
+    app->userData = window;
+    app->onAppCmd = HandleAppCommand;
     g_androidAppCtx = app;
 
-    if (!g_renderer.Init()) {
-        PLOGW.printf("Gaussian Splatting Renderer: Vulkan is unavailable, install vulkan and re-start");
-        return false;
-    }
-    return false;
-}
+    // window->Init(g_androidAppCtx);
+    window->RenderLoop();
 
-void handle_cmd(android_app* app, int32_t cmd) {
-    switch (cmd) {
-        case APP_CMD_INIT_WINDOW:
-            InitVulkan(app);
-            break;
-        case APP_CMD_TERM_WINDOW:
-            g_renderer.Destroy();
-            break;
-        default:
-            PLOGI.printf("Gaussian Splatting Renderer: event not handled: %d", cmd);
-    }
-}
-
-void android_main(struct android_app* app) {
-
-    // Set the callback to process system events
-    app->onAppCmd = handle_cmd;
-
-    // Used to poll the events in the main loop
-    int events;
-    android_poll_source* source;
-
-    // Main loop
-    do {
-        if (ALooper_pollAll(g_renderer.IsReady() ? 1 : 0, nullptr, &events, (void**)&source) >= 0) {
-            if (source != NULL) {
-                source->process(app, source);
-            }
-        }
-
-        // render if vulkan is ready
-        if (g_renderer.IsReady()) {
-            g_renderer.DrawFrame();
-        }
-    } while (app->destroyRequested == 0);
+    delete window;
 }

@@ -3,6 +3,10 @@
 #include "Surface.hpp"
 #include "Buffer.hpp"
 
+#ifdef HOST_ANDROID
+#include <game-activity/native_app_glue/android_native_app_glue.h>
+#endif
+
 namespace X::Backend {
 
 class DisplaySurface {

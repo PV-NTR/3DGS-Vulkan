@@ -14,7 +14,9 @@ constexpr typename std::underlying_type_t<E> ECast(E e)
 
 inline const std::string GetAssetPath()
 {
-#ifdef ASSET_DIR
+#ifdef HOST_ANDROID
+    return "models";
+#elif defined ASSET_DIR
     return ASSET_DIR;
 #else
     return "";

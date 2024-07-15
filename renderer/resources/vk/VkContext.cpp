@@ -21,12 +21,14 @@ std::vector<const char*> VkContext::requiredInstanceExts_ = {
 #endif
 };
 std::vector<const char*> VkContext::requiredInstanceLayers_ = {
+#ifdef HOST_WIN32
     "VK_LAYER_KHRONOS_validation"
+#endif
 };
 
 std::vector<const char*> VkContext::requiredDeviceExts_ = {
-#ifdef HOST_WIN32
     "VK_KHR_swapchain",
+#ifdef HOST_WIN32
     "VK_NV_device_diagnostic_checkpoints",
 #endif
     "VK_KHR_buffer_device_address",
@@ -41,7 +43,6 @@ void VkContext::Init()
 
     CreateInstance();
     SelectPhysicalDevice();
-    QueryQueueFamilies();
     CreateDeviceAndQueues();
 
     InitAllocator();
@@ -250,13 +251,14 @@ bool VkContext::QueryQueueFamilies()
     std::vector<vk::QueueFamilyProperties> queueProps(queueCnt);
     physicalDevice_.getQueueFamilyProperties(&queueCnt, queueProps.data());
     for (uint32_t i = 0; i < queueCnt; i++) {
-        if (queueProps[i].queueFlags & vk::QueueFlagBits::eGraphics) {
+        if ((queueProps[i].queueFlags & vk::QueueFlagBits::eGraphics) && !(~graphicsQueueFamilyIdx_)) {
             graphicsQueueFamilyIdx_ = i;
         }
-        if (queueProps[i].queueFlags & vk::QueueFlagBits::eCompute) {
+        // if ((queueProps[i].queueFlags & vk::QueueFlagBits::eCompute) && (graphicsQueueFamilyIdx_ != i)) {
+        if ((queueProps[i].queueFlags & vk::QueueFlagBits::eCompute)) {
             computeQueueFamilyIdx_ = i;
         }
-        if (!(~graphicsQueueFamilyIdx_) && !(~computeQueueFamilyIdx_)) {
+        if ((~graphicsQueueFamilyIdx_) && (~computeQueueFamilyIdx_)) {
             break;
         }
     }
@@ -306,10 +308,17 @@ bool VkContext::CreateDeviceAndQueues()
 
     // create queue
     float priorities[] = { 1.0f };
-    std::vector<vk::DeviceQueueCreateInfo> queueCIs(2);
-    queueCIs[0].setQueueCount(1).setQueuePriorities(priorities).setQueueFamilyIndex(graphicsQueueFamilyIdx_);
-    queueCIs[1].setQueueCount(1).setQueuePriorities(priorities).setQueueFamilyIndex(computeQueueFamilyIdx_);
-    deviceCI.setQueueCreateInfoCount(2).setQueueCreateInfos(queueCIs);
+    std::vector<vk::DeviceQueueCreateInfo> queueCIs;
+    if (graphicsQueueFamilyIdx_ == computeQueueFamilyIdx_) {
+        queueCIs.resize(1);
+        queueCIs[0].setQueueCount(1).setQueuePriorities(priorities).setQueueFamilyIndex(graphicsQueueFamilyIdx_);
+        deviceCI.setQueueCreateInfoCount(1).setQueueCreateInfos(queueCIs);
+    } else {
+        queueCIs.resize(2);
+        queueCIs[0].setQueueCount(1).setQueuePriorities(priorities).setQueueFamilyIndex(graphicsQueueFamilyIdx_);
+        queueCIs[1].setQueueCount(1).setQueuePriorities(priorities).setQueueFamilyIndex(computeQueueFamilyIdx_);
+        deviceCI.setQueueCreateInfoCount(2).setQueueCreateInfos(queueCIs);
+    }
 
     // set device extensions
     GetSupportedDeviceExtensions();
@@ -321,6 +330,8 @@ bool VkContext::CreateDeviceAndQueues()
     // set device features: descriptor indexing
     vk::PhysicalDeviceFeatures2 features{};
     vk::PhysicalDeviceDescriptorIndexingFeatures descriptorIndexing{};
+    vk::PhysicalDeviceProtectedMemoryFeatures memProtect{};
+    descriptorIndexing.setPNext(&memProtect);
     features.setPNext(&descriptorIndexing);
     /// check indexing support
     physicalDevice_.getFeatures2(&features);

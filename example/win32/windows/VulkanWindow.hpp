@@ -13,11 +13,8 @@ class VulkanWindow : public BaseWindow<VulkanWindow> {
 public:
     LPCSTR ClassName() const override { return "Vulkan Window Class"; }
     std::string GetWindowTitle() const override { return ClassName(); }
+    void Init();
     void HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) override;
-    void InitBackend();
-    void InitRenderer();
-    void InitSurface();
-    void LoadScene();
     void RenderLoop();
 
 protected:
@@ -26,12 +23,17 @@ protected:
     void OnHandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) {};
     void WindowResize() override;
 
+    void InitBackend();
+    void InitRenderer();
+    void InitSurface();
+    void LoadScene();
+
 private:
     std::unique_ptr<X::Renderer> renderer_;
     std::unique_ptr<X::Scene> scene_;
     std::unique_ptr<X::Backend::DisplaySurface> surface_;
 
-    // State of mouse/touch input
+    // State of mouse input
     struct {
         struct {
             bool left = false;
