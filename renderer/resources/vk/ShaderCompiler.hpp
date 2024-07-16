@@ -2,6 +2,7 @@
 
 #include <unordered_map>
 #include <memory>
+#include <mutex>
 
 #include "resources/Enums.hpp"
 #include "utils/Singleton.hpp"
@@ -17,6 +18,7 @@ public:
 
 private:
     std::unordered_map<ShaderType, std::unique_ptr<glslang::TShader>> shaders_;
+    std::mutex mutex_;
 };
 
 } // namespace X::Backend

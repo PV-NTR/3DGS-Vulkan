@@ -142,7 +142,7 @@ void GaussianRenderer::OnRecordGraphicsCommands(Scene* scene, vk::CommandBuffer 
     cmdBuffer.setScissor(0, { { { 0, 0 }, { surface_->GetWidth(), surface_->GetHeight() } } });
     pipeline_->BindDescriptorSets(cmdBuffer);
     cmdBuffer.drawIndexed(6, scene->totalPointCount_, 0, 0, 0);
-    // cmdBuffer.drawIndexed(6, 1280, 0, 0, 0);
+    // cmdBuffer.drawIndexed(6, 64, 0, 0, 0);
     // cmdBuffer.drawIndexed(6, 1, 0, 0, 0);
 }
 

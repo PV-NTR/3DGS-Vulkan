@@ -11,7 +11,9 @@
 
 void AndroidWindow::InitBackend()
 {
-    X::Backend::VkContext::GetInstance().Init();
+    if (!X::Backend::VkContext::GetInstance().IsReady()) {
+        X::Backend::VkContext::GetInstance().Init();
+    }
     X::Backend::VkResourceManager::GetInstance();
 }
 
@@ -237,7 +239,7 @@ void AndroidWindow::RenderLoop()
             break;
         }
 
-        // this->HandleAppInputs();
+        this->HandleAppInputs();
 
         // Render frame
         if (renderer_ && renderer_->IsReady() && scene_ && surface_) {

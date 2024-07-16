@@ -19,6 +19,7 @@ ShaderCompiler::~ShaderCompiler()
 
 bool ShaderCompiler::CompileShader(const std::string& code, ShaderType type, std::vector<uint32_t>& spirv)
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     if (shaders_.find(type) == shaders_.end()) {
         shaders_.insert({ type, std::unique_ptr<glslang::TShader>(new glslang::TShader(static_cast<EShLanguage>(type))) });
     }

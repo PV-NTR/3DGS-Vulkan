@@ -13,7 +13,7 @@
 namespace X {
 
 // Load the Gaussians from the given file.
-std::vector<RawGaussianPoint> loadPly(std::string fileName)
+std::vector<RawGaussianPoint> LoadPly(std::string fileName)
 {
     std::ifstream infile(fileName.c_str(), std::ios_base::binary);
 
@@ -57,7 +57,7 @@ std::vector<RawGaussianPoint> loadPly(std::string fileName)
 }
 
 #ifdef HOST_ANDROID
-std::vector<RawGaussianPoint> loadPlyAndroid(std::string fileName)
+std::vector<RawGaussianPoint> LoadPlyAndroid(std::string fileName)
 {
     assert(g_androidAppCtx);
     assert(g_androidAppCtx->activity->assetManager);
@@ -88,7 +88,8 @@ std::vector<RawGaussianPoint> loadPlyAndroid(std::string fileName)
 
     // Read all Gaussians at once (AoS)
     std::vector<RawGaussianPoint> points(count);
-    ss.read((char*)(points.data()), count * sizeof(RawGaussianPoint));
+    uint32_t headerLength = ss.tellg();
+    std::copy(data + headerLength + 1, data + 1 + headerLength + count, (char*)points.data());
     for (auto& point : points) {
         point.scale[0] = std::exp(point.scale[0]);
         point.scale[1] = std::exp(point.scale[1]);
@@ -115,9 +116,9 @@ Splat::Splat(std::string fileName) : Object(Type::Splat)
 {
     // TODO: load data from file
 #ifdef HOST_ANDROID
-    data_ = loadPlyAndroid(fileName);
+    data_ = LoadPlyAndroid(fileName);
 #elif defined HOST_WIN32
-    data_ = loadPly(fileName);
+    data_ = LoadPly(fileName);
 #endif
 }
 
