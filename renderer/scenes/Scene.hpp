@@ -38,6 +38,7 @@ private:
     Scene(const Scene& other) = delete;
     void UpdateCameraData(Backend::DisplaySurface* surface);
     void SortSplatsByDepth();
+    void RadixSortSplatsByDepth();
     float GetDepth(uint32_t index);
 
 private:

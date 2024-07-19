@@ -77,7 +77,7 @@ void GaussianRenderer::CreateComputePipeline()
     };
     preprocessPipeline_ = Backend::VkResourceManager::GetInstance().GetPipelineTable().RequireComputePipeline(info);
 
-    // cs = Backend::VkResourceManager::GetInstance().GetShaderManager().AddShaderModule(GetShaderPath() + "/sort.comp", ShaderType::Compute);
+    // cs = Backend::VkResourceManager::GetInstance().GetShaderManager().AddShaderModule(GetShaderPath() + "/pesudo_counting_sort.comp", ShaderType::Compute);
     // info = {
     //     "GaussianSplatting-sort",
     //     descriptorSetLayouts_,
@@ -120,7 +120,7 @@ void GaussianRenderer::RecordComputeCommands(Scene* scene)
         // sortPipeline_->BindStorageBuffers({ scene->ssboSortedSplats_ }, 1, 1);
         // sortPipeline_->BindUniformBuffers({ scene->uboPrefixSums_ }, 0, 1);
         // sortPipeline_->BindDescriptorSets(cmdBuffer);
-        // cmdBuffer.dispatch(1, 1, 1);
+        // cmdBuffer.dispatch((scene->totalPointCount_ + 255) / 256, 1, 1);
         cmdBuffer.end();
     }
 }
@@ -142,7 +142,7 @@ void GaussianRenderer::OnRecordGraphicsCommands(Scene* scene, vk::CommandBuffer 
     cmdBuffer.setScissor(0, { { { 0, 0 }, { surface_->GetWidth(), surface_->GetHeight() } } });
     pipeline_->BindDescriptorSets(cmdBuffer);
     cmdBuffer.drawIndexed(6, scene->totalPointCount_, 0, 0, 0);
-    // cmdBuffer.drawIndexed(6, 64, 0, 0, 0);
+    // cmdBuffer.drawIndexed(6, 128, 0, 0, 32768);
     // cmdBuffer.drawIndexed(6, 1, 0, 0, 0);
 }
 

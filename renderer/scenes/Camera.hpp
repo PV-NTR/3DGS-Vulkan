@@ -64,6 +64,7 @@ private:
 private:
     friend class Scene;
     CameraType type_ = CameraType::LookAt;
+    bool flipY_ = true;
 
     // extrinsic param
     glm::vec3 rotation_ = glm::vec3();

@@ -11,7 +11,8 @@ GraphicsPipeline::GraphicsPipeline(const GraphicsPipelineInfo& info, vk::Pipelin
     InitDefaultSettings();
 
     vk::PipelineColorBlendAttachmentState blendAttachmentState {};
-    blendAttachmentState.setBlendEnable(info.blend.has_value() ? vk::True : vk::False);
+    blendAttachmentState.setBlendEnable(info.blend.has_value() ? vk::True : vk::False)
+        .setColorWriteMask(vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA);
     if (info.blend.has_value()) {
         auto& blendState = info.blend.value();
         blendAttachmentState.setSrcColorBlendFactor(static_cast<vk::BlendFactor>(blendState.srcColor_))
@@ -19,8 +20,7 @@ GraphicsPipeline::GraphicsPipeline(const GraphicsPipelineInfo& info, vk::Pipelin
             .setSrcAlphaBlendFactor(static_cast<vk::BlendFactor>(blendState.srcAlpha_))
             .setDstAlphaBlendFactor(static_cast<vk::BlendFactor>(blendState.dstAlpha_))
             .setColorBlendOp(blendState.GetColorBlendOp())
-            .setAlphaBlendOp(blendState.GetAlphaBlendOp())
-            .setColorWriteMask(vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA);
+            .setAlphaBlendOp(blendState.GetAlphaBlendOp());
     }
     defaultState_.colorBlendState.setAttachments(blendAttachmentState);
 

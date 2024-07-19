@@ -57,6 +57,7 @@ void Scene::InitGPUData()
     sortedSplatIndices_.resize(totalPointCount_);
     std::iota(sortedSplatIndices_.begin(), sortedSplatIndices_.end(), 0);
     ssboSortedSplats_ = Backend::VkResourceManager::GetInstance().GetBufferManager().RequireBuffer({ totalPointCount_ * sizeof(uint32_t), BufferType::Storage});
+    ssboSortedSplats_->Init(0);
 }
 
 void Scene::ChangeOverlayState()
@@ -96,15 +97,54 @@ float Scene::GetDepth(uint32_t index)
     auto gaussianData = splat->GetPointData(index);
     glm::vec4 center(gaussianData.pos[0], gaussianData.pos[1], gaussianData.pos[2], 1.0f);
     glm::vec4 pos2d = camera_.matrices_.perspective * camera_.matrices_.view * splat->GetTransform() * center;
+    // glm::vec4 pos2d = center * splat->GetTransform() * camera_.matrices_.view * camera_.matrices_.perspective;
     // TODO: divider zero check
-    float depth = pos2d.z / pos2d.w;
+    float depth = pos2d.z;
     return depth;
+}
+
+void Scene::RadixSortSplatsByDepth()
+{
+    int32_t minDepth = 0x7fffffff;
+    int32_t maxDepth = 0x80000000;
+    const uint32_t depthRange = 256 * 256;
+
+    std::vector<int32_t> depthBuffer(totalPointCount_, 0);
+    std::vector<uint32_t> counts(depthRange, 0);
+    std::vector<uint32_t> starts(depthRange, 0);
+
+    for (uint32_t i = 0; i < totalPointCount_; i++) {
+        int32_t depth = GetDepth(i) * 4096;
+        depthBuffer[i] = depth;
+        if (depth > maxDepth) {
+            maxDepth = depth;
+        }
+        if (depth < minDepth) {
+            minDepth = depth;
+        }
+    }
+
+    const float depthInv = (float)(depthRange - 1) / (maxDepth - minDepth);
+    for (uint32_t i = 0; i < totalPointCount_; i++) {
+        depthBuffer[i] = (depthBuffer[i] - minDepth) * depthInv;
+        counts[depthBuffer[i]]++;
+    }
+
+    starts[0] = 0;
+    for (uint32_t i = 1; i < depthRange; i++) {
+        starts[i] = starts[i - 1] + counts[i - 1];
+    }
+
+    for (uint32_t i = 0; i < totalPointCount_; i++) {
+        sortedSplatIndices_[starts[depthBuffer[i]]++] = i;
+    }
+
+    ssboSortedSplats_->Update(sortedSplatIndices_.data(), sortedSplatIndices_.size() * sizeof(uint32_t), 0);
 }
 
 void Scene::SortSplatsByDepth()
 {
     std::sort(sortedSplatIndices_.begin(), sortedSplatIndices_.end(), [this](uint32_t i, uint32_t j) {
-        // return i < j;
         return GetDepth(i) < GetDepth(j);
     });
     ssboSortedSplats_->Update(sortedSplatIndices_.data(), sortedSplatIndices_.size() * sizeof(uint32_t), 0);
@@ -124,7 +164,8 @@ void Scene::UpdateData(Backend::DisplaySurface* surface)
 
     if (camera_.Updated() || surface->Resized()) {
         UpdateCameraData(surface);
-        SortSplatsByDepth();
+        // SortSplatsByDepth();
+        RadixSortSplatsByDepth();
     }
 
     if (OverlayChanged()) {
