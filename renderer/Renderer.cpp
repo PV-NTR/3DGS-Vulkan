@@ -96,6 +96,7 @@ void Renderer::RecordGraphicsCommands(Scene* scene)
 {
     for (uint32_t i = 0; i < presentCmdBuffers_.size(); i++) {
         auto cmdBuffer = presentCmdBuffers_[i];
+        cmdBuffer.reset();
         vk::CommandBufferBeginInfo cmdBufferBeginInfo{};
         auto ret = cmdBuffer.begin(cmdBufferBeginInfo);
         if (ret != vk::Result::eSuccess) {

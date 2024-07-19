@@ -169,7 +169,9 @@ void VulkanWindow::Init()
 
 void VulkanWindow::InitBackend()
 {
-    X::Backend::VkContext::GetInstance().Init();
+    if (!X::Backend::VkContext::GetInstance().IsReady()) {
+        X::Backend::VkContext::GetInstance().Init();
+    }
     X::Backend::VkResourceManager::GetInstance();
 }
 
@@ -227,4 +229,5 @@ void VulkanWindow::WindowResize()
     // surface_->CleanSwapchain();
     surface_->SetupSwapchain();
     surface_->SetupSwapSurfaces();
+    scene_->GetCamera().UpdateAspectRatio(surface_->GetWidth() * 1164.6601287484507 / (1159.5880733038064 * surface_->GetHeight()));
 }

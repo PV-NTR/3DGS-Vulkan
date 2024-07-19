@@ -141,8 +141,8 @@ std::vector<std::shared_ptr<Image>> DisplaySurface::GetImagesFromSwapchain()
 
 uint32_t DisplaySurface::NextFrame()
 {
-    auto ret = VkContext::GetInstance().GetDevice().waitIdle();
-    assert(ret != vk::Result::eErrorDeviceLost);
+//    auto ret = VkContext::GetInstance().GetDevice().waitIdle();
+//    assert(ret != vk::Result::eErrorDeviceLost);
     auto nextIndex = VkContext::GetInstance().GetDevice().acquireNextImageKHR(*swapchain_, UINT64_MAX, acquireFrameSignalSemaphore_, {});
     currentFrame_ = nextIndex.value;
     return currentFrame_;
