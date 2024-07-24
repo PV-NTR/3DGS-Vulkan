@@ -32,9 +32,9 @@ std::vector<const char*> VkContext::requiredDeviceExts_ = {
     "VK_NV_device_diagnostic_checkpoints",
 #endif
     "VK_KHR_buffer_device_address",
-    "VK_KHR_synchronization2",
     "VK_EXT_descriptor_indexing",
-    "VK_KHR_timeline_semaphore"
+    // "VK_KHR_synchronization2",
+    // "VK_KHR_timeline_semaphore"
 };
 
 void VkContext::Init()

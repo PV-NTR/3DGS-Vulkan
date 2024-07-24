@@ -85,7 +85,7 @@ void Scene::UpdateCameraData(Backend::DisplaySurface* surface)
     uboCamera_->Update((void*)(&data), sizeof(CameraData), 0);
 }
 
-float Scene::GetDepth(uint32_t index)
+float Scene::GetDepth(uint32_t index, const glm::vec4& viewProjZ)
 {
     assert(index < totalPointCount_);
     uint32_t objectId = std::upper_bound(prefixSums_.begin(), prefixSums_.end(), index) - prefixSums_.begin();
@@ -96,10 +96,9 @@ float Scene::GetDepth(uint32_t index)
     }
     auto gaussianData = splat->GetPointData(index);
     glm::vec4 center(gaussianData.pos[0], gaussianData.pos[1], gaussianData.pos[2], 1.0f);
-    glm::vec4 pos2d = camera_.matrices_.perspective * camera_.matrices_.view * splat->GetTransform() * center;
-    // glm::vec4 pos2d = center * splat->GetTransform() * camera_.matrices_.view * camera_.matrices_.perspective;
-    // TODO: divider zero check
-    float depth = pos2d.z;
+    // TODO: add transform
+    // float depth = glm::dot(viewProjZ, splat->GetTransform() * center);
+    float depth = glm::dot(viewProjZ, center);
     return depth;
 }
 
@@ -113,8 +112,9 @@ void Scene::RadixSortSplatsByDepth()
     std::vector<uint32_t> counts(depthRange, 0);
     std::vector<uint32_t> starts(depthRange, 0);
 
+    auto viewProj = camera_.matrices_.perspective * camera_.matrices_.view;
     for (uint32_t i = 0; i < totalPointCount_; i++) {
-        int32_t depth = GetDepth(i) * 4096;
+        int32_t depth = GetDepth(i, viewProj[2]) * 4096;
         depthBuffer[i] = depth;
         if (depth > maxDepth) {
             maxDepth = depth;
@@ -138,14 +138,14 @@ void Scene::RadixSortSplatsByDepth()
     for (uint32_t i = 0; i < totalPointCount_; i++) {
         sortedSplatIndices_[starts[depthBuffer[i]]++] = i;
     }
-
     ssboSortedSplats_->Update(sortedSplatIndices_.data(), sortedSplatIndices_.size() * sizeof(uint32_t), 0);
 }
 
 void Scene::SortSplatsByDepth()
 {
-    std::sort(sortedSplatIndices_.begin(), sortedSplatIndices_.end(), [this](uint32_t i, uint32_t j) {
-        return GetDepth(i) < GetDepth(j);
+    auto viewProj = camera_.matrices_.perspective * camera_.matrices_.view;
+    std::sort(sortedSplatIndices_.begin(), sortedSplatIndices_.end(), [this, viewProj](uint32_t i, uint32_t j) {
+        return GetDepth(i, viewProj[2]) < GetDepth(j, viewProj[2]);
     });
     ssboSortedSplats_->Update(sortedSplatIndices_.data(), sortedSplatIndices_.size() * sizeof(uint32_t), 0);
 }
@@ -162,7 +162,7 @@ void Scene::UpdateData(Backend::DisplaySurface* surface)
         }
     }
 
-    if (camera_.Updated() || surface->Resized()) {
+    if (camera_.Updated() || surface->Changed()) {
         UpdateCameraData(surface);
         // SortSplatsByDepth();
         RadixSortSplatsByDepth();

@@ -23,5 +23,6 @@ inline ::std::string FormatWithLogOutput(const char* format)
 #define XLOGI(fmt, ...) PLOGI.printf(::X::FormatWithLogOutput(fmt).c_str(), ##__VA_ARGS__)
 #define XLOGW(fmt, ...) PLOGW.printf(::X::FormatWithLogOutput(fmt).c_str(), ##__VA_ARGS__)
 #define XLOGD(fmt, ...) PLOGD.printf(::X::FormatWithLogOutput(fmt).c_str(), ##__VA_ARGS__)
+#define XLOGV(fmt, ...) PLOGV.printf(::X::FormatWithLogOutput(fmt).c_str(), ##__VA_ARGS__)
 
 } // namespace X

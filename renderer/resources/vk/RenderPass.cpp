@@ -18,9 +18,9 @@ std::shared_ptr<RenderPass> RenderPass::MakeDisplay(vk::Format targetFormat, boo
 
 RenderPass::RenderPass(vk::Format targetFormat, bool depthStencil, bool load) noexcept
 {
-    this->AddAttachment(targetFormat, false, true);
+    this->AddAttachment(targetFormat, false, true, load);
     if (depthStencil) {
-        this->AddAttachment(vk::Format::eD32SfloatS8Uint, true, false);
+        this->AddAttachment(vk::Format::eD32SfloatS8Uint, true, false, load);
     }
     this->Init();
 }
@@ -54,7 +54,7 @@ void RenderPass::AddAttachment(vk::Format format, bool depthStencil, bool presen
 void RenderPass::Init()
 {
     if (inited) {
-        XLOGI("RenderPass already inited!");
+        XLOGV("RenderPass already inited!");
         return;
     }
     if (attachments_.empty()) {

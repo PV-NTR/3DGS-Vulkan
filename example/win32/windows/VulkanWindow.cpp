@@ -193,11 +193,24 @@ void VulkanWindow::LoadScene()
     scene_ = std::make_unique<X::Scene>();
     // TODO: use gui callback to load splat file
     auto splat = X::Splat::MakeUnique(GetAssetPath() + "/train_7000.ply");
+    // auto splat = X::Splat::MakeUnique(GetAssetPath() + "/bonsai-7k-mini.ply");
+    // auto splat = X::Splat::MakeUnique(GetAssetPath() + "/demo_fox_gs.ply");
     scene_->AddObject(std::move(splat));
-    scene_->GetCamera().SetPerspective(50.154269299972504, surface_->GetWidth() * 1164.6601287484507 / (1159.5880733038064 * surface_->GetHeight()), 0.2f, 200.0f);
+    // Camera of train
+    scene_->GetCamera().SetPerspective(50.154269299972504, surface_->GetWidth() * 1164.6601287484507 / 1159.5880733038064 / surface_->GetHeight(), 0.2f, 200.0f);
     scene_->GetCamera().SetPosition({-3.0089893469241797, -0.11086489695181866, -3.7527640949141428});
-    // scene_->GetCamera().SetRotation({ 2.5534724, 28.6107985, -3.4906808 });
     scene_->GetCamera().SetRotation({ 3.756929, 28.4939513, -4.5199111 });
+
+    // Camera of bonsai
+    // scene_->GetCamera().SetPerspective(80.154269299972504, float(surface_->GetWidth()) / surface_->GetHeight(), 0.2f, 200.0f);
+    // scene_->GetCamera().SetPosition({ 3.7212285514226, -1.9830705231664232, 0.2941856450880261 });
+    // scene_->GetCamera().SetRotation({ -14.5064958, -58.9494315, -27.6427182 });
+
+    // Camera of fox
+    // scene_->GetCamera().SetPerspective(50.154269299972504, float(surface_->GetWidth()) / surface_->GetHeight(), 0.2f, 200.0f);
+    // scene_->GetCamera().SetPosition({ -1.86899006, 1.84913456, -3.75276423 });
+    // scene_->GetCamera().SetRotation({ 15.7569275, -10.5060425, -4.51991129 });
+
     scene_->InitGPUData();
 }
 
@@ -217,17 +230,19 @@ void VulkanWindow::RenderLoop()
         auto current = std::chrono::high_resolution_clock::now();
         auto frameTime = std::chrono::duration<double, std::milli>(current - frameStart_).count() / 1000.0f;
         frameStart_ = current;
-        scene_->GetCamera().Update(frameTime);
         renderer_->UpdateScene(scene_.get());
         renderer_->DrawFrame();
+        // reset camera update state to false, if moving, update it
+        scene_->GetCamera().Update(frameTime);
     }
 }
 
 void VulkanWindow::WindowResize()
 {
     X::Backend::VkContext::GetInstance().GetDevice().waitIdle();
-    // surface_->CleanSwapchain();
+    surface_->CleanSwapchain();
     surface_->SetupSwapchain();
     surface_->SetupSwapSurfaces();
-    scene_->GetCamera().UpdateAspectRatio(surface_->GetWidth() * 1164.6601287484507 / (1159.5880733038064 * surface_->GetHeight()));
+    // TODO: correct camera update
+    // scene_->GetCamera().UpdateAspectRatio(surface_->GetWidth() * 1164.6601287484507 / (1159.5880733038064 * surface_->GetHeight()));
 }

@@ -102,6 +102,7 @@ void GaussianRenderer::InitAuxiliaryBuffers(Scene* scene)
 void GaussianRenderer::RecordComputeCommands(Scene* scene)
 {
     for (auto cmdBuffer : computeCmdBuffers_) {
+        cmdBuffer.reset();
         vk::CommandBufferBeginInfo cmdBufferBeginInfo{};
         cmdBuffer.begin(cmdBufferBeginInfo);
 
@@ -142,7 +143,7 @@ void GaussianRenderer::OnRecordGraphicsCommands(Scene* scene, vk::CommandBuffer 
     cmdBuffer.setScissor(0, { { { 0, 0 }, { surface_->GetWidth(), surface_->GetHeight() } } });
     pipeline_->BindDescriptorSets(cmdBuffer);
     cmdBuffer.drawIndexed(6, scene->totalPointCount_, 0, 0, 0);
-    // cmdBuffer.drawIndexed(6, 128, 0, 0, 32768);
+    // cmdBuffer.drawIndexed(6, 32768, 0, 0, 32768);
     // cmdBuffer.drawIndexed(6, 1, 0, 0, 0);
 }
 

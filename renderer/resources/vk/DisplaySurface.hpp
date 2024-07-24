@@ -18,6 +18,7 @@ public:
     [[nodiscard]] static std::unique_ptr<DisplaySurface> Make(void* instance, void* window);
 #endif
     vk::SurfaceKHR GetHandle() const { return surface_; }
+    void CleanSwapchain();
     void SetupSwapchain();
     void SetupSwapSurfaces(bool enableDepthStencil = false);
     void UpdateScreenSizeBuffer();
@@ -34,7 +35,8 @@ public:
     std::vector<std::shared_ptr<Surface>>& GetSwapSurfaces() { return swapSurfaces_; }
     std::shared_ptr<Image> GetCurrentDisplayImage() const { return swapSurfaces_[currentFrame_]->attachmentResources_[0]; }
     std::shared_ptr<Buffer> GetScreenSizeBuffer() const { return screenSize_; }
-    bool Resized() const { return resized_; }
+    bool IsReady() const { return ready_; }
+    bool Changed() const { return changed_; }
     uint32_t GetWidth() const { return width_; }
     uint32_t GetHeight() const { return height_; }
 
@@ -54,7 +56,8 @@ private:
     vk::SurfaceKHR surface_;
     uint32_t width_ = UINT32_MAX;
     uint32_t height_ = UINT32_MAX;
-    bool resized_ = false;
+    bool ready_ = false;
+    bool changed_ = false;
 
     // TODO: Disable swapchain when use Android, use SurfaceView instead
     Swapchain swapchain_;

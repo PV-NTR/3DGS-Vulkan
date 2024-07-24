@@ -89,7 +89,7 @@ std::vector<RawGaussianPoint> LoadPlyAndroid(std::string fileName)
     // Read all Gaussians at once (AoS)
     std::vector<RawGaussianPoint> points(count);
     uint32_t headerLength = ss.tellg();
-    std::copy(data + headerLength + 1, data + 1 + headerLength + count, (char*)points.data());
+    std::copy(data + headerLength + 1, data + 1 + headerLength + count * sizeof(RawGaussianPoint), (char*)points.data());
     for (auto& point : points) {
         point.scale[0] = std::exp(point.scale[0]);
         point.scale[1] = std::exp(point.scale[1]);

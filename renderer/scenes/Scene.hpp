@@ -39,7 +39,7 @@ private:
     void UpdateCameraData(Backend::DisplaySurface* surface);
     void SortSplatsByDepth();
     void RadixSortSplatsByDepth();
-    float GetDepth(uint32_t index);
+    float GetDepth(uint32_t index, const glm::vec4& viewProjZ);
 
 private:
     std::vector<std::unique_ptr<Object>> objects_;

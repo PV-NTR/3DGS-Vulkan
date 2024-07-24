@@ -39,31 +39,29 @@ void Renderer::UpdateScene(Scene* scene)
     if (auxiliaryInited && scene->ObjectChanged()) {
         this->InitAuxiliaryBuffers(scene);
     }
-    // if (scene->SceneChanged()) {
-        this->OnUpdateScene(scene);
-    // }
+    this->OnUpdateScene(scene);
 }
 
 void Renderer::OnUpdateScene(Scene* scene)
 {
-    if (surface_->Resized()) {
+    if (surface_->Changed()) {
         this->RecordGraphicsCommands(scene);
         this->RecordComputeCommands(scene);
     }
-
-    //if (scene->SceneChanged() && !scene->GetCamera().Updated()) {
+    if (scene->SceneChanged()) {
         scene->UpdateData(surface_);
-    //}
-    surface_->UpdateScreenSizeBuffer();
+    }
+    if (surface_->Changed()) {
+        surface_->UpdateScreenSizeBuffer();
+    }
 }
 
 void Renderer::DrawFrame()
 {
     this->OnDrawFrame();
-    Backend::VkContext::GetInstance().GetDevice().waitForFences(fence_, vk::True, 100000000);
+    // Backend::VkContext::GetInstance().GetDevice().waitForFences(fence_, vk::True, 100000000);
     surface_->Present();
-    surface_->NextFrame();
-    Backend::VkContext::GetInstance().GetDevice().resetFences(fence_);
+    // Backend::VkContext::GetInstance().GetDevice().resetFences(fence_);
 }
 
 
@@ -140,8 +138,8 @@ void Renderer::SubmitGraphicsCommands()
         .setWaitDstStageMask(waitStageMask)
         .setSignalSemaphoreCount(1)
         .setPSignalSemaphores(&signalSemaphore);
-    // auto ret = queue.submit(submitInfo);
-    auto ret = queue.submit(submitInfo, fence_);
+    auto ret = queue.submit(submitInfo);
+    // auto ret = queue.submit(submitInfo, fence_);
     if (ret != vk::Result::eSuccess) {
         XLOGE("Submit graphics commands failed, errCode: %d", ret);
         // abort();

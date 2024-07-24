@@ -69,7 +69,7 @@ void GraphicsPipeline::InitDefaultSettings()
         .setVertexAttributeDescriptions(defaultState_.vertexInputAttribute);
     defaultState_.inputAssemblyState.setTopology(vk::PrimitiveTopology::eTriangleList).setPrimitiveRestartEnable(vk::False);
     defaultState_.rasterizationState.setPolygonMode(vk::PolygonMode::eFill).setCullMode(vk::CullModeFlagBits::eNone)
-        .setFrontFace(vk::FrontFace::eClockwise);
+        .setFrontFace(vk::FrontFace::eClockwise).setLineWidth(1.0f);
     defaultState_.multisampleState.setRasterizationSamples(vk::SampleCountFlagBits::e1);
     defaultState_.depthStencilState.setDepthTestEnable(vk::False).setStencilTestEnable(vk::False);
     defaultState_.viewportState.setViewportCount(1).setScissorCount(1);
