@@ -243,6 +243,5 @@ void VulkanWindow::WindowResize()
     surface_->CleanSwapchain();
     surface_->SetupSwapchain();
     surface_->SetupSwapSurfaces();
-    // TODO: correct camera update
-    // scene_->GetCamera().UpdateAspectRatio(surface_->GetWidth() * 1164.6601287484507 / (1159.5880733038064 * surface_->GetHeight()));
+    scene_->GetCamera().UpdateAspectRatio(surface_->GetWidth() * 1164.6601287484507 / (1159.5880733038064 * surface_->GetHeight()));
 }

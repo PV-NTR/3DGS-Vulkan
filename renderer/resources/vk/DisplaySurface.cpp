@@ -73,24 +73,22 @@ void DisplaySurface::SetupSwapchain()
 
     assert(surfCaps.currentExtent.width != UINT32_MAX);
     assert(surfCaps.currentExtent.height != UINT32_MAX);
-    width_ = surfCaps.currentExtent.width;
-    height_ = surfCaps.currentExtent.height;
+    swapchainImageInfo_.width_ = surfCaps.currentExtent.width;
+    swapchainImageInfo_.height_ = surfCaps.currentExtent.height;
 
     imageCount_ = std::max(std::min(imageCount_, surfCaps.maxImageCount), surfCaps.minImageCount);
 
     // Find a format for surface
     // WARNING: check result
     std::vector<vk::SurfaceFormatKHR> formats = VkContext::GetInstance().GetPhysicalDevice().getSurfaceFormatsKHR(surface_).value;
-    vk::Format chosenFormat = vk::Format::eUndefined;
-    vk::ColorSpaceKHR chosenColorSpace = vk::ColorSpaceKHR::eSrgbNonlinear;
     for (const auto& format : formats) {
-        if (format.format == vk::Format::eR8G8B8A8Unorm) {
-            chosenFormat = format.format;
-            chosenColorSpace = format.colorSpace;
+        if (format.format == vk::Format::eR8G8B8A8Unorm || format.format == vk::Format::eB8G8R8A8Unorm || format.format == vk::Format::eA8B8G8R8UnormPack32) {
+            swapchainImageInfo_.format_ = format.format;
+            swapchainColorSpace_ = format.colorSpace;
             break;
         }
     }
-    assert(chosenFormat == vk::Format::eR8G8B8A8Unorm);
+    assert(swapchainImageInfo_.format_ != vk::Format::eUndefined);
 
     // Find a supported composite alpha format (not all devices support alpha opaque)
     vk::CompositeAlphaFlagBitsKHR compositeAlpha = vk::CompositeAlphaFlagBitsKHR::eOpaque;
@@ -112,9 +110,9 @@ void DisplaySurface::SetupSwapchain()
     // TODO: can unique handle set old swapchain?
     swapchainCI.setSurface(surface_)
         .setMinImageCount(imageCount_)
-        .setImageFormat(chosenFormat)
-        .setImageColorSpace(chosenColorSpace)
-        .setImageExtent({ width_, height_ })
+        .setImageFormat(swapchainImageInfo_.format_)
+        .setImageColorSpace(swapchainColorSpace_)
+        .setImageExtent({ swapchainImageInfo_.width_, swapchainImageInfo_.height_ })
         .setImageArrayLayers(1)
         .setImageUsage(vk::ImageUsageFlagBits::eColorAttachment)
         .setImageSharingMode(vk::SharingMode::eExclusive)
@@ -145,7 +143,7 @@ std::vector<std::shared_ptr<Image>> DisplaySurface::GetImagesFromSwapchain()
     std::vector<std::shared_ptr<Image>> images;
     images.reserve(imageCount_);
     for (auto&& vkImage : vkImages) {
-        images.emplace_back(new Image(vkImage, ImageInfo{ width_, height_ }, { vk::ImageLayout::eUndefined, vk::AccessFlagBits::eNone, vk::PipelineStageFlagBits::eBottomOfPipe }));
+        images.emplace_back(new Image(vkImage, swapchainImageInfo_, { vk::ImageLayout::eUndefined, vk::AccessFlagBits::eNone, vk::PipelineStageFlagBits::eBottomOfPipe }));
         images.back()->CreateView();
     }
     return images;
@@ -193,13 +191,13 @@ void DisplaySurface::SetupSwapSurfaces(bool enableDepthStencil)
     enableDepthStencil_ = enableDepthStencil;
     auto images = GetImagesFromSwapchain();
     if (enableDepthStencil) {
-        depthStencil_ = VkResourceManager::GetInstance().GetImageManager().RequireImage({ width_, height_, vk::Format::eD32SfloatS8Uint, true });
+        depthStencil_ = VkResourceManager::GetInstance().GetImageManager().RequireImage({ swapchainImageInfo_.width_, swapchainImageInfo_.height_, vk::Format::eD32SfloatS8Uint, true });
     } else {
         depthStencil_.reset();
     }
     std::vector<std::shared_ptr<Image>> attachmentResources(2);
     attachmentResources[1] = depthStencil_;
-    auto renderPass = RenderPass::MakeDisplay(vk::Format::eR8G8B8A8Unorm, enableDepthStencil_);
+    auto renderPass = RenderPass::MakeDisplay(swapchainImageInfo_.format_, enableDepthStencil_);
     for (const auto& image : images) {
         attachmentResources[0] = image;
         auto swapSurface = Surface::Make(renderPass, attachmentResources);
@@ -213,7 +211,7 @@ void DisplaySurface::SetupSwapSurfaces(bool enableDepthStencil)
 void DisplaySurface::UpdateScreenSizeBuffer()
 {
     if (changed_) {
-        float data[2] = { static_cast<float>(width_), static_cast<float>(height_) };
+        float data[2] = { static_cast<float>(swapchainImageInfo_.width_), static_cast<float>(swapchainImageInfo_.height_) };
         screenSize_->Update(data, 8, 0);
         changed_ = false;
     }

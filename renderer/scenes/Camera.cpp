@@ -66,7 +66,7 @@ void Camera::UpdateAspectRatio(float aspect)
 {
     this->aspect_ = aspect;
     glm::mat4 currentMatrix = matrices_.perspective;
-    matrices_.perspective = glm::perspective(fovY_, aspect, zNear_, zFar_);
+    matrices_.perspective = glm::perspective(glm::radians(fovY_), aspect, zNear_, zFar_);
     matrices_.perspective[1][1] *= -1.0f;
     if (flipY_) {
         matrices_.perspective[2] *= -1.0f;
@@ -196,7 +196,7 @@ void Camera::UpdateViewMatrix()
     transM = glm::translate(glm::mat4(1.0f), translation);
 
     if (type_ == CameraType::FirstPerson) {
-        matrices_.view = rotM * transM;
+        matrices_.view = glm::inverse(rotM * transM);
     } else {
         matrices_.view = glm::inverse(transM * rotM);
     }
