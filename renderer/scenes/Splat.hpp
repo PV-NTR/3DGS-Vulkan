@@ -8,13 +8,11 @@
 
 namespace X {
 
-struct RawGaussianPoint {
+struct GaussianPoint {
     float pos[3];
-    float n[3];
     float shs[48];
     float opacity;
-    float scale[3];
-    float rot[4];
+    float cov[6];
 };
 
 class Splat : public Object {
@@ -23,14 +21,14 @@ public:
     [[nodiscard]] static std::shared_ptr<Splat> MakeShared(std::string fileName);
     uint32_t GetPointCount() const { return data_.size(); }
     const void* GetPointData() const { return data_.data(); }
-    RawGaussianPoint GetPointData(uint32_t index) const;
+    GaussianPoint GetPointData(uint32_t index) const;
 
 protected:
     Splat() : Object(Type::Splat) {}
     explicit Splat(std::string fileName);
 
 private:
-    std::vector<RawGaussianPoint> data_;
+    std::vector<GaussianPoint> data_;
 };
 
 } // namespace X

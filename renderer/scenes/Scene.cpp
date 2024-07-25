@@ -45,12 +45,12 @@ void Scene::InitGPUData()
 
     // TODO: compress data
     uint32_t totalPointCount = 0;
-    ssboSplatData_ = Backend::VkResourceManager::GetInstance().GetBufferManager().RequireBuffer({ totalPointCount_ * sizeof(RawGaussianPoint), BufferType::Storage});
+    ssboSplatData_ = Backend::VkResourceManager::GetInstance().GetBufferManager().RequireBuffer({ totalPointCount_ * sizeof(GaussianPoint), BufferType::Storage});
     for (auto& uniqueObj : objects_) {
         auto obj = uniqueObj.get();
         if (obj->GetType() == Object::Type::Splat) {
             Splat* splat = static_cast<Splat*>(obj);
-            ssboSplatData_->Update(splat->GetPointData(), splat->GetPointCount() * sizeof(RawGaussianPoint), totalPointCount);
+            ssboSplatData_->Update(splat->GetPointData(), splat->GetPointCount() * sizeof(GaussianPoint), totalPointCount);
             totalPointCount += splat->GetPointCount();
         }
     }

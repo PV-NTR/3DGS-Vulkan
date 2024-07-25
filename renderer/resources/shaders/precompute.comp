@@ -3,14 +3,22 @@
 // TODO: adjust this for different device
 #define GROUP_SIZE 64
 // TODO: compress data
+// struct SplatData {
+//     float pos[3];
+//     float n[3];
+//     float color[3];
+//     float shs[45];
+//     float opacity;
+//     float scale[3];
+//     float rot[4];
+// };
+
 struct SplatData {
     float pos[3];
-    float n[3];
     float color[3];
     float shs[45];
     float opacity;
-    float scale[3];
-    float rot[4];
+    float cov[6];
 };
 
 struct Preprocessed {
@@ -235,13 +243,8 @@ void main()
             0.f, 0.f, 0.f
         );
         mat3 T = transpose(mat3(mv)) * J;
-        mat3 rot = QuatToMat3(vec4(splat.rot[0], splat.rot[1], splat.rot[2], splat.rot[3]));
-        mat3 scale = mat3(1.0f);
-        scale[0][0] = splat.scale[0];
-        scale[1][1] = splat.scale[1];
-        scale[2][2] = splat.scale[2];
-        mat3 cov = 2 * scale * rot;
-        mat3 cov2d = transpose(T) * transpose(cov) * cov * T;
+        mat3 cov = mat3(splat.cov[0], splat.cov[1], splat.cov[2], splat.cov[1], splat.cov[3], splat.cov[4], splat.cov[2], splat.cov[4], splat.cov[5]);
+        mat3 cov2d = transpose(T) * cov * T;
 
         cov2d[0][0] += 0.3f;
         cov2d[1][1] += 0.3f;
