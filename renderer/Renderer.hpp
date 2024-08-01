@@ -32,24 +32,14 @@ protected:
     virtual bool OnInit(Backend::DisplaySurface* surface) = 0;
     virtual void OnUpdateScene(Scene* scene);
     virtual void OnDrawFrame() = 0;
-    virtual void OnRecordGraphicsCommands(Scene* scene, vk::CommandBuffer cmdBuffer) = 0;
-    vk::CommandBuffer GetCurrentPresentCmdBuffer() { return presentCmdBuffers_[surface_->GetCurrentFrameIdx()]; }
-    vk::CommandBuffer GetCurrentComputeCmdBuffer() { return computeCmdBuffers_[surface_->GetCurrentFrameIdx()]; }
-    const std::string GetShaderPath()
-    {
-#ifdef HOST_ANDROID
-        return "shaders";
-#elif defined SHADER_DIR
-        return SHADER_DIR;
-#else
-        return "";
-#endif
-    }
+    virtual void OnRecordGraphicsCommands(Scene* scene, std::shared_ptr<Backend::CommandBuffer> cmdBuffer) = 0;
+    std::shared_ptr<Backend::CommandBuffer> GetCurrentPresentCmdBuffer() { return presentCmdBuffers_[surface_->GetCurrentFrameIdx()]; }
+    std::shared_ptr<Backend::CommandBuffer> GetCurrentComputeCmdBuffer() { return computeCmdBuffers_[surface_->GetCurrentFrameIdx()]; }
 
 protected:
     Backend::DisplaySurface* surface_ = nullptr;
     vk::Fence fence_;
-    std::vector<vk::CommandBuffer> presentCmdBuffers_, computeCmdBuffers_;
+    std::vector<std::shared_ptr<Backend::CommandBuffer>> presentCmdBuffers_, computeCmdBuffers_;
 
 private:
     bool ready_ = false;
@@ -59,6 +49,7 @@ private:
 
     // data
     std::shared_ptr<Backend::Buffer> screenSize_;
+    // TODO: correct this
     bool auxiliaryInited = true;
 };
 

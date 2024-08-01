@@ -20,7 +20,7 @@ protected:
     void SubmitComputeCommands();
 
     bool OnInit(Backend::DisplaySurface* surface) override;
-    void OnRecordGraphicsCommands(Scene* scene, vk::CommandBuffer cmdBuffer) override;
+    void OnRecordGraphicsCommands(Scene* scene, std::shared_ptr<Backend::CommandBuffer> cmdBuffer) override;
     void OnDrawFrame() override;
 
     void SetDescriptorSetLayouts();

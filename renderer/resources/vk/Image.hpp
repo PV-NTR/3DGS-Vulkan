@@ -1,6 +1,6 @@
 #pragma once
 
-#include "VkResourceBase.hpp"
+#include "VkResource.hpp"
 #include "vma/VmaImage.hpp"
 #include "resources/Enums.hpp"
 #include "ImageView.hpp"
@@ -28,9 +28,11 @@ public:
     vk::Image GetHandle() { return image_.GetHandle(); };
     const ImageInfo& GetInfo() { return info_; }
     std::shared_ptr<ImageView> GetView() { return view_; }
-    void Barrier(vk::CommandBuffer cmdBuffer, VmaImageState&& state, vk::ImageAspectFlags aspectMask, vk::DependencyFlags flags = {})
+    // TODO: complete this
+    void Update(/*params*/) {}
+    void Barrier(std::shared_ptr<CommandBuffer> cmdBuffer, VmaImageState&& state, vk::ImageAspectFlags aspectMask, vk::DependencyFlags flags = {})
     {
-        return image_.Barrier(cmdBuffer, std::move(state), aspectMask, flags);
+        return image_.Barrier(cmdBuffer->get(), std::move(state), aspectMask, flags);
     }
 
 private:

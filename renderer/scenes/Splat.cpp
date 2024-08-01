@@ -10,6 +10,8 @@
 #include "AndroidMain.hpp"
 #endif
 
+#include "utils/Math.hpp"
+
 namespace X {
 
 struct RawGaussianPoint {
@@ -170,17 +172,34 @@ std::vector<GaussianPoint> LoadPlyAndroid(std::string fileName)
 }
 #endif
 
-std::unique_ptr<Splat> Splat::MakeUnique(std::string fileName)
+void Splat::CompressData()
 {
-    return std::unique_ptr<Splat>(new Splat(fileName));
+    compressedData_.resize(data_.size());
+    for (size_t i = 0; i < data_.size(); i++) {
+        compressedData_[i].posAndOpacity[0] =  PackHalf2x16(data_[i].pos[0], data_[i].pos[1]);
+        compressedData_[i].posAndOpacity[1] =  PackHalf2x16(data_[i].pos[2], data_[i].opacity);
+        for (size_t j = 0; j < 48; j += 2) {
+            compressedData_[i].shs[j / 2] = PackHalf2x16(data_[i].shs[j], data_[i].shs[j + 1]);
+        }
+        for (size_t j = 0; j < 6; j += 2) {
+            compressedData_[i].cov[j / 2] = PackHalf2x16(data_[i].cov[j], data_[i].cov[j + 1]);
+        }
+    }
+    data_.clear();
+    assert(data_.empty() && !compressedData_.empty());
 }
 
-std::shared_ptr<Splat> Splat::MakeShared(std::string fileName)
+std::unique_ptr<Splat> Splat::MakeUnique(std::string fileName, bool compress)
 {
-    return std::shared_ptr<Splat>(new Splat(fileName));
+    return std::unique_ptr<Splat>(new Splat(fileName, compress));
 }
 
-Splat::Splat(std::string fileName) : Object(Type::Splat)
+std::shared_ptr<Splat> Splat::MakeShared(std::string fileName, bool compress)
+{
+    return std::shared_ptr<Splat>(new Splat(fileName, compress));
+}
+
+Splat::Splat(std::string fileName, bool compress) : Object(Type::Splat), compressed_(compress)
 {
     // TODO: load data from file
 #ifdef HOST_ANDROID
@@ -188,6 +207,18 @@ Splat::Splat(std::string fileName) : Object(Type::Splat)
 #elif defined HOST_WIN32
     data_ = LoadPly(fileName);
 #endif
+    assert(!data_.empty());
+    if (compress) {
+        CompressData();
+    }
+}
+
+const void* Splat::GetPointData() const
+{
+    if (compressed_) {
+        return compressedData_.data();
+    }
+    return data_.data();
 }
 
 GaussianPoint Splat::GetPointData(uint32_t index) const

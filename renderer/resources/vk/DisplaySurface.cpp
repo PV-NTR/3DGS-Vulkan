@@ -133,6 +133,9 @@ void DisplaySurface::SetupSwapchain()
 
 std::vector<std::shared_ptr<Image>> DisplaySurface::GetImagesFromSwapchain()
 {
+    if (*swapchain_ == VK_NULL_HANDLE) {
+        return {};
+    }
     auto [ret, vkImages] = VkContext::GetInstance().GetDevice().getSwapchainImagesKHR(*swapchain_);
     if (ret != vk::Result::eSuccess) {
         XLOGW("GetSwapchainImages failed, errCode: %d", ret);
@@ -151,6 +154,9 @@ std::vector<std::shared_ptr<Image>> DisplaySurface::GetImagesFromSwapchain()
 
 uint32_t DisplaySurface::NextFrame()
 {
+    if (*swapchain_ == VK_NULL_HANDLE) {
+        return currentFrame_;
+    }
     auto ret = VkContext::GetInstance().GetDevice().waitIdle();
     assert(ret != vk::Result::eErrorDeviceLost);
     auto nextIndex = VkContext::GetInstance().GetDevice().acquireNextImageKHR(*swapchain_, UINT64_MAX, acquireFrameSignalSemaphore_, {});
