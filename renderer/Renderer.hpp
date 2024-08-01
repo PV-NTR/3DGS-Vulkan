@@ -12,7 +12,7 @@ namespace X {
 
 class Renderer {
 public:
-    Renderer(bool needCompute = false);
+    explicit Renderer(bool needCompute = false);
     virtual ~Renderer();
 
     bool IsReady();
@@ -33,8 +33,14 @@ protected:
     virtual void OnUpdateScene(Scene* scene);
     virtual void OnDrawFrame() = 0;
     virtual void OnRecordGraphicsCommands(Scene* scene, std::shared_ptr<Backend::CommandBuffer> cmdBuffer) = 0;
-    std::shared_ptr<Backend::CommandBuffer> GetCurrentPresentCmdBuffer() { return presentCmdBuffers_[surface_->GetCurrentFrameIdx()]; }
-    std::shared_ptr<Backend::CommandBuffer> GetCurrentComputeCmdBuffer() { return computeCmdBuffers_[surface_->GetCurrentFrameIdx()]; }
+    std::shared_ptr<Backend::CommandBuffer> GetCurrentPresentCmdBuffer()
+    {
+        return presentCmdBuffers_[surface_->GetCurrentFrameIdx()];
+    }
+    std::shared_ptr<Backend::CommandBuffer> GetCurrentComputeCmdBuffer()
+    {
+        return computeCmdBuffers_[surface_->GetCurrentFrameIdx()];
+    }
 
 protected:
     Backend::DisplaySurface* surface_ = nullptr;

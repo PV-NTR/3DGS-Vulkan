@@ -13,7 +13,6 @@ Renderer::Renderer(bool needCompute) : needCompute_(needCompute)
 
 Renderer::~Renderer()
 {
-
 }
 
 bool Renderer::Init(Backend::DisplaySurface* surface)
@@ -25,8 +24,7 @@ bool Renderer::Init(Backend::DisplaySurface* surface)
 }
 
 void Renderer::Destroy()
-{
-    
+{   
 }
 
 bool Renderer::IsReady()
@@ -71,7 +69,8 @@ bool Renderer::AllocateCommandBuffers()
     auto device = Backend::VkContext::GetInstance().GetDevice();
 
     vk::CommandBufferAllocateInfo allocInfo{};
-    allocInfo.setCommandPool(Backend::VkContext::GetInstance().GetPresentCmdPool()).setCommandBufferCount(surface_->GetSwapSurfaceCount());
+    allocInfo.setCommandPool(Backend::VkContext::GetInstance().GetPresentCmdPool())
+        .setCommandBufferCount(surface_->GetSwapSurfaceCount());
     auto [allocRet, presentCmdBuffers] = device.allocateCommandBuffersUnique(allocInfo);
     if (allocRet != vk::Result::eSuccess) {
         XLOGE("allocate present commandbuffer failed, errCode: %d", allocRet);
@@ -82,7 +81,8 @@ bool Renderer::AllocateCommandBuffers()
     }
 
     if (needCompute_) {
-        allocInfo.setCommandPool(Backend::VkContext::GetInstance().GetComputeCmdPool()).setCommandBufferCount(surface_->GetSwapSurfaceCount());
+        allocInfo.setCommandPool(Backend::VkContext::GetInstance().GetComputeCmdPool())
+            .setCommandBufferCount(surface_->GetSwapSurfaceCount());
         auto [allocRet, computeCmdBuffers] = device.allocateCommandBuffersUnique(allocInfo);
         if (allocRet != vk::Result::eSuccess) {
             XLOGE("allocate compute commandbuffer failed, errCode: %d", allocRet);
