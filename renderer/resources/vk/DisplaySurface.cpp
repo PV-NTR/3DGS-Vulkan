@@ -44,7 +44,8 @@ DisplaySurface::DisplaySurface(void* instance, void* window)
     if (presentQueueIdx_ == UINT32_MAX) {
         XLOGE("No valid present queue!");
     }
-    screenSize_ = Backend::VkResourceManager::GetInstance().GetBufferManager().RequireBuffer({ 8, BufferType::Uniform });
+    screenSize_ = Backend::VkResourceManager::GetInstance().GetBufferManager()
+        .RequireBuffer({ 8, BufferType::Uniform });
     InitDisplaySemaphores();
 }
 
@@ -69,7 +70,8 @@ void DisplaySurface::SetupSwapchain()
 {
     changed_ = true;
     // WARNING: check result
-    vk::SurfaceCapabilitiesKHR surfCaps = VkContext::GetInstance().GetPhysicalDevice().getSurfaceCapabilitiesKHR(surface_).value;
+    vk::SurfaceCapabilitiesKHR surfCaps = VkContext::GetInstance().GetPhysicalDevice()
+        .getSurfaceCapabilitiesKHR(surface_).value;
 
     assert(surfCaps.currentExtent.width != UINT32_MAX);
     assert(surfCaps.currentExtent.height != UINT32_MAX);
@@ -80,9 +82,11 @@ void DisplaySurface::SetupSwapchain()
 
     // Find a format for surface
     // WARNING: check result
-    std::vector<vk::SurfaceFormatKHR> formats = VkContext::GetInstance().GetPhysicalDevice().getSurfaceFormatsKHR(surface_).value;
+    std::vector<vk::SurfaceFormatKHR> formats = VkContext::GetInstance().GetPhysicalDevice()
+        .getSurfaceFormatsKHR(surface_).value;
     for (const auto& format : formats) {
-        if (format.format == vk::Format::eR8G8B8A8Unorm || format.format == vk::Format::eB8G8R8A8Unorm || format.format == vk::Format::eA8B8G8R8UnormPack32) {
+        if (format.format == vk::Format::eR8G8B8A8Unorm || format.format == vk::Format::eB8G8R8A8Unorm ||
+            format.format == vk::Format::eA8B8G8R8UnormPack32) {
             swapchainImageInfo_.format_ = format.format;
             swapchainColorSpace_ = format.colorSpace;
             break;
@@ -146,7 +150,8 @@ std::vector<std::shared_ptr<Image>> DisplaySurface::GetImagesFromSwapchain()
     std::vector<std::shared_ptr<Image>> images;
     images.reserve(imageCount_);
     for (auto&& vkImage : vkImages) {
-        images.emplace_back(new Image(vkImage, swapchainImageInfo_, { vk::ImageLayout::eUndefined, vk::AccessFlagBits::eNone, vk::PipelineStageFlagBits::eBottomOfPipe }));
+        images.emplace_back(new Image(vkImage, swapchainImageInfo_, {
+            vk::ImageLayout::eUndefined, vk::AccessFlagBits::eNone, vk::PipelineStageFlagBits::eBottomOfPipe }));
         images.back()->CreateView();
     }
     return images;
@@ -159,7 +164,8 @@ uint32_t DisplaySurface::NextFrame()
     }
     auto ret = VkContext::GetInstance().GetDevice().waitIdle();
     assert(ret != vk::Result::eErrorDeviceLost);
-    auto nextIndex = VkContext::GetInstance().GetDevice().acquireNextImageKHR(*swapchain_, UINT64_MAX, acquireFrameSignalSemaphore_, {});
+    auto nextIndex = VkContext::GetInstance().GetDevice()
+        .acquireNextImageKHR(*swapchain_, UINT64_MAX, acquireFrameSignalSemaphore_, {});
     currentFrame_ = nextIndex.value;
     return currentFrame_;
 }
@@ -197,7 +203,8 @@ void DisplaySurface::SetupSwapSurfaces(bool enableDepthStencil)
     enableDepthStencil_ = enableDepthStencil;
     auto images = GetImagesFromSwapchain();
     if (enableDepthStencil) {
-        depthStencil_ = VkResourceManager::GetInstance().GetImageManager().RequireImage({ swapchainImageInfo_.width_, swapchainImageInfo_.height_, vk::Format::eD32SfloatS8Uint, true });
+        depthStencil_ = VkResourceManager::GetInstance().GetImageManager().RequireImage(
+            { swapchainImageInfo_.width_, swapchainImageInfo_.height_, vk::Format::eD32SfloatS8Uint, true });
     } else {
         depthStencil_.reset();
     }
@@ -217,7 +224,8 @@ void DisplaySurface::SetupSwapSurfaces(bool enableDepthStencil)
 void DisplaySurface::UpdateScreenSizeBuffer()
 {
     if (changed_) {
-        float data[2] = { static_cast<float>(swapchainImageInfo_.width_), static_cast<float>(swapchainImageInfo_.height_) };
+        float data[2] = {
+            static_cast<float>(swapchainImageInfo_.width_), static_cast<float>(swapchainImageInfo_.height_) };
         screenSize_->Update(data, 8, 0);
         changed_ = false;
     }

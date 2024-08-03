@@ -9,9 +9,12 @@ namespace X::Backend {
 class VkResourceBase : public Resource {
 public:
     VkResourceBase() noexcept = default;
-    virtual ~VkResourceBase() noexcept = default;
+    VkResourceBase(VkResourceBase&& other) noexcept
+    {
+        dependencies_.swap(other.dependencies_);
+    }
 
-    VkResourceBase& operator=(VkResourceBase&& other) = delete;
+    virtual ~VkResourceBase() noexcept = default;
 
     void DependOn(const std::shared_ptr<VkResourceBase>& dep)
     {
@@ -19,6 +22,7 @@ public:
     }
 
 protected:
+    VkResourceBase& operator=(VkResourceBase&& other) = delete;
     std::vector<std::shared_ptr<VkResourceBase>> dependencies_;
 };
     

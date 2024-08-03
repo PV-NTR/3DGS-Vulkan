@@ -15,12 +15,15 @@ struct CameraData {
 
 Scene::Scene()
 {
-    uboCamera_ = Backend::VkResourceManager::GetInstance().GetBufferManager().RequireBuffer({ sizeof(CameraData), BufferType::Uniform });
+    uboCamera_ = Backend::VkResourceManager::GetInstance().GetBufferManager()
+        .RequireBuffer({ sizeof(CameraData), BufferType::Uniform });
     uboCamera_->Init(0);
     // UpdateCameraData();
-    uboPrefixSums_ = Backend::VkResourceManager::GetInstance().GetBufferManager().RequireBuffer({ 32 * 4, BufferType::Uniform });
+    uboPrefixSums_ = Backend::VkResourceManager::GetInstance().GetBufferManager()
+        .RequireBuffer({ 32 * 4, BufferType::Uniform });
     uboPrefixSums_->Init(0);
-    uboModels_ = Backend::VkResourceManager::GetInstance().GetBufferManager().RequireBuffer({ 32 * sizeof(glm::mat4), BufferType::Uniform });
+    uboModels_ = Backend::VkResourceManager::GetInstance().GetBufferManager()
+        .RequireBuffer({ 32 * sizeof(glm::mat4), BufferType::Uniform });
     uboModels_->Init(0);
 }
 
@@ -45,24 +48,26 @@ void Scene::InitGPUData()
 
     // TODO: compress data
     uint32_t totalPointCount = 0;
-    ssboSplatData_ = Backend::VkResourceManager::GetInstance().GetBufferManager().RequireBuffer({ totalPointCount_ * sizeof(GaussianPoint), BufferType::Storage});
+    ssboSplatData_ = Backend::VkResourceManager::GetInstance().GetBufferManager()
+        .RequireBuffer({ totalPointCount_ * sizeof(GaussianPoint), BufferType::Storage});
     for (auto& uniqueObj : objects_) {
         auto obj = uniqueObj.get();
         if (obj->GetType() == Object::Type::Splat) {
             Splat* splat = static_cast<Splat*>(obj);
-            ssboSplatData_->Update(splat->GetPointData(), splat->GetPointCount() * sizeof(GaussianPoint), totalPointCount);
+            ssboSplatData_->Update(splat->GetPointData(),
+                splat->GetPointCount() * sizeof(GaussianPoint), totalPointCount);
             totalPointCount += splat->GetPointCount();
         }
     }
     sortedSplatIndices_.resize(totalPointCount_);
     std::iota(sortedSplatIndices_.begin(), sortedSplatIndices_.end(), 0);
-    ssboSortedSplats_ = Backend::VkResourceManager::GetInstance().GetBufferManager().RequireBuffer({ totalPointCount_ * sizeof(uint32_t), BufferType::Storage});
+    ssboSortedSplats_ = Backend::VkResourceManager::GetInstance().GetBufferManager()
+        .RequireBuffer({ totalPointCount_ * sizeof(uint32_t), BufferType::Storage});
     ssboSortedSplats_->Init(0);
 }
 
 void Scene::ChangeOverlayState()
 {
-
 }
 
 void Scene::ChangeCameraType()
@@ -72,7 +77,6 @@ void Scene::ChangeCameraType()
 
 void Scene::UpdateCameraState()
 {
-
 }
 
 void Scene::UpdateCameraData(Backend::DisplaySurface* surface)
@@ -124,7 +128,7 @@ void Scene::RadixSortSplatsByDepth()
         }
     }
 
-    const float depthInv = (float)(depthRange - 1) / (maxDepth - minDepth);
+    const float depthInv = static_cast<float>(depthRange - 1) / (maxDepth - minDepth);
     for (uint32_t i = 0; i < totalPointCount_; i++) {
         depthBuffer[i] = (depthBuffer[i] - minDepth) * depthInv;
         counts[depthBuffer[i]]++;
@@ -169,7 +173,7 @@ void Scene::UpdateData(Backend::DisplaySurface* surface)
     }
 
     if (OverlayChanged()) {
-
+        // TODO: process overlaychanged
     }
 }
 

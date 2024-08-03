@@ -24,7 +24,7 @@ bool Renderer::Init(Backend::DisplaySurface* surface)
 }
 
 void Renderer::Destroy()
-{   
+{
 }
 
 bool Renderer::IsReady()

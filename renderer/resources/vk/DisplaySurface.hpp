@@ -11,7 +11,6 @@ namespace X::Backend {
 
 class DisplaySurface {
 public:
-
 #ifdef HOST_ANDROID
     [[nodiscard]] static std::unique_ptr<DisplaySurface> Make(ANativeWindow* window);
 #elif defined HOST_WIN32
@@ -33,7 +32,10 @@ public:
     std::shared_ptr<Surface> GetCurrentSwapSurface() const { return swapSurfaces_[currentFrame_]; }
     // TODO: delete this!
     std::vector<std::shared_ptr<Surface>>& GetSwapSurfaces() { return swapSurfaces_; }
-    std::shared_ptr<Image> GetCurrentDisplayImage() const { return swapSurfaces_[currentFrame_]->attachmentResources_[0]; }
+    std::shared_ptr<Image> GetCurrentDisplayImage() const
+    {
+        return swapSurfaces_[currentFrame_]->attachmentResources_[0];
+    }
     std::shared_ptr<Buffer> GetScreenSizeBuffer() const { return screenSize_; }
     bool IsReady() const { return ready_; }
     bool Changed() const { return changed_; }
@@ -73,5 +75,5 @@ private:
     uint32_t imageCount_ = 4;
     bool enableDepthStencil_ = false;
 };
-    
+
 } // namespace X::Backend

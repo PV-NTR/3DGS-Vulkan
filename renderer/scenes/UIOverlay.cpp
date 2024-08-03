@@ -49,15 +49,17 @@ void UIOverlay::InitFontImage()
     ImGuiIO& io = ImGui::GetIO();
     // Create font texture
     unsigned char* fontData;
-    int texWidth, texHeight;
+    int texWidth;
+    int texHeight;
     const std::string filename = GetAssetPath() + "/fonts/Roboto-Medium.ttf";
     io.Fonts->AddFontFromFileTTF(filename.c_str(), 16.0f * scale_);
     io.Fonts->GetTexDataAsRGBA32(&fontData, &texWidth, &texHeight);
     vk::DeviceSize uploadSize = texWidth * texHeight * 4 * sizeof(char);
-    //SRS - Set ImGui style scale factor to handle retina and other HiDPI displays (same as font scaling above)
+    // SRS - Set ImGui style scale factor to handle retina and other HiDPI displays (same as font scaling above)
     ImGuiStyle& style = ImGui::GetStyle();
     style.ScaleAllSizes(scale_);
-    resources_.fontImage_ = Backend::VkResourceManager::GetInstance().GetImageManager().RequireImage({ static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight) });
+    resources_.fontImage_ = Backend::VkResourceManager::GetInstance().GetImageManager().RequireImage(
+        { static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight) });
     resources_.fontImage_->Update();
 }
 
@@ -67,21 +69,23 @@ void UIOverlay::InitResources(std::shared_ptr<Backend::RenderPass> renderPass)
     resources_.pipelineInfo_.renderPass = renderPass;
     resources_.pipelineInfo_.setLayouts = {};
     Backend::BlendState blendState;
-    blendState.colorOp_ = 0;	// func_add
-    blendState.alphaOp_ = 0;	// func_add
+    blendState.colorOp_ = 0;    // func_add
+    blendState.alphaOp_ = 0;    // func_add
     blendState.srcColor_ = static_cast<uint32_t>(vk::BlendFactor::eSrcAlpha);
     blendState.dstColor_ = static_cast<uint32_t>(vk::BlendFactor::eOneMinusSrcAlpha);
     blendState.srcAlpha_ = static_cast<uint32_t>(vk::BlendFactor::eOneMinusSrcAlpha);
     blendState.dstAlpha_ = static_cast<uint32_t>(vk::BlendFactor::eZero);
     resources_.pipelineInfo_.blend.emplace(blendState);
-    resources_.pipelineInfo_.vs =
-        Backend::VkResourceManager::GetInstance().GetShaderManager().AddShaderModule(GetShaderPath() + "/uioverlay/uioverlay.vert", ShaderType::Vertex);
-    resources_.pipelineInfo_.fs =
-        Backend::VkResourceManager::GetInstance().GetShaderManager().AddShaderModule(GetShaderPath() + "/uioverlay/uioverlay.frag", ShaderType::Fragment);
+    resources_.pipelineInfo_.vs = Backend::VkResourceManager::GetInstance().GetShaderManager()
+        .AddShaderModule(GetShaderPath() + "/uioverlay/uioverlay.vert", ShaderType::Vertex);
+    resources_.pipelineInfo_.fs = Backend::VkResourceManager::GetInstance().GetShaderManager()
+        .AddShaderModule(GetShaderPath() + "/uioverlay/uioverlay.frag", ShaderType::Fragment);
 
-    resources_.pipeline_ = Backend::VkResourceManager::GetInstance().GetPipelineTable().RequireGraphicsPipeline(resources_.pipelineInfo_);
+    resources_.pipeline_ = Backend::VkResourceManager::GetInstance().GetPipelineTable()
+        .RequireGraphicsPipeline(resources_.pipelineInfo_);
     InitFontImage();
-    resources_.sampler_ = std::make_shared<Backend::Sampler>(Backend::VkContext::GetInstance().GetDevice().createSamplerUnique({}).value);
+    resources_.sampler_ = std::make_shared<Backend::Sampler>(
+        Backend::VkContext::GetInstance().GetDevice().createSamplerUnique({}).value);
 }
 
 bool UIOverlay::Header(const std::string& caption)
@@ -172,7 +176,8 @@ bool UIOverlay::Button(const std::string& caption)
     return res;
 }
 
-bool UIOverlay::ColorPicker(const std::string& caption, std::vector<float>& color) {
+bool UIOverlay::ColorPicker(const std::string& caption, std::vector<float>& color)
+{
     bool res = ImGui::ColorEdit4(caption.c_str(), color.data(), ImGuiColorEditFlags_NoInputs);
     if (res) {
         updated_ = true;
@@ -228,17 +233,16 @@ void UIOverlay::PrepareDrawCommands(std::shared_ptr<Backend::CommandBuffer> comm
     pipeline->BindTextures({std::make_pair(resources_.fontImage_, resources_.sampler_)}, 0, 0);
     pipeline->BindDescriptorSets(commandBuffer);
 
-    resources_.constants_.scale[0] = 2.0f / io.DisplaySize.x;
-    resources_.constants_.scale[1] = 2.0f / io.DisplaySize.y;
-    resources_.constants_.translate[0] = -1.0f;
-    resources_.constants_.translate[1] = -1.0f;
-    cmdBuffer.pushConstants(resources_.pipeline_->GetLayout(), vk::ShaderStageFlagBits::eVertex, 0, 16, &resources_.constants_);
+    resources_.constants.scale[0] = 2.0f / io.DisplaySize.x;
+    resources_.constants.scale[1] = 2.0f / io.DisplaySize.y;
+    resources_.constants.translate[0] = -1.0f;
+    resources_.constants.translate[1] = -1.0f;
+    cmdBuffer.pushConstants(resources_.pipeline_->GetLayout(), vk::ShaderStageFlagBits::eVertex, 0,
+        sizeof(resources_.constants), &resources_.constants);
 
-    for (int32_t i = 0; i < imDrawData->CmdListsCount; i++)
-    {
+    for (uint32_t i = 0; i < imDrawData->CmdListsCount; i++) {
         const ImDrawList* cmd_list = imDrawData->CmdLists[i];
-        for (int32_t j = 0; j < cmd_list->CmdBuffer.Size; j++)
-        {
+        for (uint32_t j = 0; j < cmd_list->CmdBuffer.Size; j++) {
             const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[j];
             vk::Rect2D scissorRect;
             scissorRect.offset.x = std::max((int32_t)(pcmd->ClipRect.x), 0);

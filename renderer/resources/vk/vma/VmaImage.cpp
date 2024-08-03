@@ -28,7 +28,6 @@ VmaImage::VmaImage(VmaAllocator allocator, const VmaImageInfo& info) noexcept
 VmaImage::VmaImage(vk::Image image, VmaImageState&& state) noexcept
     : VmaObject(nullptr), handle_(image), state_(std::move(state)), external_(true)
 {
-
 }
 
 VmaImage::~VmaImage() noexcept
@@ -50,6 +49,26 @@ VmaImage& VmaImage::operator=(VmaImage&& other) noexcept
     Destroy();
     new (this) VmaImage { std::move(other) };
     return *this;
+}
+
+void VmaImage::Barrier(vk::CommandBuffer cmdBuffer, VmaImageState&& state, vk::ImageAspectFlags aspectMask,
+    vk::DependencyFlags flags)
+{
+    if (state_.layout_ == state.layout_ && state_.accessType_ == state.accessType_ &&
+        state_.accessStage_ == state.accessStage_ && state_.queueFamilyIndex_ == state.queueFamilyIndex_) {
+        return;
+    }
+    vk::ImageMemoryBarrier barrier{};
+    barrier.setImage(handle_)
+        .setSrcAccessMask(state_.accessType_)
+        .setDstAccessMask(state.accessType_)
+        .setOldLayout(state_.layout_)
+        .setNewLayout(state.layout_)
+        .setSrcQueueFamilyIndex(state_.queueFamilyIndex_)
+        .setDstQueueFamilyIndex(state.queueFamilyIndex_)
+        .setSubresourceRange({ aspectMask, 0, 1, 0, 1 });
+    cmdBuffer.pipelineBarrier(state_.accessStage_, state.accessStage_, flags, {}, {}, barrier);
+    state_ = std::move(state);
 }
 
 void VmaImage::Destroy() noexcept

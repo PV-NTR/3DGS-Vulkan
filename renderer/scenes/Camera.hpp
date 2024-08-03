@@ -10,6 +10,7 @@ class Camera {
 public:
     Camera() = default;
     Camera(const Camera& oth) = default;
+    Camera& operator=(const Camera& other) = default;
     ~Camera() = default;
 
     enum class CameraType {

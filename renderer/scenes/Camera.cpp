@@ -109,7 +109,7 @@ void Camera::Update(float deltaTime)
 
 bool Camera::UpdateCameraFirstPerson(glm::vec2 axisLeft, glm::vec2 axisRight, float deltaTime, float deadZone)
 {
-    // Use the common console thumbstick layout		
+    // Use the common console thumbstick layout
     // Left = view, right = move
     bool ret = false;
     const float range = 1.0f - deadZone;

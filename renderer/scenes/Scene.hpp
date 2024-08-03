@@ -35,7 +35,11 @@ public:
 private:
     friend class Renderer;
     friend class GaussianRenderer;
+
     Scene(const Scene& other) = delete;
+    Scene& operator=(const Scene& other) = delete;
+    Scene& operator=(Scene&& other) = delete;
+
     void UpdateCameraData(Backend::DisplaySurface* surface);
     void SortSplatsByDepth();
     void RadixSortSplatsByDepth();

@@ -6,7 +6,6 @@ namespace X::Backend {
 
 ImageView::ImageView(std::shared_ptr<Image> image) noexcept
 {
-    // auto& info = image->GetInfo();
     vk::ImageViewCreateInfo viewCI;
     vk::ImageSubresourceRange subreourceRange;
     subreourceRange.setAspectMask(vk::ImageAspectFlagBits::eColor)
@@ -19,7 +18,8 @@ ImageView::ImageView(std::shared_ptr<Image> image) noexcept
         .setImage(image->GetHandle())
         // TODO: format from info, ycbcr or astc or other info
         .setFormat(image->GetInfo().format_)
-        .setComponents({ vk::ComponentSwizzle::eR, vk::ComponentSwizzle::eG, vk::ComponentSwizzle::eB, vk::ComponentSwizzle::eA })
+        .setComponents({ vk::ComponentSwizzle::eR, vk::ComponentSwizzle::eG, vk::ComponentSwizzle::eB,
+            vk::ComponentSwizzle::eA })
         .setSubresourceRange(subreourceRange);
     auto [ret, uniqueView] = VkContext::GetInstance().GetDevice().createImageViewUnique(viewCI);
     if (ret != vk::Result::eSuccess) {
@@ -33,7 +33,6 @@ ImageView::ImageView(std::shared_ptr<Image> image) noexcept
 ImageView::ImageView(ImageView&& other) noexcept
     : uniqueView_(std::move(other.uniqueView_)), view_(std::move(other.view_))
 {
-
 }
 
 ImageView& ImageView::operator=(ImageView&& other) noexcept

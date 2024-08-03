@@ -19,7 +19,8 @@ std::shared_ptr<Buffer> BufferManager::RequireBuffer(const BufferInfo& info)
 {
     auto key = GetKeyFromBufferInfo(info);
     if (freeResources_.find(key.packed_) == freeResources_.end()) {
-        freeResources_[key.packed_] = std::unique_ptr<Buffer>(new Buffer(VkContext::GetInstance().GetAllocator(), info));
+        freeResources_[key.packed_]
+            = std::unique_ptr<Buffer>(new Buffer(VkContext::GetInstance().GetAllocator(), info));
     }
     std::shared_ptr<Buffer> ret(freeResources_[key.packed_].release(), [this](Buffer* bufferPtr) {
             this->Recycle(bufferPtr);

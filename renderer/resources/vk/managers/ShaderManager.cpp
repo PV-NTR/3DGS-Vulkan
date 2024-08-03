@@ -84,7 +84,8 @@ void ShaderManager::Recycle(ShaderModule* shaderModulePtr)
         freeResources_.erase(frontFreeResource);
     }
     resourceQueue_.push(shaderModulePtr->GetName());
-    freeResources_[shaderModulePtr->GetName()] = std::unique_ptr<ShaderModule>(new ShaderModule(std::move(*shaderModulePtr)));
+    freeResources_[shaderModulePtr->GetName()] =
+        std::unique_ptr<ShaderModule>(new ShaderModule(std::move(*shaderModulePtr)));
 }
 
 } // namespace X::Backend

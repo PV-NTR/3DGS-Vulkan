@@ -23,7 +23,7 @@ public:
 
 private:
     static constexpr uint32_t BLEND_OP_NUM = 51;
-    static const std::array<vk::BlendOp, BLEND_OP_NUM> blendOpMap;
+    static const std::array<vk::BlendOp, BLEND_OP_NUM> blendOpMap_;
 };
 
 } // namespace X::Backend

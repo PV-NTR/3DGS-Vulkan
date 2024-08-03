@@ -24,13 +24,14 @@ private:
     friend class DisplaySurface;
 
 public:
-    virtual ~Image() noexcept = default;
+    ~Image() override = default;
     vk::Image GetHandle() { return image_.GetHandle(); };
     const ImageInfo& GetInfo() { return info_; }
     std::shared_ptr<ImageView> GetView() { return view_; }
     // TODO: complete this
-    void Update(/*params*/) {}
-    void Barrier(std::shared_ptr<CommandBuffer> cmdBuffer, VmaImageState&& state, vk::ImageAspectFlags aspectMask, vk::DependencyFlags flags = {})
+    void Update(/* params */) {}
+    void Barrier(std::shared_ptr<CommandBuffer> cmdBuffer, VmaImageState&& state, vk::ImageAspectFlags aspectMask,
+        vk::DependencyFlags flags = {})
     {
         return image_.Barrier(cmdBuffer->get(), std::move(state), aspectMask, flags);
     }
@@ -39,7 +40,9 @@ private:
     Image(VmaAllocator allocator, const ImageInfo& info) noexcept;
     // external image, only for swapchain
     Image(vk::Image image, const ImageInfo& info, VmaImageState&& state) noexcept;
-    Image(Image&& other) noexcept : image_(std::move(other.image_)), info_(other.info_), view_(std::move(other.view_)) {}
+    Image(Image&& other) noexcept : image_(std::move(other.image_)), info_(other.info_),
+        view_(std::move(other.view_)) {}
+    Image& operator=(Image&& other) = delete;
 
     void CreateView();
 

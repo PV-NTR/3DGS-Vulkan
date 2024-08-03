@@ -4,7 +4,7 @@
 
 namespace X::Backend {
 
-const std::array<vk::BlendOp, BlendState::BLEND_OP_NUM> BlendState::blendOpMap = {
+const std::array<vk::BlendOp, BlendState::BLEND_OP_NUM> BlendState::blendOpMap_ = {
     vk::BlendOp::eAdd,
     vk::BlendOp::eSubtract,
     vk::BlendOp::eReverseSubtract,
@@ -60,12 +60,12 @@ const std::array<vk::BlendOp, BlendState::BLEND_OP_NUM> BlendState::blendOpMap =
    
 vk::BlendOp BlendState::GetColorBlendOp() const
 {
-    return blendOpMap[colorOp_];
+    return blendOpMap_[colorOp_];
 }
 
 vk::BlendOp BlendState::GetAlphaBlendOp() const
 {
-    return blendOpMap[alphaOp_];
+    return blendOpMap_[alphaOp_];
 }
 
 

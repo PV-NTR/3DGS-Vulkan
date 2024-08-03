@@ -10,8 +10,8 @@ Pipeline::~Pipeline()
     descriptorSets_.clear();
 }
 
-Pipeline::Pipeline(std::string name, const std::vector<std::shared_ptr<DescriptorSetLayout>>& setLayouts, Type type) noexcept
-    : name_(name), type_(type)
+Pipeline::Pipeline(std::string name, const std::vector<std::shared_ptr<DescriptorSetLayout>>& setLayouts,
+    Type type) noexcept : name_(name), type_(type)
 {
     assert(!setLayouts.empty());
     CreateDescriptorPool(setLayouts);
@@ -100,14 +100,16 @@ bool Pipeline::BindBuffer(std::shared_ptr<Buffer> buffer, uint32_t bindSet, uint
     vk::WriteDescriptorSet dWrite {};
     dWrite.setDstSet(*descriptorSets_[bindSet])
         .setDescriptorCount(1)
-        .setDescriptorType(buffer->GetType() == BufferType::Uniform ? vk::DescriptorType::eUniformBuffer : vk::DescriptorType::eStorageBuffer)
+        .setDescriptorType(buffer->GetType() == BufferType::Uniform ?
+            vk::DescriptorType::eUniformBuffer : vk::DescriptorType::eStorageBuffer)
         .setDstBinding(binding)
         .setBufferInfo(info);
     VkContext::GetInstance().GetDevice().updateDescriptorSets(dWrite, nullptr);
     return true;
 }
 
-bool Pipeline::BindUniformBuffers(const std::vector<std::shared_ptr<Buffer>>& buffers, uint32_t bindSet, uint32_t startBinding)
+bool Pipeline::BindUniformBuffers(const std::vector<std::shared_ptr<Buffer>>& buffers, uint32_t bindSet,
+    uint32_t startBinding)
 {
     if (bindSet >= descriptorSets_.size()) {
         XLOGE("Bind set index not valid!");
@@ -138,7 +140,8 @@ bool Pipeline::BindUniformBuffers(const std::vector<std::shared_ptr<Buffer>>& bu
     return true;
 }
 
-bool Pipeline::BindStorageBuffers(const std::vector<std::shared_ptr<Buffer>>& buffers, uint32_t bindSet, uint32_t startBinding)
+bool Pipeline::BindStorageBuffers(const std::vector<std::shared_ptr<Buffer>>& buffers, uint32_t bindSet,
+    uint32_t startBinding)
 {
     if (bindSet >= descriptorSets_.size()) {
         XLOGE("Bind set index not valid!");
@@ -169,7 +172,8 @@ bool Pipeline::BindStorageBuffers(const std::vector<std::shared_ptr<Buffer>>& bu
     return true;
 }
 
-bool Pipeline::BindTextures(const std::vector<std::pair<std::shared_ptr<Image>, std::shared_ptr<Sampler>>>& images, uint32_t bindSet, uint32_t startBinding)
+bool Pipeline::BindTextures(const std::vector<std::pair<std::shared_ptr<Image>, std::shared_ptr<Sampler>>>& images,
+    uint32_t bindSet, uint32_t startBinding)
 {
     if (bindSet >= descriptorSets_.size()) {
         XLOGE("Bind set index not valid!");
@@ -200,7 +204,8 @@ bool Pipeline::BindTextures(const std::vector<std::pair<std::shared_ptr<Image>, 
 bool Pipeline::BindDescriptorSets(std::shared_ptr<CommandBuffer> commandBuffer)
 {
     auto cmdBuffer = commandBuffer->get();
-    vk::PipelineBindPoint bindPoint = type_ == Type::Graphics ? vk::PipelineBindPoint::eGraphics : vk::PipelineBindPoint::eCompute;
+    vk::PipelineBindPoint bindPoint =
+        type_ == Type::Graphics ? vk::PipelineBindPoint::eGraphics : vk::PipelineBindPoint::eCompute;
     cmdBuffer.bindPipeline(bindPoint, pipeline_);
     std::vector<vk::DescriptorSet> descSetHandles;
     for (const auto& descriptorSet : descriptorSets_) {

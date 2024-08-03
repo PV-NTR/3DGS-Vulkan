@@ -34,7 +34,8 @@ public:
     bool CheckBox(const std::string& caption, bool& value);
     bool CheckBox(const std::string& caption, int32_t& value);
     bool RadioButton(const std::string& caption, bool value);
-    bool InputFloat(const std::string& caption, std::vector<float>& value, float step, const std::string format = "%.3f");
+    bool InputFloat(const std::string& caption, std::vector<float>& value, float step,
+        const std::string format = "%.3f");
     bool SliderFloat(const std::string& caption, std::vector<float>& value, float min, float max);
     bool SliderInt(const std::string& caption, std::vector<int32_t>& value, int32_t min, int32_t max);
     bool ComboBox(const std::string& caption, std::vector<int32_t>& itemindex, std::vector<std::string> items);
@@ -54,7 +55,7 @@ private:
         struct {
             float scale[2];
             float translate[2];
-        } constants_;
+        } constants;
 
         Backend::GraphicsPipelineInfo pipelineInfo_ {};
         std::shared_ptr<Backend::GraphicsPipeline> pipeline_;

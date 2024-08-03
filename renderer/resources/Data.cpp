@@ -7,9 +7,8 @@ std::shared_ptr<Data> Data::MakeLength(uint32_t size, bool init)
     return std::shared_ptr<Data>(new Data(size, init));
 }
 
-Data::Data(uint32_t size, bool init) : size_(size)
+Data::Data(uint32_t size, bool init) : size_(size), data_(new uint32_t[size])
 {
-    data_ = new uint32_t[size];
     if (init) {
         memset(data_, 0, size_);
     }

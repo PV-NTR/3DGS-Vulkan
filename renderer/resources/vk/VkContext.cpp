@@ -168,7 +168,8 @@ void VkContext::GetSupportedDeviceExtensions()
     (void)physicalDevice_.enumerateDeviceExtensionProperties(nullptr, &extCount, nullptr);
     if (extCount > 0) {
         std::vector<vk::ExtensionProperties> extensions(extCount);
-        if (physicalDevice_.enumerateDeviceExtensionProperties(nullptr, &extCount, &extensions.front()) == vk::Result::eSuccess) {
+        if (physicalDevice_.enumerateDeviceExtensionProperties(nullptr, &extCount, &extensions.front()) ==
+            vk::Result::eSuccess) {
             for (const vk::ExtensionProperties& extension : extensions) {
                 supportedDeviceExts_.push_back(extension.extensionName);
             }
@@ -292,7 +293,6 @@ uint32_t VkContext::QueryPresentQueueFamilies(vk::SurfaceKHR surface)
         }
     }
     return UINT32_MAX;
-
 }
 
 bool VkContext::CreateDeviceAndQueues()

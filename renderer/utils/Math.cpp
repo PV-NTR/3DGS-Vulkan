@@ -35,7 +35,7 @@ uint32_t PackHalf2x16(float x, float y)
 {
     uint16_t hx = FloatToHalf(x);
     uint16_t hy = FloatToHalf(y);
-    return (uint32_t)hx | ((uint32_t)hy << 16);
+    return static_cast<uint32_t>(hx) | (static_cast<uint32_t>(hy) << 16);
 }
 
 } // namespace X

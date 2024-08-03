@@ -20,7 +20,7 @@ protected:
 
 private:
     static inline constexpr uint32_t TABLE_SIZE = 256;
-    static std::string CACHE_FILE;
+    std::string cacheFile_ = "";
 
     std::unordered_map<std::string, std::shared_ptr<Pipeline>> pipelines_;
     std::queue<std::string> pipelineQueue_;

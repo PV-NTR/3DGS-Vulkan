@@ -15,14 +15,16 @@ public:
         Graphics = 0,
         Compute,
     };
-    virtual ~Pipeline();
-
+    ~Pipeline() override;
 
     bool BindBuffer(std::shared_ptr<Buffer> buffer, uint32_t bindSet, uint32_t binding);
-    bool BindUniformBuffers(const std::vector<std::shared_ptr<Buffer>>& buffers, uint32_t bindSet, uint32_t startBinding);
-    bool BindStorageBuffers(const std::vector<std::shared_ptr<Buffer>>& buffers, uint32_t bindSet, uint32_t startBinding);
+    bool BindUniformBuffers(const std::vector<std::shared_ptr<Buffer>>& buffers, uint32_t bindSet,
+        uint32_t startBinding);
+    bool BindStorageBuffers(const std::vector<std::shared_ptr<Buffer>>& buffers, uint32_t bindSet,
+        uint32_t startBinding);
     // TODO: sampler type
-    bool BindTextures(const std::vector<std::pair<std::shared_ptr<Image>, std::shared_ptr<Sampler>>>& images, uint32_t bindSet, uint32_t startBinding);
+    bool BindTextures(const std::vector<std::pair<std::shared_ptr<Image>, std::shared_ptr<Sampler>>>& images,
+        uint32_t bindSet, uint32_t startBinding);
     bool BindDescriptorSets(std::shared_ptr<CommandBuffer> commandBuffer);
     vk::PipelineLayout GetLayout() const
     {

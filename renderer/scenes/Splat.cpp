@@ -96,7 +96,7 @@ std::vector<GaussianPoint> LoadPly(std::string fileName)
 
     // Read all Gaussians at once (AoS)
     std::vector<RawGaussianPoint> rawPoints(count);
-    infile.read((char*)(rawPoints.data()), count * sizeof(RawGaussianPoint));
+    infile.read(reinterpret_cast<char*>(rawPoints.data()), count * sizeof(RawGaussianPoint));
 
     // simple preprocess
     std::vector<GaussianPoint> points(count);
@@ -122,7 +122,8 @@ std::vector<GaussianPoint> LoadPlyAndroid(std::string fileName)
 {
     assert(g_androidAppCtx);
     assert(g_androidAppCtx->activity->assetManager);
-    AAsset* asset = AAssetManager_open(g_androidAppCtx->activity->assetManager, fileName.c_str(), AASSET_MODE_STREAMING);
+    AAsset* asset = AAssetManager_open(g_androidAppCtx->activity->assetManager, fileName.c_str(),
+        AASSET_MODE_STREAMING);
     assert(asset);
     size_t size = AAsset_getLength(asset);
     assert(size > 0);
@@ -150,7 +151,8 @@ std::vector<GaussianPoint> LoadPlyAndroid(std::string fileName)
     // Read all Gaussians at once (AoS)
     std::vector<RawGaussianPoint> rawPoints(count);
     uint32_t headerLength = ss.tellg();
-    std::copy(data + headerLength + 1, data + 1 + headerLength + count * sizeof(RawGaussianPoint), (char*)rawPoints.data());
+    std::copy(data + headerLength + 1, data + 1 + headerLength + count * sizeof(RawGaussianPoint),
+        reinterpret_cast<char*>(rawPoints.data()));
 
     // simple preprocess
     std::vector<GaussianPoint> points(count);
@@ -176,8 +178,8 @@ void Splat::CompressData()
 {
     compressedData_.resize(data_.size());
     for (size_t i = 0; i < data_.size(); i++) {
-        compressedData_[i].posAndOpacity[0] =  PackHalf2x16(data_[i].pos[0], data_[i].pos[1]);
-        compressedData_[i].posAndOpacity[1] =  PackHalf2x16(data_[i].pos[2], data_[i].opacity);
+        compressedData_[i].posAndOpacity[0] = PackHalf2x16(data_[i].pos[0], data_[i].pos[1]);
+        compressedData_[i].posAndOpacity[1] = PackHalf2x16(data_[i].pos[2], data_[i].opacity);
         for (size_t j = 0; j < 48; j += 2) {
             compressedData_[i].shs[j / 2] = PackHalf2x16(data_[i].shs[j], data_[i].shs[j + 1]);
         }

@@ -3,8 +3,7 @@
 namespace X {
 
 enum class ColorType {
-
-
+    // TODO: Complete this
 };
 
 enum class BufferType {

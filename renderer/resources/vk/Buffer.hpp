@@ -21,7 +21,7 @@ private:
     using BufferProps = std::pair<vk::BufferUsageFlags, vk::MemoryPropertyFlags>;
 
 public:
-    virtual ~Buffer() noexcept = default;
+    ~Buffer() override = default;
     vk::Buffer GetHandle() { return buffer_.GetHandle(); }
     uint64_t GetSize() { return info_.size_; }
     BufferType GetType() { return info_.type_; }
@@ -31,6 +31,7 @@ public:
 private:
     Buffer(VmaAllocator allocator, const BufferInfo& info) noexcept;
     Buffer(Buffer&& other) noexcept : buffer_(std::move(other.buffer_)), info_(other.info_) {}
+    Buffer& operator=(Buffer&& other) = delete;
     static BufferProps GetPropsFromType(BufferType type);
 
 private:

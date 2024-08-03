@@ -12,7 +12,8 @@ GraphicsPipeline::GraphicsPipeline(const GraphicsPipelineInfo& info, vk::Pipelin
 
     vk::PipelineColorBlendAttachmentState blendAttachmentState {};
     blendAttachmentState.setBlendEnable(info.blend.has_value() ? vk::True : vk::False)
-        .setColorWriteMask(vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA);
+        .setColorWriteMask(vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
+            vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA);
     if (info.blend.has_value()) {
         auto& blendState = info.blend.value();
         blendAttachmentState.setSrcColorBlendFactor(static_cast<vk::BlendFactor>(blendState.srcColor_))
@@ -26,13 +27,16 @@ GraphicsPipeline::GraphicsPipeline(const GraphicsPipelineInfo& info, vk::Pipelin
 
     assert(info.vs->GetType() == ShaderType::Vertex);
     assert(info.fs->GetType() == ShaderType::Fragment);
-    defaultState_.shaderStages[0].setStage(vk::ShaderStageFlagBits::eVertex).setModule(info.vs->GetHandle()).setPName("main");
-    defaultState_.shaderStages[1].setStage(vk::ShaderStageFlagBits::eFragment).setModule(info.fs->GetHandle()).setPName("main");
+    defaultState_.shaderStages[0].setStage(vk::ShaderStageFlagBits::eVertex).setModule(info.vs->GetHandle())
+        .setPName("main");
+    defaultState_.shaderStages[1].setStage(vk::ShaderStageFlagBits::eFragment).setModule(info.fs->GetHandle())
+        .setPName("main");
 
     assert(info.renderPass != nullptr);
     vk::GraphicsPipelineCreateInfo pipelineCI {};
     if (info.renderPass->DepthStencilAttachmentID() != UINT32_MAX) {
-        defaultState_.depthStencilState.setDepthTestEnable(vk::True).setStencilTestEnable(vk::False).setDepthCompareOp(vk::CompareOp::eLessOrEqual);
+        defaultState_.depthStencilState.setDepthTestEnable(vk::True).setStencilTestEnable(vk::False)
+            .setDepthCompareOp(vk::CompareOp::eLessOrEqual);
     }
     pipelineCI.setRenderPass(info.renderPass->GetHandle())
         .setLayout(*layout_)
@@ -67,7 +71,8 @@ void GraphicsPipeline::InitDefaultSettings()
     defaultState_.vertexInputAttribute.setLocation(0).setBinding(0).setFormat(vk::Format::eR32G32Sfloat);
     defaultState_.vertexInputState.setVertexBindingDescriptions(defaultState_.vertexInputBinding)
         .setVertexAttributeDescriptions(defaultState_.vertexInputAttribute);
-    defaultState_.inputAssemblyState.setTopology(vk::PrimitiveTopology::eTriangleList).setPrimitiveRestartEnable(vk::False);
+    defaultState_.inputAssemblyState.setTopology(vk::PrimitiveTopology::eTriangleList)
+        .setPrimitiveRestartEnable(vk::False);
     defaultState_.rasterizationState.setPolygonMode(vk::PolygonMode::eFill).setCullMode(vk::CullModeFlagBits::eNone)
         .setFrontFace(vk::FrontFace::eClockwise).setLineWidth(1.0f);
     defaultState_.multisampleState.setRasterizationSamples(vk::SampleCountFlagBits::e1);

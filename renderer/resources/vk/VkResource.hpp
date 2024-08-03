@@ -10,13 +10,16 @@ class VkResource : public VkUniqueHandle, public VkResourceBase {
 public:
     VkResource() = default;
 
-    VkResource(VkUniqueHandle&& uniqueHandle) : VkUniqueHandle(std::move(uniqueHandle)) {}
+    explicit VkResource(VkUniqueHandle&& uniqueHandle) : VkUniqueHandle(std::move(uniqueHandle)) {}
     VkResource(VkResource&& other) noexcept : VkUniqueHandle(other.release())
     {
         this->dependencies_ = std::move(other.dependencies_);
     }
     VkResource& operator=(VkResource&& other) = delete;
-    virtual ~VkResource() { VkUniqueHandle::reset(); }
+    ~VkResource() override
+    {
+        VkUniqueHandle::reset();
+    }
 };
 
 using PipelineLayout = VkResource<vk::UniquePipelineLayout>;

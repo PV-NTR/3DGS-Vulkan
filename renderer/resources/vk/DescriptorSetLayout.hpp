@@ -16,7 +16,7 @@ using LayoutBindingInfo = std::pair<BindingTypes, uint32_t>;
 class DescriptorSetLayout : public VkResourceBase {
 public:
     [[nodiscard]] static std::shared_ptr<DescriptorSetLayout> Make();
-    virtual ~DescriptorSetLayout() noexcept;
+    ~DescriptorSetLayout() override;
     vk::DescriptorSetLayout GetHandle() { return descLayout_; }
 
     void Update();

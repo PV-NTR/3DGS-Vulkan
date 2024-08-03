@@ -7,7 +7,7 @@ namespace X::Backend {
 
 class VmaObject {
 public:
-    VmaObject(VmaAllocator allocator, bool coherent = false, bool persistent = false) noexcept
+    explicit VmaObject(VmaAllocator allocator, bool coherent = false, bool persistent = false) noexcept
         : allocator_(allocator), coherent_(coherent), persistent_(persistent) {}
 
     VmaObject(VmaObject&& other) noexcept
@@ -79,6 +79,7 @@ public:
 
 protected:
     VmaObject() noexcept = default;
+    VmaObject& operator=(VmaObject&& other) = delete;
     VmaAllocator allocator_ = VK_NULL_HANDLE;
     VmaAllocation allocation_ = VK_NULL_HANDLE;
     VmaAllocationInfo allocationInfo_ {};
