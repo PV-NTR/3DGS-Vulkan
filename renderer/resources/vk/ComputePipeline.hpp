@@ -16,12 +16,10 @@ private:
     friend class PipelineTable;
 
 public:
-    virtual ~ComputePipeline() = default;
+    ~ComputePipeline() override = default;
 
 protected:
     ComputePipeline(const ComputePipelineInfo& info, vk::PipelineCache cache) noexcept;
-
-private:
 };
 
 } // namespace X::Backend

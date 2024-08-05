@@ -32,23 +32,8 @@ public:
     VmaImage(VmaImage&& other) noexcept;
     VmaImage& operator=(VmaImage&& other) noexcept;
     vk::Image GetHandle() { return handle_; };
-    void Barrier(vk::CommandBuffer cmdBuffer, VmaImageState&& state, vk::ImageAspectFlags aspectMask, vk::DependencyFlags flags = {}) {
-        if (state_.layout_ == state.layout_ && state_.accessType_ == state.accessType_ &&
-            state_.accessStage_ == state.accessStage_ && state_.queueFamilyIndex_ == state.queueFamilyIndex_) {
-            return;
-        }
-        vk::ImageMemoryBarrier barrier{};
-        barrier.setImage(handle_)
-            .setSrcAccessMask(state_.accessType_)
-            .setDstAccessMask(state.accessType_)
-            .setOldLayout(state_.layout_)
-            .setNewLayout(state.layout_)
-            .setSrcQueueFamilyIndex(state_.queueFamilyIndex_)
-            .setDstQueueFamilyIndex(state.queueFamilyIndex_)
-            .setSubresourceRange({ aspectMask, 0, 1, 0, 1 });
-        cmdBuffer.pipelineBarrier(state_.accessStage_, state.accessStage_, flags, {}, {}, barrier);
-        state_ = std::move(state);
-    }
+    void Barrier(vk::CommandBuffer cmdBuffer, VmaImageState&& state, vk::ImageAspectFlags aspectMask,
+        vk::DependencyFlags flags = {});
 
 protected:
     void Destroy() noexcept;

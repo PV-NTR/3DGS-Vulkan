@@ -13,7 +13,6 @@ Renderer::Renderer(bool needCompute) : needCompute_(needCompute)
 
 Renderer::~Renderer()
 {
-
 }
 
 bool Renderer::Init(Backend::DisplaySurface* surface)
@@ -26,7 +25,6 @@ bool Renderer::Init(Backend::DisplaySurface* surface)
 
 void Renderer::Destroy()
 {
-    
 }
 
 bool Renderer::IsReady()
@@ -36,34 +34,33 @@ bool Renderer::IsReady()
 
 void Renderer::UpdateScene(Scene* scene)
 {
+    // TODO: correct usage of auxiliaryInited
     if (auxiliaryInited && scene->ObjectChanged()) {
         this->InitAuxiliaryBuffers(scene);
     }
-    // if (scene->SceneChanged()) {
-        this->OnUpdateScene(scene);
-    // }
+    this->OnUpdateScene(scene);
 }
 
 void Renderer::OnUpdateScene(Scene* scene)
 {
-    if (surface_->Resized()) {
+    if (surface_->Changed()) {
         this->RecordGraphicsCommands(scene);
         this->RecordComputeCommands(scene);
     }
-
-    //if (scene->SceneChanged() && !scene->GetCamera().Updated()) {
+    if (scene->SceneChanged()) {
         scene->UpdateData(surface_);
-    //}
-    surface_->UpdateScreenSizeBuffer();
+    }
+    if (surface_->Changed()) {
+        surface_->UpdateScreenSizeBuffer();
+    }
 }
 
 void Renderer::DrawFrame()
 {
     this->OnDrawFrame();
-    Backend::VkContext::GetInstance().GetDevice().waitForFences(fence_, vk::True, 100000000);
+    // Backend::VkContext::GetInstance().GetDevice().waitForFences(fence_, vk::True, 100000000);
     surface_->Present();
-    surface_->NextFrame();
-    Backend::VkContext::GetInstance().GetDevice().resetFences(fence_);
+    // Backend::VkContext::GetInstance().GetDevice().resetFences(fence_);
 }
 
 
@@ -72,21 +69,27 @@ bool Renderer::AllocateCommandBuffers()
     auto device = Backend::VkContext::GetInstance().GetDevice();
 
     vk::CommandBufferAllocateInfo allocInfo{};
-    allocInfo.setCommandPool(Backend::VkContext::GetInstance().GetPresentCmdPool()).setCommandBufferCount(surface_->GetSwapSurfaceCount());
-    presentCmdBuffers_.resize(surface_->GetSwapSurfaceCount());
-    auto allocRet = device.allocateCommandBuffers(&allocInfo, presentCmdBuffers_.data());
+    allocInfo.setCommandPool(Backend::VkContext::GetInstance().GetPresentCmdPool())
+        .setCommandBufferCount(surface_->GetSwapSurfaceCount());
+    auto [allocRet, presentCmdBuffers] = device.allocateCommandBuffersUnique(allocInfo);
     if (allocRet != vk::Result::eSuccess) {
         XLOGE("allocate present commandbuffer failed, errCode: %d", allocRet);
         return false;
     }
+    for (auto&& presentCmdBuffer : presentCmdBuffers) {
+        presentCmdBuffers_.emplace_back(std::make_shared<Backend::CommandBuffer>(std::move(presentCmdBuffer)));
+    }
 
     if (needCompute_) {
-        allocInfo.setCommandPool(Backend::VkContext::GetInstance().GetComputeCmdPool()).setCommandBufferCount(surface_->GetSwapSurfaceCount());
-        computeCmdBuffers_.resize(surface_->GetSwapSurfaceCount());
-        allocRet = device.allocateCommandBuffers(&allocInfo, computeCmdBuffers_.data());
+        allocInfo.setCommandPool(Backend::VkContext::GetInstance().GetComputeCmdPool())
+            .setCommandBufferCount(surface_->GetSwapSurfaceCount());
+        auto [allocRet, computeCmdBuffers] = device.allocateCommandBuffersUnique(allocInfo);
         if (allocRet != vk::Result::eSuccess) {
             XLOGE("allocate compute commandbuffer failed, errCode: %d", allocRet);
             return false;
+        }
+        for (auto&& computeCmdBuffer : computeCmdBuffers) {
+            computeCmdBuffers_.emplace_back(std::make_shared<Backend::CommandBuffer>(std::move(computeCmdBuffer)));
         }
     }
     return true;
@@ -95,7 +98,8 @@ bool Renderer::AllocateCommandBuffers()
 void Renderer::RecordGraphicsCommands(Scene* scene)
 {
     for (uint32_t i = 0; i < presentCmdBuffers_.size(); i++) {
-        auto cmdBuffer = presentCmdBuffers_[i];
+        auto cmdBuffer = presentCmdBuffers_[i]->get();
+        cmdBuffer.reset();
         vk::CommandBufferBeginInfo cmdBufferBeginInfo{};
         auto ret = cmdBuffer.begin(cmdBufferBeginInfo);
         if (ret != vk::Result::eSuccess) {
@@ -113,7 +117,8 @@ void Renderer::RecordGraphicsCommands(Scene* scene)
             .setClearValues(clearValues)
             .setRenderArea({ {0, 0}, {surface_->GetWidth(), surface_->GetHeight()} });
         cmdBuffer.beginRenderPass(beginInfo, { vk::SubpassContents::eInline });
-        this->OnRecordGraphicsCommands(scene, cmdBuffer);
+        this->OnRecordGraphicsCommands(scene, presentCmdBuffers_[i]);
+        scene->overlay_.PrepareDrawCommands(presentCmdBuffers_[i]);
 
         cmdBuffer.endRenderPass();
         ret = cmdBuffer.end();
@@ -133,14 +138,14 @@ void Renderer::SubmitGraphicsCommands()
     std::vector<vk::PipelineStageFlags> waitStageMask{ vk::PipelineStageFlagBits::eColorAttachmentOutput };
     auto waitSemaphore = surface_->GetAcquireFrameSignalSemaphore();
     auto signalSemaphore = surface_->GetPresentWaitSemaphore();
-    submitInfo.setCommandBuffers(cmdBuffer)
+    submitInfo.setCommandBuffers(cmdBuffer->get())
         .setWaitSemaphoreCount(1)
         .setPWaitSemaphores(&waitSemaphore)
         .setWaitDstStageMask(waitStageMask)
         .setSignalSemaphoreCount(1)
         .setPSignalSemaphores(&signalSemaphore);
-    // auto ret = queue.submit(submitInfo);
-    auto ret = queue.submit(submitInfo, fence_);
+    auto ret = queue.submit(submitInfo);
+    // auto ret = queue.submit(submitInfo, fence_);
     if (ret != vk::Result::eSuccess) {
         XLOGE("Submit graphics commands failed, errCode: %d", ret);
         // abort();

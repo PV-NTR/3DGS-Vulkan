@@ -10,6 +10,7 @@ class Camera {
 public:
     Camera() = default;
     Camera(const Camera& oth) = default;
+    Camera& operator=(const Camera& other) = default;
     ~Camera() = default;
 
     enum class CameraType {
@@ -64,6 +65,7 @@ private:
 private:
     friend class Scene;
     CameraType type_ = CameraType::LookAt;
+    bool flipY_ = true;
 
     // extrinsic param
     glm::vec3 rotation_ = glm::vec3();

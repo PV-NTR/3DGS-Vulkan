@@ -44,7 +44,8 @@ DisplaySurface::DisplaySurface(void* instance, void* window)
     if (presentQueueIdx_ == UINT32_MAX) {
         XLOGE("No valid present queue!");
     }
-    screenSize_ = Backend::VkResourceManager::GetInstance().GetBufferManager().RequireBuffer({ 8, BufferType::Uniform });
+    screenSize_ = Backend::VkResourceManager::GetInstance().GetBufferManager()
+        .RequireBuffer({ 8, BufferType::Uniform });
     InitDisplaySemaphores();
 }
 
@@ -55,32 +56,43 @@ void DisplaySurface::InitDisplaySemaphores()
     assert(acquireFrameSignalSemaphore_ && presentWaitSemaphore_);
 }
 
+void DisplaySurface::CleanSwapchain()
+{
+    ready_ = false;
+    swapchain_.reset();
+    // swapSurfaces_.clear();
+    if (depthStencil_) {
+        depthStencil_.reset();
+    }
+}
+
 void DisplaySurface::SetupSwapchain()
 {
-    resized_ = true;
+    changed_ = true;
     // WARNING: check result
-    vk::SurfaceCapabilitiesKHR surfCaps = VkContext::GetInstance().GetPhysicalDevice().getSurfaceCapabilitiesKHR(surface_).value;
+    vk::SurfaceCapabilitiesKHR surfCaps = VkContext::GetInstance().GetPhysicalDevice()
+        .getSurfaceCapabilitiesKHR(surface_).value;
 
     assert(surfCaps.currentExtent.width != UINT32_MAX);
     assert(surfCaps.currentExtent.height != UINT32_MAX);
-    width_ = surfCaps.currentExtent.width;
-    height_ = surfCaps.currentExtent.height;
+    swapchainImageInfo_.width_ = surfCaps.currentExtent.width;
+    swapchainImageInfo_.height_ = surfCaps.currentExtent.height;
 
     imageCount_ = std::max(std::min(imageCount_, surfCaps.maxImageCount), surfCaps.minImageCount);
 
     // Find a format for surface
     // WARNING: check result
-    std::vector<vk::SurfaceFormatKHR> formats = VkContext::GetInstance().GetPhysicalDevice().getSurfaceFormatsKHR(surface_).value;
-    vk::Format chosenFormat = vk::Format::eUndefined;
-    vk::ColorSpaceKHR chosenColorSpace = vk::ColorSpaceKHR::eSrgbNonlinear;
+    std::vector<vk::SurfaceFormatKHR> formats = VkContext::GetInstance().GetPhysicalDevice()
+        .getSurfaceFormatsKHR(surface_).value;
     for (const auto& format : formats) {
-        if (format.format == vk::Format::eR8G8B8A8Unorm) {
-            chosenFormat = format.format;
-            chosenColorSpace = format.colorSpace;
+        if (format.format == vk::Format::eR8G8B8A8Unorm || format.format == vk::Format::eB8G8R8A8Unorm ||
+            format.format == vk::Format::eA8B8G8R8UnormPack32) {
+            swapchainImageInfo_.format_ = format.format;
+            swapchainColorSpace_ = format.colorSpace;
             break;
         }
     }
-    assert(chosenFormat == vk::Format::eR8G8B8A8Unorm);
+    assert(swapchainImageInfo_.format_ != vk::Format::eUndefined);
 
     // Find a supported composite alpha format (not all devices support alpha opaque)
     vk::CompositeAlphaFlagBitsKHR compositeAlpha = vk::CompositeAlphaFlagBitsKHR::eOpaque;
@@ -102,9 +114,9 @@ void DisplaySurface::SetupSwapchain()
     // TODO: can unique handle set old swapchain?
     swapchainCI.setSurface(surface_)
         .setMinImageCount(imageCount_)
-        .setImageFormat(chosenFormat)
-        .setImageColorSpace(chosenColorSpace)
-        .setImageExtent({ width_, height_ })
+        .setImageFormat(swapchainImageInfo_.format_)
+        .setImageColorSpace(swapchainColorSpace_)
+        .setImageExtent({ swapchainImageInfo_.width_, swapchainImageInfo_.height_ })
         .setImageArrayLayers(1)
         .setImageUsage(vk::ImageUsageFlagBits::eColorAttachment)
         .setImageSharingMode(vk::SharingMode::eExclusive)
@@ -125,15 +137,21 @@ void DisplaySurface::SetupSwapchain()
 
 std::vector<std::shared_ptr<Image>> DisplaySurface::GetImagesFromSwapchain()
 {
-    // WARNING: check return
-    auto vkImages = VkContext::GetInstance().GetDevice().getSwapchainImagesKHR(*swapchain_).value;
+    if (*swapchain_ == VK_NULL_HANDLE) {
+        return {};
+    }
+    auto [ret, vkImages] = VkContext::GetInstance().GetDevice().getSwapchainImagesKHR(*swapchain_);
+    if (ret != vk::Result::eSuccess) {
+        XLOGW("GetSwapchainImages failed, errCode: %d", ret);
+    }
     imageCount_ = vkImages.size();
     // assert(vkImages.size() == imageCount_);
 
     std::vector<std::shared_ptr<Image>> images;
     images.reserve(imageCount_);
     for (auto&& vkImage : vkImages) {
-        images.emplace_back(new Image(vkImage, ImageInfo{ width_, height_ }, { vk::ImageLayout::eUndefined, vk::AccessFlagBits::eNone, vk::PipelineStageFlagBits::eBottomOfPipe }));
+        images.emplace_back(new Image(vkImage, swapchainImageInfo_, {
+            vk::ImageLayout::eUndefined, vk::AccessFlagBits::eNone, vk::PipelineStageFlagBits::eBottomOfPipe }));
         images.back()->CreateView();
     }
     return images;
@@ -141,15 +159,20 @@ std::vector<std::shared_ptr<Image>> DisplaySurface::GetImagesFromSwapchain()
 
 uint32_t DisplaySurface::NextFrame()
 {
+    if (*swapchain_ == VK_NULL_HANDLE) {
+        return currentFrame_;
+    }
     auto ret = VkContext::GetInstance().GetDevice().waitIdle();
     assert(ret != vk::Result::eErrorDeviceLost);
-    auto nextIndex = VkContext::GetInstance().GetDevice().acquireNextImageKHR(*swapchain_, UINT64_MAX, acquireFrameSignalSemaphore_, {});
+    auto nextIndex = VkContext::GetInstance().GetDevice()
+        .acquireNextImageKHR(*swapchain_, UINT64_MAX, acquireFrameSignalSemaphore_, {});
     currentFrame_ = nextIndex.value;
     return currentFrame_;
 }
 
 void DisplaySurface::Present()
 {
+    X::Backend::VkContext::GetInstance().GetDevice().waitIdle();
     auto queue = VkContext::GetInstance().AcquireGraphicsQueue(presentQueueIdx_);
     std::array<vk::Semaphore, 1> waitSemaphores { presentWaitSemaphore_ };
     vk::PresentInfoKHR presentInfo{};
@@ -157,9 +180,21 @@ void DisplaySurface::Present()
         .setSwapchains(*swapchain_)
         .setWaitSemaphores(waitSemaphores);
     auto ret = queue.presentKHR(presentInfo);
-    if (ret != vk::Result::eSuccess) {
+    if (ret == vk::Result::eSuboptimalKHR || ret == vk::Result::eErrorOutOfDateKHR) {
+        XLOGW("Swapchain need changing, retCode: %d", ret);
+        changed_ = true;
+        auto waitRet = X::Backend::VkContext::GetInstance().GetDevice().waitIdle();
+        if (waitRet != vk::Result::eSuccess) {
+            XLOGW("waitIdle failed, errCode: %d", waitRet);
+        }
+        CleanSwapchain();
+        SetupSwapchain();
+        SetupSwapSurfaces();
+        return;
+    } else if (ret != vk::Result::eSuccess) {
         XLOGE("Present failed, errCode: %d", ret);
     }
+    NextFrame();
 }
 
 void DisplaySurface::SetupSwapSurfaces(bool enableDepthStencil)
@@ -168,13 +203,14 @@ void DisplaySurface::SetupSwapSurfaces(bool enableDepthStencil)
     enableDepthStencil_ = enableDepthStencil;
     auto images = GetImagesFromSwapchain();
     if (enableDepthStencil) {
-        depthStencil_ = VkResourceManager::GetInstance().GetImageManager().RequireImage({ width_, height_, vk::Format::eD32SfloatS8Uint, true });
+        depthStencil_ = VkResourceManager::GetInstance().GetImageManager().RequireImage(
+            { swapchainImageInfo_.width_, swapchainImageInfo_.height_, vk::Format::eD32SfloatS8Uint, true });
     } else {
-        depthStencil_ = nullptr;
+        depthStencil_.reset();
     }
     std::vector<std::shared_ptr<Image>> attachmentResources(2);
     attachmentResources[1] = depthStencil_;
-    auto renderPass = RenderPass::MakeDisplay(vk::Format::eR8G8B8A8Unorm, enableDepthStencil_);
+    auto renderPass = RenderPass::MakeDisplay(swapchainImageInfo_.format_, enableDepthStencil_);
     for (const auto& image : images) {
         attachmentResources[0] = image;
         auto swapSurface = Surface::Make(renderPass, attachmentResources);
@@ -182,14 +218,16 @@ void DisplaySurface::SetupSwapSurfaces(bool enableDepthStencil)
         swapSurfaces_.emplace_back(std::move(swapSurface));
     }
     NextFrame();
+    ready_ = true;
 }
 
 void DisplaySurface::UpdateScreenSizeBuffer()
 {
-    if (resized_) {
-        float data[2] = { static_cast<float>(width_), static_cast<float>(height_) };
+    if (changed_) {
+        float data[2] = {
+            static_cast<float>(swapchainImageInfo_.width_), static_cast<float>(swapchainImageInfo_.height_) };
         screenSize_->Update(data, 8, 0);
-        resized_ = false;
+        changed_ = false;
     }
 }
 

@@ -42,12 +42,8 @@ void main()
 {
     Preprocessed data = preprocessed[sorted[gl_InstanceIndex]];
 
-    if (!data.visible) {
+    if (!data.visible || !data.valid) {
         gl_Position = vec4(0.0, 0.0, 2.0, 1.0);
-        return;
-    }
-
-    if (!data.valid) {
         return;
     }
 
@@ -57,4 +53,6 @@ void main()
     gl_Position = vec4(
         data.pos2d.xy / data.pos2d.w + inPos.x * data.majorAxis / viewport + inPos.y * data.minorAxis / viewport,
         0.0f, 1.0f);
+    // FIXME: FLIP Y ON CPU
+    gl_Position.y *= -1.0f;
 }

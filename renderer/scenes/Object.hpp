@@ -17,12 +17,26 @@ public:
     };
     explicit Object(Type type) noexcept : type_(type) {}
     Type GetType() const { return type_; }
-    void SetPosition(glm::vec3 position) { position_ = position; }
-    void SetRotation(glm::quat rotation) { rotation_ = rotation; }
-    void SetScale(glm::vec3 scale) { scale_ = scale; }
+    void SetPosition(glm::vec3 position)
+    {
+        position_ = position;
+        updated_ = false;
+    }
+    void SetRotation(glm::quat rotation)
+    {
+        rotation_ = rotation;
+        updated_ = false;
+    }
+    void SetScale(glm::vec3 scale)
+    {
+        scale_ = scale;
+        updated_ = false;
+    }
     glm::mat4 GetTransform()
     {
-        Update();
+        if (!updated_) {
+            Update();
+        }
         return transform_;
     }
     void Update();
@@ -34,6 +48,7 @@ private:
     glm::quat rotation_ = glm::quat();
     glm::vec3 scale_ = glm::vec3(1.0f);
     glm::mat4 transform_ = glm::mat4(1.0f);
+    bool updated_ = false;
 };
 
 } // namespace X

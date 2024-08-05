@@ -11,7 +11,9 @@
 
 void AndroidWindow::InitBackend()
 {
-    X::Backend::VkContext::GetInstance().Init();
+    if (!X::Backend::VkContext::GetInstance().IsReady()) {
+        X::Backend::VkContext::GetInstance().Init();
+    }
     X::Backend::VkResourceManager::GetInstance();
 }
 
@@ -41,11 +43,24 @@ void AndroidWindow::LoadScene()
     scene_ = std::make_unique<X::Scene>();
     // TODO: use gui callback to load splat file
     auto splat = X::Splat::MakeUnique(GetAssetPath() + "/train_7000.ply");
+//    auto splat = X::Splat::MakeUnique(GetAssetPath() + "/bonsai-7k-mini.ply");
+//    auto splat = X::Splat::MakeUnique(GetAssetPath() + "/demo_fox_gs.ply");
     scene_->AddObject(std::move(splat));
+    // Camera of train
     scene_->GetCamera().SetPerspective(50.154269299972504, surface_->GetWidth() * 1164.6601287484507 / 1159.5880733038064 / surface_->GetHeight(), 0.2f, 200.0f);
     scene_->GetCamera().SetPosition({-3.0089893469241797, -0.11086489695181866, -3.7527640949141428});
-    scene_->GetCamera().SetRotation({ 2.5534724, 28.6107985, -3.4906808 });
-    // scene_->GetCamera().SetRotation({ 3.756929, 28.4939513, -4.5199111 });
+    scene_->GetCamera().SetRotation({ 3.756929, 28.4939513, -4.5199111 });
+
+    // Camera of bonsai
+//    scene_->GetCamera().SetPerspective(80.154269299972504, float(surface_->GetWidth()) / surface_->GetHeight(), 0.2f, 200.0f);
+//    scene_->GetCamera().SetPosition({3.7212285514226, -1.9830705231664232, 0.2941856450880261});
+//    scene_->GetCamera().SetRotation({-14.5064958, -58.9494315, -27.6427182});
+
+    // Camera of fox
+//    scene_->GetCamera().SetPerspective(50.154269299972504, float(surface_->GetWidth()) / surface_->GetHeight(), 0.2f, 200.0f);
+//    scene_->GetCamera().SetPosition({ -1.86899006, 1.84913456, -3.75276423 });
+//    scene_->GetCamera().SetRotation({ 15.7569275, -10.5060425, -4.51991129 });
+
     scene_->InitGPUData();
 }
 
@@ -83,79 +98,51 @@ void AndroidWindow::HandleAppCommand(int32_t cmd)
     case APP_CMD_TERM_WINDOW:
         // Window is hidden or closed, clean up resources
         XLOGD("APP_CMD_TERM_WINDOW");
+        if (surface_->IsReady()) {
+            surface_->CleanSwapchain();
+        }
         break;
     }
 }
 
-void AndroidWindow::HandleAppInputs()
+void AndroidWindow::HandleMotionEvent(GameActivityMotionEvent* motionEvent)
 {
-    android_input_buffer inputBuffer = g_androidAppCtx->inputBuffers[g_androidAppCtx->currentInputBuffer];
-    for (int32_t i = 0; i < inputBuffer.keyEventsCount; i++) {
-        GameActivityKeyEvent* event = inputBuffer.keyEvents + i;
-        int32_t keyCode = event->keyCode;
-        int32_t action = event->action;
-
-        if (action == AKEY_EVENT_ACTION_UP) {
-            return;
-        }
-
-        switch (keyCode) {
-            case AKEYCODE_1:
-            case AKEYCODE_F1:
-            case AKEYCODE_BUTTON_L1:
-                scene_->ChangeOverlayState();
-                break;
-            default:
-                KeyPressed(keyCode);
-                break;
-        };
-
-        XLOGD("Button %d pressed", keyCode);
-    }
-
-    for (int32_t i = 0; i < inputBuffer.motionEventsCount; i++) {
-        GameActivityMotionEvent* event = inputBuffer.motionEvents + i;
-        int32_t eventSource = event->source;
-        switch (eventSource) {
-            case AINPUT_SOURCE_JOYSTICK: {
-                UpdateGamePad(event);
-                break;
-            }
-
-            case AINPUT_SOURCE_TOUCHSCREEN: {
-                int32_t action = event->action;
-
+    if (motionEvent->pointerCount > 0) {
+        int eventSource = motionEvent->source;
+        int action = motionEvent->action;
+        int actionMasked = action & AMOTION_EVENT_ACTION_MASK;
+        int ptrIndex = (action & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
+        if (ptrIndex < motionEvent->pointerCount) {
+            if (eventSource == AINPUT_SOURCE_TOUCHSCREEN) {
                 switch (action) {
                     case AMOTION_EVENT_ACTION_UP: {
-                        lastTapTime_ = event->eventTime;
-                        touchPos_.x_ = event->precisionX;
-                        touchPos_.y_ = event->precisionY;
+                        lastTapTime_ = motionEvent->eventTime;
+                        touchPos_.x_ = GameActivityPointerAxes_getX(&motionEvent->pointers[ptrIndex]);
+                        touchPos_.y_ = GameActivityPointerAxes_getY(&motionEvent->pointers[ptrIndex]);
                         touchTime_ = 0.0;
                         touchDown_ = false;
                         scene_->GetCamera().keys_.up = false;
 
                         // Detect single tap
-                        int64_t eventTime = event->eventTime;
-                        int64_t downTime = event->downTime;
+                        int64_t eventTime = motionEvent->eventTime;
+                        int64_t downTime = motionEvent->downTime;
                         if (eventTime - downTime <= Android::TAP_TIMEOUT) {
                             float deadZone = (160.f / screenDensity_) * Android::TAP_SLOP * Android::TAP_SLOP;
-                            float x = event->precisionX - touchPos_.x_;
-                            float y = event->precisionY - touchPos_.y_;
+                            float x = motionEvent->precisionX - touchPos_.x_;
+                            float y = motionEvent->precisionY - touchPos_.y_;
                             // if ((x * x + y * y) < deadZone) {
                             //     mouseState.buttons.left = true;
                             // }
                         };
-
-                        return;
                         break;
                     }
                     case AMOTION_EVENT_ACTION_DOWN: {
                         // Detect double tap
-                        int64_t eventTime = event->eventTime;
+                        int64_t eventTime = motionEvent->eventTime;
                         if (eventTime - lastTapTime_ <= Android::DOUBLE_TAP_TIMEOUT) {
                             float deadZone = (160.f / screenDensity_) * Android::DOUBLE_TAP_SLOP * Android::DOUBLE_TAP_SLOP;
-                            float x = event->precisionX - touchPos_.x_;
-                            float y = event->precisionY - touchPos_.y_;
+                            float x = GameActivityPointerAxes_getX(&motionEvent->pointers[ptrIndex]) - touchPos_.x_;
+                            float y = GameActivityPointerAxes_getY(&motionEvent->pointers[ptrIndex]) - touchPos_.y_;
                             if ((x * x + y * y) < deadZone) {
                                 KeyPressed(TOUCH_DOUBLE_TAP);
                                 touchDown_ = false;
@@ -163,19 +150,17 @@ void AndroidWindow::HandleAppInputs()
                         } else {
                             touchDown_ = true;
                         }
-                        touchPos_.x_ = event->precisionX;
-                        touchPos_.y_ = event->precisionY;
-                        // mouseState.position.x = AMotionEvent_getX(event, 0);
-                        // mouseState.position.y = AMotionEvent_getY(event, 0);
+                        touchPos_.x_ = motionEvent->precisionX;
+                        touchPos_.y_ = motionEvent->precisionY;
                         break;
                     }
                     case AMOTION_EVENT_ACTION_MOVE: {
                         bool handled = false;
-                        ImGuiIO& io = ImGui::GetIO();
-                        handled = io.WantCaptureMouse && scene_->OverlayVisible();
+//                    ImGuiIO& io = ImGui::GetIO();
+//                    handled = io.WantCaptureMouse && scene_->OverlayVisible();
                         if (!handled) {
-                            int32_t eventX = event->precisionX;
-                            int32_t eventY = event->precisionY;
+                            int32_t eventX = GameActivityPointerAxes_getX(&motionEvent->pointers[ptrIndex]);
+                            int32_t eventY = GameActivityPointerAxes_getY(&motionEvent->pointers[ptrIndex]);
 
                             float deltaX = (float)(touchPos_.y_ - eventY) * scene_->GetCamera().rotationSpeed_ * 0.5f;
                             float deltaY = (float)(touchPos_.x_ - eventX) * scene_->GetCamera().rotationSpeed_ * 0.5f;
@@ -189,25 +174,27 @@ void AndroidWindow::HandleAppInputs()
                         break;
                     }
                     default:
-                        return;
                         break;
                 }
             }
-
-            return;
         }
     }
-    return;
 }
 
-void AndroidWindow::UpdateGamePad(GameActivityMotionEvent* event)
+void AndroidWindow::HandleAppInputs()
 {
-    // Left thumbstick
-    gamePadState_.axisLeft_.x = GameActivityMotionEvent_getHistoricalAxisValue(event, AMOTION_EVENT_AXIS_X, 0, 0);
-    gamePadState_.axisLeft_.y = GameActivityMotionEvent_getHistoricalAxisValue(event, AMOTION_EVENT_AXIS_Y, 0, 0);
-    // Right thumbstick
-    gamePadState_.axisRight_.x = GameActivityMotionEvent_getHistoricalAxisValue(event, AMOTION_EVENT_AXIS_Z, 0, 0);
-    gamePadState_.axisRight_.y = GameActivityMotionEvent_getHistoricalAxisValue(event, AMOTION_EVENT_AXIS_RZ, 0, 0);
+    android_input_buffer* inputBuffer = android_app_swap_input_buffers(g_androidAppCtx);
+    // TODO: add key event
+//    for (int32_t i = 0; i < inputBuffer.keyEventsCount; i++) {
+//        XLOGD("Button %d pressed", keyCode);
+//    }
+    if (inputBuffer) {
+        for (int32_t i = 0; i < inputBuffer->motionEventsCount; i++) {
+            GameActivityMotionEvent* motionEvent = &inputBuffer->motionEvents[i];
+            HandleMotionEvent(motionEvent);
+        }
+        android_app_clear_motion_events(inputBuffer);
+    }
 }
 
 void AndroidWindow::RenderLoop()
@@ -236,18 +223,23 @@ void AndroidWindow::RenderLoop()
             GameActivity_finish(g_androidAppCtx->activity);
             break;
         }
-
-        // this->HandleAppInputs();
-
+        this->HandleAppInputs();
         // Render frame
-        if (renderer_ && renderer_->IsReady() && scene_ && surface_) {
+        if (renderer_ && renderer_->IsReady() && scene_ && surface_ && surface_->IsReady()) {
             auto current = std::chrono::high_resolution_clock::now();
             auto frameTime = std::chrono::duration<double, std::milli>(current - frameStart_).count() / 1000.0f;
             frameStart_ = current;
 
-            scene_->GetCamera().Update(frameTime);
             renderer_->UpdateScene(scene_.get());
+            auto updatedTimeStamp = std::chrono::high_resolution_clock::now();
+            XLOGI("Update time: %f ms", std::chrono::duration<double, std::milli>((updatedTimeStamp - frameStart_).count()) / 1e6);
+
             renderer_->DrawFrame();
+            auto drawnTimeStamp = std::chrono::high_resolution_clock::now();
+            XLOGI("Draw time: %f ms", std::chrono::duration<double, std::milli>((drawnTimeStamp - updatedTimeStamp).count()) / 1e6);
+
+            // reset camera update state to false, if moving, update it
+            scene_->GetCamera().Update(frameTime);
 
             // Check touch state (for movement)
             if (touchDown_) {

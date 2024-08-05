@@ -18,9 +18,9 @@ std::shared_ptr<RenderPass> RenderPass::MakeDisplay(vk::Format targetFormat, boo
 
 RenderPass::RenderPass(vk::Format targetFormat, bool depthStencil, bool load) noexcept
 {
-    this->AddAttachment(targetFormat, false, true);
+    this->AddAttachment(targetFormat, false, true, load);
     if (depthStencil) {
-        this->AddAttachment(vk::Format::eD32SfloatS8Uint, true, false);
+        this->AddAttachment(vk::Format::eD32SfloatS8Uint, true, false, load);
     }
     this->Init();
 }
@@ -51,48 +51,40 @@ void RenderPass::AddAttachment(vk::Format format, bool depthStencil, bool presen
     }
 }
 
-void RenderPass::Init()
+vk::RenderPassCreateInfo RenderPass::SetupCreateInfo()
 {
-    if (inited) {
-        XLOGI("RenderPass already inited!");
-        return;
-    }
-    if (attachments_.empty()) {
-        XLOGE("renderpass has no attachment, please add before init!");
-        return;
-    }
-
-    std::vector<vk::AttachmentReference> colorRefs(depthStencil_ == UINT32_MAX ? attachments_.size() : attachments_.size() - 1);
+    subpassInfo_.colorRefs_.resize(depthStencil_ == UINT32_MAX ? attachments_.size() : attachments_.size() - 1);
     uint32_t i = 0;
-    for (auto& colorRef : colorRefs) {
+    for (auto& colorRef : subpassInfo_.colorRefs_) {
         if (i == depthStencil_) {
             i++;
         }
         colorRef.setAttachment(i++).setLayout(vk::ImageLayout::eColorAttachmentOptimal);
     }
 
-    vk::AttachmentReference depthRef {};
     if (depthStencil_ != UINT32_MAX) {
-        depthRef.setAttachment(depthStencil_).setLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal);
+        subpassInfo_.depthRef_.setAttachment(depthStencil_).setLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal);
     }
 
-    vk::SubpassDescription subpassDesc{};
-    subpassDesc.setPipelineBindPoint(vk::PipelineBindPoint::eGraphics)
-        .setColorAttachments(colorRefs);
+    subpassInfo_.subpassDesc_.setPipelineBindPoint(vk::PipelineBindPoint::eGraphics)
+        .setColorAttachments(subpassInfo_.colorRefs_);
     if (depthStencil_ != UINT32_MAX) {
-        subpassDesc.setPDepthStencilAttachment(&depthRef);
+        subpassInfo_.subpassDesc_.setPDepthStencilAttachment(&subpassInfo_.depthRef_);
     }
 
     // Subpass dependencies for layout transitions
-    std::array<vk::SubpassDependency, 2> dependencies;
-    dependencies[0].setSrcSubpass(vk::SubpassExternal)
+    subpassInfo_.dependencies_.resize(2);
+    subpassInfo_.dependencies_[0].setSrcSubpass(vk::SubpassExternal)
         .setDstSubpass(0)
-        .setSrcStageMask(vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests)
-        .setDstStageMask(vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests)
+        .setSrcStageMask(vk::PipelineStageFlagBits::eEarlyFragmentTests |
+            vk::PipelineStageFlagBits::eLateFragmentTests)
+        .setDstStageMask(vk::PipelineStageFlagBits::eEarlyFragmentTests |
+            vk::PipelineStageFlagBits::eLateFragmentTests)
         .setSrcAccessMask(vk::AccessFlagBits::eDepthStencilAttachmentWrite)
-        .setDstAccessMask(vk::AccessFlagBits::eDepthStencilAttachmentWrite | vk::AccessFlagBits::eDepthStencilAttachmentRead);
+        .setDstAccessMask(vk::AccessFlagBits::eDepthStencilAttachmentWrite |
+            vk::AccessFlagBits::eDepthStencilAttachmentRead);
 
-    dependencies[1].setSrcSubpass(vk::SubpassExternal)
+    subpassInfo_.dependencies_[1].setSrcSubpass(vk::SubpassExternal)
         .setDstSubpass(0)
         .setSrcStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput)
         .setDstStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput)
@@ -101,9 +93,24 @@ void RenderPass::Init()
 
     vk::RenderPassCreateInfo renderPassCI{};
     renderPassCI.setAttachments(attachments_)
-        .setSubpasses(subpassDesc)
-        .setDependencies(dependencies);
+        .setSubpasses(subpassInfo_.subpassDesc_)
+        .setDependencies(subpassInfo_.dependencies_);
+    return renderPassCI;
+}
 
+void RenderPass::Init()
+{
+    if (inited) {
+        XLOGV("RenderPass already inited!");
+        return;
+    }
+
+    if (attachments_.empty()) {
+        XLOGE("renderpass has no attachment, please add before init!");
+        return;
+    }
+
+    auto renderPassCI = SetupCreateInfo();
     auto [ret, renderPassUnique] = VkContext::GetInstance().GetDevice().createRenderPassUnique(renderPassCI);
     if (ret != vk::Result::eSuccess) {
         XLOGE("CreateRenderPass failed, errCode: %d", ret);

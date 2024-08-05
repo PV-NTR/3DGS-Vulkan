@@ -11,13 +11,13 @@ namespace X::Backend {
 
 class DisplaySurface {
 public:
-
 #ifdef HOST_ANDROID
     [[nodiscard]] static std::unique_ptr<DisplaySurface> Make(ANativeWindow* window);
 #elif defined HOST_WIN32
     [[nodiscard]] static std::unique_ptr<DisplaySurface> Make(void* instance, void* window);
 #endif
     vk::SurfaceKHR GetHandle() const { return surface_; }
+    void CleanSwapchain();
     void SetupSwapchain();
     void SetupSwapSurfaces(bool enableDepthStencil = false);
     void UpdateScreenSizeBuffer();
@@ -32,11 +32,15 @@ public:
     std::shared_ptr<Surface> GetCurrentSwapSurface() const { return swapSurfaces_[currentFrame_]; }
     // TODO: delete this!
     std::vector<std::shared_ptr<Surface>>& GetSwapSurfaces() { return swapSurfaces_; }
-    std::shared_ptr<Image> GetCurrentDisplayImage() const { return swapSurfaces_[currentFrame_]->attachmentResources_[0]; }
+    std::shared_ptr<Image> GetCurrentDisplayImage() const
+    {
+        return swapSurfaces_[currentFrame_]->attachmentResources_[0];
+    }
     std::shared_ptr<Buffer> GetScreenSizeBuffer() const { return screenSize_; }
-    bool Resized() const { return resized_; }
-    uint32_t GetWidth() const { return width_; }
-    uint32_t GetHeight() const { return height_; }
+    bool IsReady() const { return ready_; }
+    bool Changed() const { return changed_; }
+    uint32_t GetWidth() const { return swapchainImageInfo_.width_; }
+    uint32_t GetHeight() const { return swapchainImageInfo_.height_; }
 
 protected:
 #ifdef HOST_ANDROID
@@ -52,12 +56,14 @@ private:
 private:
     vk::UniqueSurfaceKHR surfaceUnique_;
     vk::SurfaceKHR surface_;
-    uint32_t width_ = UINT32_MAX;
-    uint32_t height_ = UINT32_MAX;
-    bool resized_ = false;
+    bool ready_ = false;
+    bool changed_ = false;
 
     // TODO: Disable swapchain when use Android, use SurfaceView instead
     Swapchain swapchain_;
+    ImageInfo swapchainImageInfo_ = { UINT32_MAX, UINT32_MAX, vk::Format::eUndefined };
+    // TODO: move colorspace into ImageInfo
+    vk::ColorSpaceKHR swapchainColorSpace_ = vk::ColorSpaceKHR::eSrgbNonlinear;
     std::vector<std::shared_ptr<Surface>> swapSurfaces_;
     std::shared_ptr<Image> depthStencil_;
     vk::Semaphore acquireFrameSignalSemaphore_;
@@ -69,5 +75,5 @@ private:
     uint32_t imageCount_ = 4;
     bool enableDepthStencil_ = false;
 };
-    
+
 } // namespace X::Backend

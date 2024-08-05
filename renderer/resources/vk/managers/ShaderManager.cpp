@@ -42,12 +42,13 @@ std::string ShaderManager::ReadShader(std::string fileName)
     size_t size = AAsset_getLength(asset);
     assert(size > 0);
 
-    // memory leak?
-    char* shaderCode = new char[size];
+    char* shaderCode = new char[size + 1];
     AAsset_read(asset, shaderCode, size);
     AAsset_close(asset);
-
-    return shaderCode;
+    shaderCode[size] = '\0';
+    std::stringstream ss(shaderCode);
+    delete[] shaderCode;
+    return ss.str();
 #endif
 }
 
@@ -83,7 +84,8 @@ void ShaderManager::Recycle(ShaderModule* shaderModulePtr)
         freeResources_.erase(frontFreeResource);
     }
     resourceQueue_.push(shaderModulePtr->GetName());
-    freeResources_[shaderModulePtr->GetName()] = std::unique_ptr<ShaderModule>(new ShaderModule(std::move(*shaderModulePtr)));
+    freeResources_[shaderModulePtr->GetName()] =
+        std::unique_ptr<ShaderModule>(new ShaderModule(std::move(*shaderModulePtr)));
 }
 
 } // namespace X::Backend

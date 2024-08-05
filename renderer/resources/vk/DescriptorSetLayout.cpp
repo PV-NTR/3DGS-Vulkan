@@ -22,7 +22,8 @@ void DescriptorSetLayout::Update()
     }
     vk::DescriptorSetLayoutCreateInfo layoutCI{};
     vk::DescriptorSetLayoutBindingFlagsCreateInfo bindingFlagsCI{};
-    std::vector<vk::DescriptorBindingFlags> bindingFlags(bindings.size(), vk::DescriptorBindingFlagBits::eUpdateAfterBind);
+    std::vector<vk::DescriptorBindingFlags> bindingFlags(bindings.size(),
+        vk::DescriptorBindingFlagBits::eUpdateAfterBind);
     bindingFlagsCI.setBindingFlags(bindingFlags);
     layoutCI.setFlags(vk::DescriptorSetLayoutCreateFlagBits::eUpdateAfterBindPool).setBindings(bindings)
         .setPNext(&bindingFlagsCI);
@@ -40,9 +41,8 @@ void DescriptorSetLayout::AddDescriptorBinding(vk::DescriptorType type, vk::Shad
     bindingInfos_.emplace_back(BindingTypes{ type, stage }, num);
 }
 
-DescriptorSetLayout::~DescriptorSetLayout() noexcept
+DescriptorSetLayout::~DescriptorSetLayout()
 {
-
 }
 
 } // namespace X::Backend

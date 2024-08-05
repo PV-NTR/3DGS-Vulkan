@@ -21,7 +21,6 @@ void android_main(android_app* app) {
     app->onAppCmd = HandleAppCommand;
     g_androidAppCtx = app;
 
-    // window->Init(g_androidAppCtx);
     window->RenderLoop();
 
     delete window;

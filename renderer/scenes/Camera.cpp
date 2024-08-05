@@ -23,6 +23,10 @@ void Camera::SetPerspective(float fovY, float aspect, float zNear, float zFar)
     this->zNear_ = zNear;
     this->zFar_ = zFar;
     matrices_.perspective = glm::perspective(glm::radians(fovY), aspect, zNear, zFar);
+    matrices_.perspective[1][1] *= -1.0f;
+    if (flipY_) {
+        matrices_.perspective[2] *= -1.0f;
+    }
     if (matrices_.view != currentMatrix) {
         updated_ = true;
     }
@@ -62,7 +66,11 @@ void Camera::UpdateAspectRatio(float aspect)
 {
     this->aspect_ = aspect;
     glm::mat4 currentMatrix = matrices_.perspective;
-    matrices_.perspective = glm::perspective(fovY_, aspect, zNear_, zFar_);
+    matrices_.perspective = glm::perspective(glm::radians(fovY_), aspect, zNear_, zFar_);
+    matrices_.perspective[1][1] *= -1.0f;
+    if (flipY_) {
+        matrices_.perspective[2] *= -1.0f;
+    }
     if (matrices_.view != currentMatrix) {
         updated_ = true;
     }
@@ -101,7 +109,7 @@ void Camera::Update(float deltaTime)
 
 bool Camera::UpdateCameraFirstPerson(glm::vec2 axisLeft, glm::vec2 axisRight, float deltaTime, float deadZone)
 {
-    // Use the common console thumbstick layout		
+    // Use the common console thumbstick layout
     // Left = view, right = move
     bool ret = false;
     const float range = 1.0f - deadZone;
@@ -177,16 +185,20 @@ void Camera::UpdateViewMatrix()
     glm::mat4 transM;
 
     rotM = glm::rotate(rotM, glm::radians(rotation_.x), glm::vec3(1.0f, 0.0f, 0.0f));
+    // rotM = glm::rotate(rotM, glm::radians(flipY_ ? -rotation_.x : rotation_.x), glm::vec3(1.0f, 0.0f, 0.0f));
     rotM = glm::rotate(rotM, glm::radians(rotation_.y), glm::vec3(0.0f, 1.0f, 0.0f));
     rotM = glm::rotate(rotM, glm::radians(rotation_.z), glm::vec3(0.0f, 0.0f, 1.0f));
 
     glm::vec3 translation = position_;
+    // if (flipY_) {
+    //     translation.y *= -1.0f;
+    // }
     transM = glm::translate(glm::mat4(1.0f), translation);
 
     if (type_ == CameraType::FirstPerson) {
-        matrices_.view = rotM * transM;
+        matrices_.view = glm::inverse(rotM * transM);
     } else {
-        matrices_.view = transM * rotM;
+        matrices_.view = glm::inverse(transM * rotM);
     }
 
     if (matrices_.view != currentMatrix) {

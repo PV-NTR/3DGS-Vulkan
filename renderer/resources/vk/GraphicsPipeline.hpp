@@ -21,7 +21,7 @@ private:
     friend class PipelineTable;
 
 public:
-    virtual ~GraphicsPipeline() = default;
+    ~GraphicsPipeline() override = default;
 
 protected:
     GraphicsPipeline(const GraphicsPipelineInfo& info, vk::PipelineCache cache) noexcept;
@@ -40,7 +40,8 @@ protected:
         vk::PipelineViewportStateCreateInfo viewportState;
         vk::PipelineDynamicStateCreateInfo dynamicState;
         std::array<vk::PipelineShaderStageCreateInfo, 2> shaderStages;
-        std::array<vk::DynamicState, 2> dynamicStateEnables = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
+        std::array<vk::DynamicState, 2> dynamicStateEnables = { vk::DynamicState::eViewport,
+            vk::DynamicState::eScissor };
     } defaultState_;
 
 private:

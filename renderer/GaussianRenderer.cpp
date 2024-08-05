@@ -1,5 +1,6 @@
 #include "GaussianRenderer.hpp"
 
+#include "resources/vk/VkResource.hpp"
 #include "resources/vk/VkContext.hpp"
 #include "resources/vk/VkResourceManager.hpp"
 
@@ -16,9 +17,11 @@ const std::vector<uint16_t> GaussianRenderer::iboData_ = {
 GaussianRenderer::GaussianRenderer()
     : Renderer(true)
 {
-    vbo_ = Backend::VkResourceManager::GetInstance().GetBufferManager().RequireBuffer({ vboData_.size() * sizeof(float), BufferType::Vertex });
+    vbo_ = Backend::VkResourceManager::GetInstance().GetBufferManager()
+        .RequireBuffer({ vboData_.size() * sizeof(float), BufferType::Vertex });
     vbo_->Update(vboData_.data(), vboData_.size() * sizeof(float), 0);
-    ibo_ = Backend::VkResourceManager::GetInstance().GetBufferManager().RequireBuffer({ iboData_.size() * sizeof(uint16_t), BufferType::Index });
+    ibo_ = Backend::VkResourceManager::GetInstance().GetBufferManager()
+        .RequireBuffer({ iboData_.size() * sizeof(uint16_t), BufferType::Index });
     ibo_->Update(iboData_.data(), iboData_.size() * sizeof(uint16_t), 0);
     SetDescriptorSetLayouts();
     SetBlendState();
@@ -29,19 +32,23 @@ void GaussianRenderer::SetDescriptorSetLayouts()
 {
     descriptorSetLayouts_.emplace_back(Backend::DescriptorSetLayout::Make());
     descriptorSetLayouts_.emplace_back(Backend::DescriptorSetLayout::Make());
-    descriptorSetLayouts_[0]->AddDescriptorBinding(vk::DescriptorType::eStorageBuffer, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eCompute, 1);
-    descriptorSetLayouts_[0]->AddDescriptorBinding(vk::DescriptorType::eUniformBuffer, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eCompute, 4);
+    descriptorSetLayouts_[0]->AddDescriptorBinding(
+        vk::DescriptorType::eStorageBuffer, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eCompute, 1);
+    descriptorSetLayouts_[0]->AddDescriptorBinding(
+        vk::DescriptorType::eUniformBuffer, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eCompute, 4);
     descriptorSetLayouts_[0]->Update();
-    descriptorSetLayouts_[1]->AddDescriptorBinding(vk::DescriptorType::eStorageBuffer, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eCompute, 1);
-    descriptorSetLayouts_[1]->AddDescriptorBinding(vk::DescriptorType::eStorageBuffer, vk::ShaderStageFlagBits::eVertex, 1);
+    descriptorSetLayouts_[1]->AddDescriptorBinding(
+        vk::DescriptorType::eStorageBuffer, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eCompute, 1);
+    descriptorSetLayouts_[1]->AddDescriptorBinding(
+        vk::DescriptorType::eStorageBuffer, vk::ShaderStageFlagBits::eVertex, 1);
     descriptorSetLayouts_[1]->Update();
 }
 
 void GaussianRenderer::SetBlendState()
 {
     Backend::BlendState blend;
-    blend.colorOp_ = 0;	// func_add
-    blend.alphaOp_ = 0;	// func_add
+    blend.colorOp_ = 0; // func_add
+    blend.alphaOp_ = 0; // func_add
     blend.srcColor_ = static_cast<uint32_t>(vk::BlendFactor::eOneMinusDstAlpha);
     blend.dstColor_ = static_cast<uint32_t>(vk::BlendFactor::eOne);
     blend.srcAlpha_ = static_cast<uint32_t>(vk::BlendFactor::eOneMinusDstAlpha);
@@ -51,11 +58,11 @@ void GaussianRenderer::SetBlendState()
 
 void GaussianRenderer::CreateGraphicsPipeline(std::shared_ptr<Backend::RenderPass> renderPass)
 {
-    std::shared_ptr<Backend::ShaderModule> vs =
-        Backend::VkResourceManager::GetInstance().GetShaderManager().AddShaderModule(GetShaderPath() + "/gsplat_precomputed.vert", ShaderType::Vertex);
-    std::shared_ptr<Backend::ShaderModule> fs =
-        Backend::VkResourceManager::GetInstance().GetShaderManager().AddShaderModule(GetShaderPath() + "/gsplat.frag", ShaderType::Fragment);
-    Backend::GraphicsPipelineInfo info = {
+    std::shared_ptr<Backend::ShaderModule> vs = Backend::VkResourceManager::GetInstance().GetShaderManager()
+        .AddShaderModule(GetShaderPath() + "/gsplat_precomputed.vert", ShaderType::Vertex);
+    std::shared_ptr<Backend::ShaderModule> fs = Backend::VkResourceManager::GetInstance().GetShaderManager()
+        .AddShaderModule(GetShaderPath() + "/gsplat.frag", ShaderType::Fragment);
+    graphicsPipelineInfo_ = {
         "GaussianSplatting",
         renderPass,
         descriptorSetLayouts_,
@@ -63,21 +70,24 @@ void GaussianRenderer::CreateGraphicsPipeline(std::shared_ptr<Backend::RenderPas
         vs,
         fs
     };
-    pipeline_ = Backend::VkResourceManager::GetInstance().GetPipelineTable().RequireGraphicsPipeline(info);
+    pipeline_ = Backend::VkResourceManager::GetInstance().GetPipelineTable()
+        .RequireGraphicsPipeline(graphicsPipelineInfo_);
 }
 
 void GaussianRenderer::CreateComputePipeline()
 {
-    std::shared_ptr<Backend::ShaderModule> cs =
-        Backend::VkResourceManager::GetInstance().GetShaderManager().AddShaderModule(GetShaderPath() + "/precompute.comp", ShaderType::Compute);
-    Backend::ComputePipelineInfo info = {
+    std::shared_ptr<Backend::ShaderModule> cs = Backend::VkResourceManager::GetInstance().GetShaderManager()
+        .AddShaderModule(GetShaderPath() + "/precompute.comp", ShaderType::Compute);
+    computePipelineInfo_ = {
         "GaussianSplatting-preprocess",
         descriptorSetLayouts_,
         cs
     };
-    preprocessPipeline_ = Backend::VkResourceManager::GetInstance().GetPipelineTable().RequireComputePipeline(info);
+    preprocessPipeline_ = Backend::VkResourceManager::GetInstance().GetPipelineTable()
+        .RequireComputePipeline(computePipelineInfo_);
 
-    // cs = Backend::VkResourceManager::GetInstance().GetShaderManager().AddShaderModule(GetShaderPath() + "/sort.comp", ShaderType::Compute);
+    // cs = Backend::VkResourceManager::GetInstance().GetShaderManager()
+    //     .AddShaderModule(GetShaderPath() + "/pesudo_counting_sort.comp", ShaderType::Compute);
     // info = {
     //     "GaussianSplatting-sort",
     //     descriptorSetLayouts_,
@@ -101,7 +111,9 @@ void GaussianRenderer::InitAuxiliaryBuffers(Scene* scene)
 
 void GaussianRenderer::RecordComputeCommands(Scene* scene)
 {
-    for (auto cmdBuffer : computeCmdBuffers_) {
+    for (auto& commandBuffer : computeCmdBuffers_) {
+        auto& cmdBuffer = commandBuffer->get();
+        cmdBuffer.reset();
         vk::CommandBufferBeginInfo cmdBufferBeginInfo{};
         cmdBuffer.begin(cmdBufferBeginInfo);
 
@@ -112,7 +124,7 @@ void GaussianRenderer::RecordComputeCommands(Scene* scene)
         preprocessPipeline_->BindUniformBuffers({ scene->uboModels_ }, 0, 2);
         preprocessPipeline_->BindUniformBuffers({ scene->uboCamera_ }, 0, 3);
         preprocessPipeline_->BindUniformBuffers({ surface_->GetScreenSizeBuffer() }, 0, 4);
-        preprocessPipeline_->BindDescriptorSets(cmdBuffer);
+        preprocessPipeline_->BindDescriptorSets(commandBuffer);
         if (scene->totalPointCount_ != 0) {
             cmdBuffer.dispatch((scene->totalPointCount_ + 63) / 64, 1, 1);
         }
@@ -120,14 +132,15 @@ void GaussianRenderer::RecordComputeCommands(Scene* scene)
         // sortPipeline_->BindStorageBuffers({ scene->ssboSortedSplats_ }, 1, 1);
         // sortPipeline_->BindUniformBuffers({ scene->uboPrefixSums_ }, 0, 1);
         // sortPipeline_->BindDescriptorSets(cmdBuffer);
-        // cmdBuffer.dispatch(1, 1, 1);
+        // cmdBuffer.dispatch((scene->totalPointCount_ + 255) / 256, 1, 1);
         cmdBuffer.end();
     }
 }
 
-void GaussianRenderer::OnRecordGraphicsCommands(Scene* scene, vk::CommandBuffer cmdBuffer)
+void GaussianRenderer::OnRecordGraphicsCommands(Scene* scene, std::shared_ptr<Backend::CommandBuffer> commandBuffer)
 {
     vk::DeviceSize offset = 0;
+    auto cmdBuffer = commandBuffer->get();
     cmdBuffer.bindVertexBuffers(0, vbo_->GetHandle(), offset);
     cmdBuffer.bindIndexBuffer(ibo_->GetHandle(), 0, vk::IndexType::eUint16);
     // TODO: prepare buffer from scene
@@ -138,22 +151,24 @@ void GaussianRenderer::OnRecordGraphicsCommands(Scene* scene, vk::CommandBuffer 
     pipeline_->BindUniformBuffers({ scene->uboModels_ }, 0, 2);
     pipeline_->BindUniformBuffers({ scene->uboCamera_ }, 0, 3);
     pipeline_->BindUniformBuffers({ surface_->GetScreenSizeBuffer() }, 0, 4);
-    cmdBuffer.setViewport(0, { { 0.0f, 0.0f, static_cast<float>(surface_->GetWidth()), static_cast<float>(surface_->GetHeight()), 0.0f, 1.0f } });
+    cmdBuffer.setViewport(0, { { 0.0f, 0.0f, static_cast<float>(surface_->GetWidth()),
+        static_cast<float>(surface_->GetHeight()), 0.0f, 1.0f } });
     cmdBuffer.setScissor(0, { { { 0, 0 }, { surface_->GetWidth(), surface_->GetHeight() } } });
-    pipeline_->BindDescriptorSets(cmdBuffer);
+    pipeline_->BindDescriptorSets(commandBuffer);
     cmdBuffer.drawIndexed(6, scene->totalPointCount_, 0, 0, 0);
-    // cmdBuffer.drawIndexed(6, 1280, 0, 0, 0);
+    // cmdBuffer.drawIndexed(6, 32768, 0, 0, 32768);
     // cmdBuffer.drawIndexed(6, 1, 0, 0, 0);
 }
 
 void GaussianRenderer::SubmitGraphicsCommands()
 {
-    auto cmdBuffer = GetCurrentPresentCmdBuffer();
+    auto cmdBuffer = GetCurrentPresentCmdBuffer()->get();
     auto queue = Backend::VkContext::GetInstance().AcquireGraphicsQueue(surface_->GetPresentQueueIdx());
     std::array<vk::Semaphore, 2> waitSemaphores{ preprocessComplete_, surface_->GetAcquireFrameSignalSemaphore() };
     std::array<vk::Semaphore, 2> signalSemaphores { surface_->GetPresentWaitSemaphore(), preprocessComplete_ };
     vk::SubmitInfo submitInfo{};
-    std::array<vk::PipelineStageFlags, 2> waitStageMask{ vk::PipelineStageFlagBits::eVertexShader, vk::PipelineStageFlagBits::eColorAttachmentOutput };
+    std::array<vk::PipelineStageFlags, 2> waitStageMask{ vk::PipelineStageFlagBits::eVertexShader,
+        vk::PipelineStageFlagBits::eColorAttachmentOutput };
     submitInfo.setCommandBuffers(cmdBuffer)
         .setWaitSemaphores(waitSemaphores)
         .setWaitDstStageMask(waitStageMask)
@@ -168,14 +183,14 @@ void GaussianRenderer::SubmitGraphicsCommands()
 
 void GaussianRenderer::SubmitComputeCommands()
 {
-    auto cmdBuffer = GetCurrentComputeCmdBuffer();
+    auto cmdBuffer = GetCurrentComputeCmdBuffer()->get();
 
     auto queue = Backend::VkContext::GetInstance().AcquireCurrentComputeQueue().second;
     vk::SubmitInfo submitInfo{};
     std::vector<vk::PipelineStageFlags> waitStageMask{ vk::PipelineStageFlagBits::eComputeShader };
     submitInfo.setCommandBuffers(cmdBuffer)
         .setWaitSemaphoreCount(1)
-        .setPWaitSemaphores(&preprocessComplete_)	// wait semaphore of last frame, right?
+        .setPWaitSemaphores(&preprocessComplete_)   // wait semaphore of last frame, right?
         .setWaitDstStageMask(waitStageMask)
         .setSignalSemaphoreCount(1)
         .setPSignalSemaphores(&preprocessComplete_);

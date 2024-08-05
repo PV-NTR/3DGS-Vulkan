@@ -35,10 +35,15 @@ public:
 private:
     friend class Renderer;
     friend class GaussianRenderer;
+
     Scene(const Scene& other) = delete;
+    Scene& operator=(const Scene& other) = delete;
+    Scene& operator=(Scene&& other) = delete;
+
     void UpdateCameraData(Backend::DisplaySurface* surface);
     void SortSplatsByDepth();
-    float GetDepth(uint32_t index);
+    void RadixSortSplatsByDepth();
+    float GetDepth(uint32_t index, const glm::vec4& viewProjZ);
 
 private:
     std::vector<std::unique_ptr<Object>> objects_;

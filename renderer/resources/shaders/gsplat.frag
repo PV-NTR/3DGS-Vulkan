@@ -11,6 +11,6 @@ void main()
     float A = -dot(inPos, inPos);
     if (A < -4.0f) discard;
     // is lower bound necessary?
-    float B = clamp(exp(A) * inColor.a, 0.0f, 1.0f);
+    float B = exp(A) * inColor.a;
     outColor = vec4(B * inColor.rgb, B);
 }

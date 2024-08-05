@@ -15,7 +15,6 @@ public:
     bool Init(android_app* app);
     void RenderLoop();
     void HandleAppCommand(int32_t cmd);
-    void HandleAppInputs();
 
 protected:
     void GetDeviceConfig();
@@ -24,7 +23,8 @@ protected:
     void InitSurface(ANativeWindow* window);
     void LoadScene();
 
-    void UpdateGamePad(GameActivityMotionEvent* event);
+    void HandleAppInputs();
+    void HandleMotionEvent(GameActivityMotionEvent* motionEvent);
     void KeyPressed(uint32_t) {};       // realize this function for other interactions
 
 private:

@@ -10,7 +10,7 @@
 
 namespace X::Backend {
 
-class VkContext : public Singleton<VkContext>{
+class VkContext : public Singleton<VkContext> {
 public:
     VkContext() = default;
     void Init();

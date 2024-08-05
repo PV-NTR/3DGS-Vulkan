@@ -22,3 +22,14 @@ inline const std::string GetAssetPath()
     return "";
 #endif
 }
+
+inline const std::string GetShaderPath()
+{
+#ifdef HOST_ANDROID
+    return "shaders";
+#elif defined SHADER_DIR
+    return SHADER_DIR;
+#else
+    return "";
+#endif
+}

@@ -12,8 +12,6 @@
 
 namespace X::Backend {
 
-std::string PipelineTable::CACHE_FILE = "";
-
 PipelineTable::PipelineTable()
 {
 #ifdef HOST_ANDROID
@@ -22,7 +20,7 @@ PipelineTable::PipelineTable()
     char buf[MAX_PATH] = { '\0' };
     auto ret = GetEnvironmentVariable("HOME", buf, MAX_PATH);
     if (!ret) {
-        CACHE_FILE = std::string(buf) + "/.3dgs/pipeline.cache";
+        cacheFile_ = std::string(buf) + "/.3dgs/pipeline.cache";
     }
 #endif
     CreatePipelineCache();
@@ -63,7 +61,7 @@ std::shared_ptr<ComputePipeline> PipelineTable::RequireComputePipeline(const Com
 
 void PipelineTable::CreatePipelineCache()
 {
-    std::ifstream is(CACHE_FILE, std::ios::binary | std::ios::in | std::ios::ate);
+    std::ifstream is(cacheFile_, std::ios::binary | std::ios::in | std::ios::ate);
     if (!is.is_open()) {
         XLOGW("Cachefile not exist!");
         return;
@@ -106,7 +104,7 @@ void PipelineTable::SavePipelineCache()
         return;
     }
 
-    std::ofstream os(CACHE_FILE, std::ios::out | std::ios::trunc);
+    std::ofstream os(cacheFile_, std::ios::out | std::ios::trunc);
     os.write(cacheData.data(), cacheSize);
     os.close();
 }

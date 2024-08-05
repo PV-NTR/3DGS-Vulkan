@@ -19,8 +19,10 @@ ShaderCompiler::~ShaderCompiler()
 
 bool ShaderCompiler::CompileShader(const std::string& code, ShaderType type, std::vector<uint32_t>& spirv)
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     if (shaders_.find(type) == shaders_.end()) {
-        shaders_.insert({ type, std::unique_ptr<glslang::TShader>(new glslang::TShader(static_cast<EShLanguage>(type))) });
+        shaders_.insert({ type,
+            std::unique_ptr<glslang::TShader>(new glslang::TShader(static_cast<EShLanguage>(type))) });
     }
     auto shader = shaders_[type].release();
     shaders_.erase(type);
@@ -28,21 +30,24 @@ bool ShaderCompiler::CompileShader(const std::string& code, ShaderType type, std
     shader->setStrings(shaderStrings, 1);
     EShMessages messages = static_cast<EShMessages>(EShMsgVulkanRules | EShMsgSpvRules);
     if (!shader->parse(GetDefaultResources(), 100, false, messages)) {
-        XLOGE("CompileShader parse failed, glslang info: %s\n, debug info: %s\n", shader->getInfoLog(), shader->getInfoDebugLog());
+        XLOGE("CompileShader parse failed, glslang info: %s\n, debug info: %s\n", shader->getInfoLog(),
+            shader->getInfoDebugLog());
         return false;
     }
 
     glslang::TProgram program;
     program.addShader(&(*shader));
     if (!program.link(messages)) {
-        XLOGE("CompileShader link failed, glslang info: %s\n, debug info: %s\n", shader->getInfoLog(), shader->getInfoDebugLog());
+        XLOGE("CompileShader link failed, glslang info: %s\n, debug info: %s\n", shader->getInfoLog(),
+            shader->getInfoDebugLog());
         return false;
     }
 
     if (program.getIntermediate(static_cast<EShLanguage>(type))) {
         glslang::GlslangToSpv(*program.getIntermediate(static_cast<EShLanguage>(type)), spirv);
     } else {
-        XLOGE("CompileShader unknown error, glslang info: %s\n, debug info: %s\n", shader->getInfoLog(), shader->getInfoDebugLog());
+        XLOGE("CompileShader unknown error, glslang info: %s\n, debug info: %s\n", shader->getInfoLog(),
+            shader->getInfoDebugLog());
         return false;
     }
     return true;
