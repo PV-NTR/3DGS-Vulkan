@@ -4,6 +4,5 @@
 
 class SceneLoader {
 public:
-    SceneLoader();
-
+    SceneLoader() = default;
 };
