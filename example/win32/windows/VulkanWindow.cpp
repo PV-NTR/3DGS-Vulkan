@@ -198,14 +198,14 @@ void VulkanWindow::LoadScene()
     // auto splat = X::Splat::MakeUnique(GetAssetPath() + "/demo_fox_gs.ply");
     scene_->AddObject(std::move(splat));
     // Camera of train
-    //scene_->GetCamera().SetPerspective(50.154269299972504, surface_->GetWidth() * 1164.6601287484507 / 1159.5880733038064 / surface_->GetHeight(), 0.2f, 200.0f);
-    //scene_->GetCamera().SetPosition({-3.0089893469241797, -0.11086489695181866, -3.7527640949141428});
-    //scene_->GetCamera().SetRotation({ 3.756929, 28.4939513, -4.5199111 });
+    scene_->GetCamera().SetPerspective(50.154269299972504, surface_->GetWidth() * 1164.6601287484507 / 1159.5880733038064 / surface_->GetHeight(), 0.2f, 200.0f);
+    scene_->GetCamera().SetPosition({-3.0089893469241797, -0.11086489695181866, -3.7527640949141428});
+    scene_->GetCamera().SetRotation({ 3.756929, 28.4939513, -4.5199111 });
 
     // Camera of bonsai
-     scene_->GetCamera().SetPerspective(80.154269299972504, float(surface_->GetWidth()) / surface_->GetHeight(), 0.2f, 200.0f);
-     scene_->GetCamera().SetPosition({ 3.7212285514226, -1.9830705231664232, 0.2941856450880261 });
-     scene_->GetCamera().SetRotation({ -14.5064958, -58.9494315, -27.6427182 });
+    // scene_->GetCamera().SetPerspective(80.154269299972504, float(surface_->GetWidth()) / surface_->GetHeight(), 0.2f, 200.0f);
+    // scene_->GetCamera().SetPosition({ 3.7212285514226, -1.9830705231664232, 0.2941856450880261 });
+    // scene_->GetCamera().SetRotation({ -14.5064958, -58.9494315, -27.6427182 });
 
     // Camera of fox
     // scene_->GetCamera().SetPerspective(50.154269299972504, float(surface_->GetWidth()) / surface_->GetHeight(), 0.2f, 200.0f);
