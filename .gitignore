@@ -1,2 +1,4 @@
 .vscode
+.VSCodeCounter
 example/win32/build
+build
