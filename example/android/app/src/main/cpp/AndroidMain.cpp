@@ -14,7 +14,8 @@ void HandleAppCommand(android_app* app, int32_t cmd)
     window->HandleAppCommand(cmd);
 }
 
-void android_main(android_app* app) {
+void android_main(android_app* app)
+{
     INIT_LOGGER(plog::debug, &androidAppender);
     AndroidWindow* window = new AndroidWindow();
     app->userData = window;

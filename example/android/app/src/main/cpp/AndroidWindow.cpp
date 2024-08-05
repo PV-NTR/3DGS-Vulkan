@@ -66,42 +66,41 @@ void AndroidWindow::LoadScene()
 
 void AndroidWindow::HandleAppCommand(int32_t cmd)
 {
-    switch (cmd)
-    {
-    case APP_CMD_SAVE_STATE:
-        XLOGD("APP_CMD_SAVE_STATE");
-        /*
-        window->app->savedState = malloc(sizeof(struct saved_state));
-        *((struct saved_state*)window->app->savedState) = window->state;
-        window->app->savedStateSize = sizeof(struct saved_state);
-        */
-        break;
-    case APP_CMD_INIT_WINDOW:
-        XLOGD("APP_CMD_INIT_WINDOW");
-        if (g_androidAppCtx->window != nullptr) {
-            if (!Init(g_androidAppCtx)) {
-                XLOGE("Could not initialize window, exiting!");
-                g_androidAppCtx->destroyRequested = 1;
+    switch (cmd) {
+        case APP_CMD_SAVE_STATE:
+            XLOGD("APP_CMD_SAVE_STATE");
+            /*
+            window->app->savedState = malloc(sizeof(struct saved_state));
+            *((struct saved_state*)window->app->savedState) = window->state;
+            window->app->savedStateSize = sizeof(struct saved_state);
+            */
+            break;
+        case APP_CMD_INIT_WINDOW:
+            XLOGD("APP_CMD_INIT_WINDOW");
+            if (g_androidAppCtx->window != nullptr) {
+                if (!Init(g_androidAppCtx)) {
+                    XLOGE("Could not initialize window, exiting!");
+                    g_androidAppCtx->destroyRequested = 1;
+                }
+            } else {
+                XLOGE("No window assigned!");
             }
-        } else {
-            XLOGE("No window assigned!");
-        }
-        break;
-    case APP_CMD_LOST_FOCUS:
-        XLOGD("APP_CMD_LOST_FOCUS");
-        focused_ = false;
-        break;
-    case APP_CMD_GAINED_FOCUS:
-        XLOGD("APP_CMD_GAINED_FOCUS");
-        focused_ = true;
-        break;
-    case APP_CMD_TERM_WINDOW:
-        // Window is hidden or closed, clean up resources
-        XLOGD("APP_CMD_TERM_WINDOW");
-        if (surface_->IsReady()) {
-            surface_->CleanSwapchain();
-        }
-        break;
+            break;
+        case APP_CMD_LOST_FOCUS:
+            XLOGD("APP_CMD_LOST_FOCUS");
+            focused_ = false;
+            break;
+        case APP_CMD_GAINED_FOCUS:
+            XLOGD("APP_CMD_GAINED_FOCUS");
+            focused_ = true;
+            break;
+        case APP_CMD_TERM_WINDOW:
+            // Window is hidden or closed, clean up resources
+            XLOGD("APP_CMD_TERM_WINDOW");
+            if (surface_->IsReady()) {
+                surface_->CleanSwapchain();
+            }
+            break;
     }
 }
 
@@ -140,7 +139,8 @@ void AndroidWindow::HandleMotionEvent(GameActivityMotionEvent* motionEvent)
                         // Detect double tap
                         int64_t eventTime = motionEvent->eventTime;
                         if (eventTime - lastTapTime_ <= Android::DOUBLE_TAP_TIMEOUT) {
-                            float deadZone = (160.f / screenDensity_) * Android::DOUBLE_TAP_SLOP * Android::DOUBLE_TAP_SLOP;
+                            float deadZone =
+                                (160.f / screenDensity_) * Android::DOUBLE_TAP_SLOP * Android::DOUBLE_TAP_SLOP;
                             float x = GameActivityPointerAxes_getX(&motionEvent->pointers[ptrIndex]) - touchPos_.x_;
                             float y = GameActivityPointerAxes_getY(&motionEvent->pointers[ptrIndex]) - touchPos_.y_;
                             if ((x * x + y * y) < deadZone) {
@@ -232,11 +232,13 @@ void AndroidWindow::RenderLoop()
 
             renderer_->UpdateScene(scene_.get());
             auto updatedTimeStamp = std::chrono::high_resolution_clock::now();
-            XLOGI("Update time: %f ms", std::chrono::duration<double, std::milli>((updatedTimeStamp - frameStart_).count()) / 1e6);
+            XLOGI("Update time: %f ms",
+                std::chrono::duration<double, std::milli>((updatedTimeStamp - frameStart_).count()) / 1e6);
 
             renderer_->DrawFrame();
             auto drawnTimeStamp = std::chrono::high_resolution_clock::now();
-            XLOGI("Draw time: %f ms", std::chrono::duration<double, std::milli>((drawnTimeStamp - updatedTimeStamp).count()) / 1e6);
+            XLOGI("Draw time: %f ms",
+                std::chrono::duration<double, std::milli>((drawnTimeStamp - updatedTimeStamp).count()) / 1e6);
 
             // reset camera update state to false, if moving, update it
             scene_->GetCamera().Update(frameTime);

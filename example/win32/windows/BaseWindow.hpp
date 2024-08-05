@@ -32,8 +32,7 @@ public:
         wndClass.lpszClassName = ClassName();
         wndClass.hIconSm = LoadIcon(NULL, IDI_WINLOGO);
 
-        if (!RegisterClassEx(&wndClass))
-        {
+        if (!RegisterClassEx(&wndClass)) {
             std::cout << "Could not register window class!\n";
             fflush(stdout);
             exit(1);
@@ -42,10 +41,8 @@ public:
         int screenWidth = GetSystemMetrics(SM_CXSCREEN);
         int screenHeight = GetSystemMetrics(SM_CYSCREEN);
 
-        if (fullscreen_)
-        {
-            if ((width_ != (uint32_t)screenWidth) && (height_ != (uint32_t)screenHeight))
-            {
+        if (fullscreen_) {
+            if ((width_ != (uint32_t)screenWidth) && (height_ != (uint32_t)screenHeight)) {
                 DEVMODE dmScreenSettings;
                 memset(&dmScreenSettings, 0, sizeof(dmScreenSettings));
                 dmScreenSettings.dmSize       = sizeof(dmScreenSettings);
@@ -53,33 +50,26 @@ public:
                 dmScreenSettings.dmPelsHeight = height_;
                 dmScreenSettings.dmBitsPerPel = 32;
                 dmScreenSettings.dmFields     = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
-                if (ChangeDisplaySettings(&dmScreenSettings, CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL)
-                {
-                    if (MessageBox(NULL, "Fullscreen Mode not supported!\n Switch to window mode?", "Error", MB_YESNO | MB_ICONEXCLAMATION) == IDYES)
-                    {
+                if (ChangeDisplaySettings(&dmScreenSettings, CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL){
+                    if (MessageBox(NULL, "Fullscreen Mode not supported!\n Switch to window mode?", "Error",
+                        MB_YESNO | MB_ICONEXCLAMATION) == IDYES) {
                         fullscreen_ = false;
-                    }
-                    else
-                    {
+                    } else {
                         return false;
                     }
                 }
                 screenWidth = width_;
                 screenHeight = height_;
             }
-
         }
 
         DWORD dwExStyle;
         DWORD dwStyle;
 
-        if (fullscreen_)
-        {
+        if (fullscreen_) {
             dwExStyle = WS_EX_APPWINDOW;
             dwStyle = WS_POPUP | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
-        }
-        else
-        {
+        } else {
             dwExStyle = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
             dwStyle = WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
         }
@@ -106,16 +96,14 @@ public:
             hInstance_,
             NULL);
 
-        if (!fullscreen_)
-        {
+        if (!fullscreen_) {
             // Center on screen
             uint32_t x = (GetSystemMetrics(SM_CXSCREEN) - windowRect.right) / 2;
             uint32_t y = (GetSystemMetrics(SM_CYSCREEN) - windowRect.bottom) / 2;
             SetWindowPos(hWnd_, 0, x, y, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
         }
 
-        if (!hWnd_)
-        {
+        if (!hWnd_) {
             printf("Could not create window!\n");
             fflush(stdout);
             return false;
