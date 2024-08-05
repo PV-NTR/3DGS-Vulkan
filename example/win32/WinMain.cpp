@@ -21,5 +21,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR pCmdLine, int nCmdSho
     g_window->Init();
     g_window->RenderLoop();
     delete g_window;
+    g_window = nullptr;
     return 0;
 }

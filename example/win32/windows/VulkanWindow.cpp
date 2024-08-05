@@ -26,7 +26,8 @@ void VulkanWindow::HandleMouseMove(int32_t x, int32_t y)
     }
 
     if (mouseState_.buttons_.left) {
-        scene_->GetCamera().Rotate(glm::vec3(dy * scene_->GetCamera().GetRotationSpeed(), -dx * scene_->GetCamera().GetRotationSpeed(), 0.0f));
+        scene_->GetCamera().Rotate(glm::vec3(
+            dy * scene_->GetCamera().GetRotationSpeed(), -dx * scene_->GetCamera().GetRotationSpeed(), 0.0f));
     }
     if (mouseState_.buttons_.right) {
         scene_->GetCamera().Translate(glm::vec3(-0.0f, 0.0f, dy * .005f));
@@ -126,10 +127,8 @@ void VulkanWindow::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
             break;
         }
         case WM_MOUSEMOVE:
-        {
             HandleMouseMove(LOWORD(lParam), HIWORD(lParam));
             break;
-        }
         case WM_SIZE:
             if ((renderer_->IsReady()) && (wParam != SIZE_MINIMIZED))
             {
@@ -153,6 +152,8 @@ void VulkanWindow::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
             break;
         case WM_EXITSIZEMOVE:
             resizing_ = false;
+            break;
+        default:
             break;
     }
 
@@ -243,5 +244,6 @@ void VulkanWindow::WindowResize()
     surface_->CleanSwapchain();
     surface_->SetupSwapchain();
     surface_->SetupSwapSurfaces();
-    scene_->GetCamera().UpdateAspectRatio(surface_->GetWidth() * 1164.6601287484507 / (1159.5880733038064 * surface_->GetHeight()));
+    scene_->GetCamera().UpdateAspectRatio(
+        surface_->GetWidth() * 1164.6601287484507 / (1159.5880733038064 * surface_->GetHeight()));
 }

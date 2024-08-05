@@ -32,7 +32,7 @@ std::string ShaderManager::ReadShader(std::string fileName)
 
         return shaderCode;
     } else {
-        XLOGE("ReadShader failed, open file failed!");
+        XLOGE("ReadShader failed, open file failed, fileName: %s!", fileName.c_str());
         return "";
     }
 #elif defined HOST_ANDROID
