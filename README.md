@@ -23,9 +23,7 @@ git submodule update
 # Build
 ## windows
 ```
-cd examples/win32
-cmake -B build/Debug -DCMAKE_BUILD_TYPE=Debug .
-# for release/releasewithdebuginfo, -DCMAKE_BUILD_TYPE=Release
+cmake -B build .
 ```
 
 ## Android
