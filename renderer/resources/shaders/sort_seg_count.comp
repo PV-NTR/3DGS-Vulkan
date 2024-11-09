@@ -1,0 +1,64 @@
+#version 450
+#extension GL_KHR_vulkan_glsl : enable
+
+#define LOCAL_SIZE 1024
+#define DEPTH_RANGE 4096
+
+layout(local_size_x = 1024) in;
+
+struct Preprocessed {
+    vec4 pos2d;
+    vec4 color;
+    vec2 majorAxis;
+    vec2 minorAxis;
+    uint modelID;
+    bool visible;
+    bool valid;
+};
+
+layout (set = 1, binding = 0, std430) restrict writeonly buffer SSBO_PREPROCESSED {
+    Preprocessed preprocessed[];
+};
+
+layout(set = 1, binding = 1, std430) readonly buffer SSBO_COUNTING {
+    int cnt[];
+};
+
+layout(set = 1, binding = 2, std430) writeonly buffer SSBO_DISTANCE {
+    uint dis[];
+};
+
+layout (binding = 1, std140) uniform UBO_OBJECT_INDEX_PREFIXSUM {
+    uvec4 prefixSums[8];
+};
+
+layout (binding = 5) uniform UBO_COMPUTE {
+    vec2 depthRange;
+};
+
+void main()
+{
+    uint index = gl_GlobalInvocationID.x;
+    uint objectID = 0;
+    for (int i = 0; i < 32; i++) {
+        objectID = i;
+        if (prefixSums[objectID / 4][objectID % 4] >= index) {
+            break;
+        }
+    }
+    // index bigger than point count, not valid
+    if (objectID == 32) {
+        return;
+    }
+
+    float dis = preprocessed[index].pos2d.z;
+    float depth = (depthRange.y - dis) / (depthRange.y - depthRange.x);
+    uint i_dis = uint(depth * float(DEPTH_RANGE));
+    if (i_dis > DEPTH_RANGE) {
+        i_dis = DEPTH_RANGE;
+    }
+    dis[index] = i_dis;
+
+    uint baseAddr = gl_WorkGroupID.x * DEPTH_RANGE;
+    atomicAdd(cnt[baseAddr + i_dis], 1);
+}

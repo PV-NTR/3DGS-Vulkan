@@ -1,0 +1,42 @@
+#version 450
+#extension GL_KHR_vulkan_glsl : enable
+
+#define LOCAL_SIZE 1024
+#define DEPTH_RANGE 4096
+
+layout(set = 1, binding = 1, std430) readonly buffer SSBO_COUNTING {
+    int cnt[];
+};
+
+layout(set = 1, binding = 2, std430) readonly buffer SSBO_DISTANCE {
+    uint dis[];
+};
+
+layout(set = 1, binding = 4, std430) writeonly buffer SSBO_SORTED {
+    uint sorted[];
+};
+
+layout (binding = 1, std140) uniform UBO_OBJECT_INDEX_PREFIXSUM {
+    uvec4 prefixSums[8];
+};
+
+void main()
+{
+    uint index = gl_GlobalInvocationID.x;
+    uint objectID = 0;
+    for (int i = 0; i < 32; i++) {
+        objectID = i;
+        if (prefixSums[objectID / 4][objectID % 4] >= index) {
+            break;
+        }
+    }
+    // index bigger than point count, not valid
+    if (objectID == 32) {
+        return;
+    }
+
+    uint iDistance = dis[index];
+    uint baseAddr = gl_WorkGroupID.x * DEPTH_RANGE;
+    int gOffset = atomicAdd(cnt[baseAddr + iDistance], -1);
+    sorted[gOffset - 1u] = index;
+}

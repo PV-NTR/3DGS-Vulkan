@@ -1,0 +1,81 @@
+#version 450
+#extension GL_KHR_vulkan_glsl : enable
+
+#define LOCAL_SIZE 1024
+#define DEPTH_RANGE 4096
+// correct this: n_splats / LOCAL_SIZE
+#define GROUP_X 128
+#define SPLIT_GROUP_COUNT GROUP_X
+
+layout(set = 1, binding = 1, std430) buffer SSBO_COUNTING {
+    int cnt[];
+};
+
+layout(set = 1, binding = 3, std430) buffer SSBO_GLOBALCOUNTING {
+    int g_cnt[];
+};
+
+int[SPLIT_GROUP_COUNT] originCountingBuffer;
+
+void CalcPerDepthCount(uint depthIndex)
+{
+    int sum = 0;
+    for (uint i = 0u; i < SPLIT_GROUP_COUNT; i++) {
+        sum = sum + cnt[i * DEPTH_RANGE + depthIndex];
+    }
+    g_cnt[depthIndex] = sum;
+}
+
+void CalcSplitPrefixCount(uint depthIndex)
+{
+    int perDepthTotal = g_cnt[depthIndex];
+    for (uint i = 0u; i < SPLIT_GROUP_COUNT; i++) {
+        originCountingBuffer[i] = cnt[i * DEPTH_RANGE + depthIndex];
+    }
+    for (uint i = 0u; i < SPLIT_GROUP_COUNT; i++) {
+        if (i == 0u) {
+            cnt[depthIndex] = perDepthTotal;
+        } else {
+            perDepthTotal = perDepthTotal - originCountingBuffer[i - 1u];
+            cnt[i * DEPTH_RANGE + depthIndex] = perDepthTotal;
+        }
+    }
+    g_cnt[depthIndex] = 0;
+}
+
+void ClearDepthCount(uint depthIndex)
+{
+    for (uint i = 0u; i < SPLIT_GROUP_COUNT; i++) {
+        cnt[i * DEPTH_RANGE + depthIndex] = 0;
+    }
+}
+
+void main()
+{
+    uint index = gl_LocalInvocationID.x;
+
+#if PRE_NUM_SUM
+    if (index < DEPTH_RANGE) {
+        CalcPerDepthCount(index);
+    }
+#endif
+
+#if PREFIX_SUM
+    for (uint i = 1u; i < DEPTH_RANGE; i++) {
+        g_cnt[i] = g_cnt[i] + g_cnt[i - 1u];
+    }
+#endif
+
+#if PREFIX_SPLIT_SUM
+    if (index < DEPTH_RANGE) {
+        CalcSplitPrefixCount(index);
+    }
+#endif
+
+#if CLEAR_COUNTING_BUFFER
+    if (index < DEPTH_RANGE) {
+        ClearDepthCount(index);
+    }
+#endif
+
+}
