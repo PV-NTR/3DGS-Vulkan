@@ -115,7 +115,7 @@ void GaussianRenderer::RecordComputeCommands(Scene* scene)
         auto& cmdBuffer = commandBuffer->get();
         cmdBuffer.reset();
         vk::CommandBufferBeginInfo cmdBufferBeginInfo{};
-        cmdBuffer.begin(cmdBufferBeginInfo);
+        (void)cmdBuffer.begin(cmdBufferBeginInfo);
 
         // TODO: prepare buffer from scene
         preprocessPipeline_->BindStorageBuffers({ scene->ssboSplatData_ }, 0, 0);
@@ -133,14 +133,14 @@ void GaussianRenderer::RecordComputeCommands(Scene* scene)
         // sortPipeline_->BindUniformBuffers({ scene->uboPrefixSums_ }, 0, 1);
         // sortPipeline_->BindDescriptorSets(cmdBuffer);
         // cmdBuffer.dispatch((scene->totalPointCount_ + 255) / 256, 1, 1);
-        cmdBuffer.end();
+        (void)cmdBuffer.end();
     }
 }
 
 void GaussianRenderer::OnRecordGraphicsCommands(Scene* scene, std::shared_ptr<Backend::CommandBuffer> commandBuffer)
 {
     vk::DeviceSize offset = 0;
-    auto cmdBuffer = commandBuffer->get();
+    auto& cmdBuffer = commandBuffer->get();
     cmdBuffer.bindVertexBuffers(0, vbo_->GetHandle(), offset);
     cmdBuffer.bindIndexBuffer(ibo_->GetHandle(), 0, vk::IndexType::eUint16);
     // TODO: prepare buffer from scene
@@ -162,9 +162,9 @@ void GaussianRenderer::OnRecordGraphicsCommands(Scene* scene, std::shared_ptr<Ba
 
 void GaussianRenderer::SubmitGraphicsCommands()
 {
-    auto cmdBuffer = GetCurrentPresentCmdBuffer()->get();
+    auto& cmdBuffer = GetCurrentPresentCmdBuffer()->get();
     auto queue = Backend::VkContext::GetInstance().AcquireGraphicsQueue(surface_->GetPresentQueueIdx());
-    std::array<vk::Semaphore, 2> waitSemaphores{ preprocessComplete_, surface_->GetAcquireFrameSignalSemaphore() };
+    std::array<vk::Semaphore, 2> waitSemaphores{ preprocessComplete_, surface_->GetPresentCompleteSemaphore() };
     std::array<vk::Semaphore, 2> signalSemaphores { surface_->GetPresentWaitSemaphore(), preprocessComplete_ };
     vk::SubmitInfo submitInfo{};
     std::array<vk::PipelineStageFlags, 2> waitStageMask{ vk::PipelineStageFlagBits::eVertexShader,
@@ -183,7 +183,7 @@ void GaussianRenderer::SubmitGraphicsCommands()
 
 void GaussianRenderer::SubmitComputeCommands()
 {
-    auto cmdBuffer = GetCurrentComputeCmdBuffer()->get();
+    auto& cmdBuffer = GetCurrentComputeCmdBuffer()->get();
 
     auto queue = Backend::VkContext::GetInstance().AcquireCurrentComputeQueue().second;
     vk::SubmitInfo submitInfo{};
@@ -194,6 +194,10 @@ void GaussianRenderer::SubmitComputeCommands()
         .setWaitDstStageMask(waitStageMask)
         .setSignalSemaphoreCount(1)
         .setPSignalSemaphores(&preprocessComplete_);
+    if (firstFrame_) {
+        submitInfo.setWaitSemaphoreCount(0).setPWaitSemaphores(nullptr);
+        firstFrame_ = false;
+    }
     auto ret = queue.submit(submitInfo);
     if (ret != vk::Result::eSuccess) {
         XLOGE("Submit compute commands failed, errCode: %d", ret);

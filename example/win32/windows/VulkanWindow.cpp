@@ -138,6 +138,10 @@ void VulkanWindow::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
                     height_ = HIWORD(lParam);
                     WindowResize();
                 }
+            } else if (wParam == SIZE_MINIMIZED) {
+                width_ = 0.0f;
+                height_ = 0.0f;
+                WindowClean();
             }
             break;
         case WM_GETMINMAXINFO:
@@ -193,9 +197,9 @@ void VulkanWindow::LoadScene()
 {
     scene_ = std::make_unique<X::Scene>();
     // TODO: use gui callback to load splat file
-    auto splat = X::Splat::MakeUnique(GetAssetPath() + "/train_7000.ply");
+    // auto splat = X::Splat::MakeUnique(GetAssetPath() + "/train_7000.ply");
     // auto splat = X::Splat::MakeUnique(GetAssetPath() + "/bonsai-7k-mini.ply");
-    // auto splat = X::Splat::MakeUnique(GetAssetPath() + "/demo_fox_gs.ply");
+    auto splat = X::Splat::MakeUnique(GetAssetPath() + "/demo_fox_gs.ply");
     scene_->AddObject(std::move(splat));
     // Camera of train
     scene_->GetCamera().SetPerspective(50.154269299972504, surface_->GetWidth() * 1164.6601287484507 / 1159.5880733038064 / surface_->GetHeight(), 0.2f, 200.0f);
@@ -228,22 +232,29 @@ void VulkanWindow::RenderLoop()
                 break;
             }
         }
-        auto current = std::chrono::high_resolution_clock::now();
-        auto frameTime = std::chrono::duration<double, std::milli>(current - frameStart_).count() / 1000.0f;
-        frameStart_ = current;
-        renderer_->UpdateScene(scene_.get());
-        renderer_->DrawFrame();
-        // reset camera update state to false, if moving, update it
-        scene_->GetCamera().Update(frameTime);
+        if (width_ > 0 && height_ > 0) {
+            auto current = std::chrono::high_resolution_clock::now();
+            auto frameTime = std::chrono::duration<double, std::milli>(current - frameStart_).count() / 1000.0f;
+            frameStart_ = current;
+            renderer_->UpdateScene(scene_.get());
+            renderer_->DrawFrame();
+            // reset camera update state to false, if moving, update it
+            scene_->GetCamera().Update(frameTime);
+        }
     }
 }
 
 void VulkanWindow::WindowResize()
 {
-    X::Backend::VkContext::GetInstance().GetDevice().waitIdle();
-    surface_->CleanSwapchain();
+    WindowClean();
     surface_->SetupSwapchain();
     surface_->SetupSwapSurfaces();
     scene_->GetCamera().UpdateAspectRatio(
         surface_->GetWidth() * 1164.6601287484507 / (1159.5880733038064 * surface_->GetHeight()));
+}
+
+void VulkanWindow::WindowClean()
+{
+    (void)X::Backend::VkContext::GetInstance().GetDevice().waitIdle();
+    surface_->CleanSwapchain();
 }

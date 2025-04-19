@@ -22,6 +22,7 @@ protected:
     void HandleMouseMove(int32_t x, int32_t y);
     void OnHandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) {};
     void WindowResize() override;
+    void WindowClean() override;
 
     void InitBackend();
     void InitRenderer();

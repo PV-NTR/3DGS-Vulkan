@@ -51,9 +51,15 @@ DisplaySurface::DisplaySurface(void* instance, void* window)
 
 void DisplaySurface::InitDisplaySemaphores()
 {
-    acquireFrameSignalSemaphore_ = VkContext::GetInstance().GetDevice().createSemaphore({}).value;
+    presentCompleteSemaphore_ = VkContext::GetInstance().GetDevice().createSemaphore({}).value;
     presentWaitSemaphore_ = VkContext::GetInstance().GetDevice().createSemaphore({}).value;
-    assert(acquireFrameSignalSemaphore_ && presentWaitSemaphore_);
+    assert(presentCompleteSemaphore_ && presentWaitSemaphore_);
+}
+
+void DisplaySurface::ResetPresentCompleleSemaphore()
+{
+    VkContext::GetInstance().GetDevice().destroySemaphore(presentCompleteSemaphore_);
+    presentCompleteSemaphore_ = VkContext::GetInstance().GetDevice().createSemaphore({}).value;
 }
 
 void DisplaySurface::CleanSwapchain()
@@ -64,6 +70,7 @@ void DisplaySurface::CleanSwapchain()
     if (depthStencil_) {
         depthStencil_.reset();
     }
+    ResetPresentCompleleSemaphore();
 }
 
 void DisplaySurface::SetupSwapchain()
@@ -165,14 +172,14 @@ uint32_t DisplaySurface::NextFrame()
     auto ret = VkContext::GetInstance().GetDevice().waitIdle();
     assert(ret != vk::Result::eErrorDeviceLost);
     auto nextIndex = VkContext::GetInstance().GetDevice()
-        .acquireNextImageKHR(*swapchain_, UINT64_MAX, acquireFrameSignalSemaphore_, {});
+        .acquireNextImageKHR(*swapchain_, UINT64_MAX, presentCompleteSemaphore_, {});
     currentFrame_ = nextIndex.value;
     return currentFrame_;
 }
 
 void DisplaySurface::Present()
 {
-    X::Backend::VkContext::GetInstance().GetDevice().waitIdle();
+    (void)X::Backend::VkContext::GetInstance().GetDevice().waitIdle();
     auto queue = VkContext::GetInstance().AcquireGraphicsQueue(presentQueueIdx_);
     std::array<vk::Semaphore, 1> waitSemaphores { presentWaitSemaphore_ };
     vk::PresentInfoKHR presentInfo{};

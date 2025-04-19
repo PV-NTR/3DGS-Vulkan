@@ -25,7 +25,7 @@ public:
     uint32_t GetPresentQueueIdx() const { return presentQueueIdx_; }
     uint32_t GetCurrentFrameIdx() const { return currentFrame_; }
     uint32_t GetSwapSurfaceCount() const { return imageCount_; }
-    vk::Semaphore GetAcquireFrameSignalSemaphore() { return acquireFrameSignalSemaphore_; };
+    vk::Semaphore GetPresentCompleteSemaphore() { return presentCompleteSemaphore_; };
     vk::Semaphore GetPresentWaitSemaphore() { return presentWaitSemaphore_; };
 
     uint32_t NextFrame();
@@ -52,6 +52,7 @@ protected:
 private:
     std::vector<std::shared_ptr<Image>> GetImagesFromSwapchain();
     void InitDisplaySemaphores();
+    void ResetPresentCompleleSemaphore();
 
 private:
     vk::UniqueSurfaceKHR surfaceUnique_;
@@ -66,7 +67,7 @@ private:
     vk::ColorSpaceKHR swapchainColorSpace_ = vk::ColorSpaceKHR::eSrgbNonlinear;
     std::vector<std::shared_ptr<Surface>> swapSurfaces_;
     std::shared_ptr<Image> depthStencil_;
-    vk::Semaphore acquireFrameSignalSemaphore_;
+    vk::Semaphore presentCompleteSemaphore_;
     vk::Semaphore presentWaitSemaphore_;
     std::shared_ptr<Buffer> screenSize_;
 

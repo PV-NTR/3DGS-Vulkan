@@ -136,7 +136,7 @@ void Renderer::SubmitGraphicsCommands()
     auto queue = Backend::VkContext::GetInstance().AcquireGraphicsQueue(surface_->GetPresentQueueIdx());
     vk::SubmitInfo submitInfo{};
     std::vector<vk::PipelineStageFlags> waitStageMask{ vk::PipelineStageFlagBits::eColorAttachmentOutput };
-    auto waitSemaphore = surface_->GetAcquireFrameSignalSemaphore();
+    auto waitSemaphore = surface_->GetPresentCompleteSemaphore();
     auto signalSemaphore = surface_->GetPresentWaitSemaphore();
     submitInfo.setCommandBuffers(cmdBuffer->get())
         .setWaitSemaphoreCount(1)

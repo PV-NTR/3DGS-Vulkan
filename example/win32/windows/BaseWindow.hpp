@@ -122,6 +122,7 @@ protected:
     virtual void HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) = 0;
     virtual std::string GetWindowTitle() const = 0;
     virtual void WindowResize() = 0;
+    virtual void WindowClean() = 0;
 
     HWND hWnd_;
     HINSTANCE hInstance_;

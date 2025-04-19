@@ -46,6 +46,7 @@ private:
     std::vector<std::shared_ptr<Backend::DescriptorSetLayout>> descriptorSetLayouts_;
     std::optional<Backend::BlendState> blend_;
     vk::Semaphore preprocessComplete_;
+    bool firstFrame_{ true };
 };
     
 } // namespace X
